@@ -19,7 +19,9 @@ Needs Node 22.5 or newer.
 npm install && npm start
 ```
 
-Then open http://localhost:3000 on your phone or in a browser (this works once the app is scaffolded).
+Then open http://localhost:3000 on your phone or in a browser.
+
+Optional environment: `PORT` (3000), `DB_PATH` (`data/loaner.db`), `APP_TZ` (`UTC`, used for due dates and reminders). Web push is off unless `VAPID_PUBLIC_KEY` and `VAPID_PRIVATE_KEY` are set; `npm run vapid` prints a fresh pair. Never commit them.
 
 ## Check it
 
