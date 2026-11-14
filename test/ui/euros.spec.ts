@@ -4,6 +4,7 @@ import path from "node:path";
 import test from "node:test";
 import type { Page } from "playwright-core";
 import { useLoaner } from "./harness.js";
+import { skipWhatsNew } from "./whats-new-seen.js";
 
 const SHOTS = path.resolve("test/ui/screenshots/euros");
 const loaner = useLoaner();
@@ -37,6 +38,7 @@ async function seed() {
 async function signedIn(token: string, size: { width: number; height: number }): Promise<Page> {
   const ctx = await loaner.phone();
   await ctx.addInitScript((t) => localStorage.setItem("loaner_token", t), token);
+  await skipWhatsNew(ctx);
   const page = await ctx.newPage();
   await page.setViewportSize(size);
   return page;
