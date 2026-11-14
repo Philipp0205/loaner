@@ -7,6 +7,15 @@ import { normalizeEntries } from "./whats-new.js";
  */
 const RAW = [
   {
+    id: "2026-11-14-rename-group",
+    date: "2026-11-14",
+    title: "Rename a group",
+    bullets: [
+      "You can rename a group from the You tab. Anyone in the group can do it.",
+      "The new name shows up for everyone in the group.",
+    ],
+  },
+  {
     id: "2026-11-14-logo",
     date: "2026-11-14",
     title: "A new logo",

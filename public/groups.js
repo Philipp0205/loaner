@@ -29,18 +29,58 @@ export function createGroupForm(onDone) {
   return form;
 }
 
-/** One group: members, invite link with a copy button, and leave. */
+/** One group: name with a rename button, members, invite link with a copy button, and leave. */
 export function groupCard(group, rerender) {
   const link = inviteLink(group);
   const copy = h("button", { type: "button", class: "primary", onclick: async () => toast((await copyText(link)) ? "Invite link copied" : "Could not copy, select the link instead", "info") }, "Copy invite link");
   const leave = h("button", { type: "button", class: "danger", onclick: () => leaveGroup(group, leave, rerender) }, "Leave group");
+  const rename = h("button", { type: "button", class: "group-rename-open" }, "Rename");
+  const title = h("div", { class: "card-top" }, h("h3", null, group.name), rename);
+  rename.addEventListener("click", () => {
+    const form = renameForm(group, rerender, () => {
+      form.remove();
+      rename.classList.remove("hidden");
+      rename.focus();
+    });
+    rename.classList.add("hidden");
+    title.after(form);
+    form.querySelector("input").focus();
+  });
   return h("section", { class: "card", "data-group": group.id },
-    h("h3", null, group.name),
+    title,
     h("p", { class: "muted small" }, `${group.members.length} ${group.members.length === 1 ? "member" : "members"}: ${group.members.map((m) => m.name).join(", ")}`),
     h("p", { class: "small" }, "Anyone with this link can join:"),
     h("code", { class: "invite-link" }, link),
     h("div", { class: "row" }, copy, leave),
   );
+}
+
+/** Short form with the current name filled in. Any member can rename. Errors show in the form. */
+function renameForm(group, rerender, cancel) {
+  const input = h("input", { type: "text", id: "group-rename-name", maxlength: "40", value: group.name });
+  const error = h("p", { class: "error-text", role: "alert" });
+  const save = h("button", { class: "primary", type: "submit" }, "Save name");
+  const form = h("form", { class: "stack", id: "group-rename-form" },
+    h("label", { class: "field" }, h("span", null, "Group name"), input),
+    error,
+    h("div", { class: "row" }, save, h("button", { type: "button", onclick: cancel }, "Cancel")),
+  );
+  form.addEventListener("submit", (event) => {
+    event.preventDefault();
+    error.textContent = "";
+    busy(save, async () => {
+      try {
+        await api("PATCH", `/api/groups/${group.id}`, { name: input.value });
+      } catch (e) {
+        error.textContent = e.message;
+        return;
+      }
+      await loadGroups();
+      toast("Group renamed");
+      await rerender();
+    });
+  });
+  return form;
 }
 
 async function leaveGroup(group, button, rerender) {
