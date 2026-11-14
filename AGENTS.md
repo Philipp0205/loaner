@@ -22,6 +22,11 @@ v1 is what `docs/brief.md` lists under "In v1". No payments, deposits, ratings, 
 - Work on a feature branch and open a PR. Never push to `main` after the initial commit. Never merge.
 - Fake data only in tests and screenshots.
 
+## Tools
+
+- Search code and logs with the grep tool, find files with the glob tool, view files with the read tool (use offset/limit for long logs). Do not use `cat`, `sed -n`, `head`, `tail`, `grep`, `rg` or `ls -R` in bash to read or search files. Trimming a command's own output (`npm test 2>&1 | tail`) is fine.
+- Bash is for running commands (npm scripts, `scripts/check.sh`, git). Do not probe the permission rules with dummy commands (`python3 -c`, empty `cat >` heredocs).
+
 ## Safety
 
 - Never commit secrets: no `.env`, tokens, recovery codes, VAPID private keys, or database files.
