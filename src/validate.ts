@@ -1,4 +1,5 @@
 import { HttpError } from "./types.js";
+import { isCategory } from "./categories.js";
 import { isCalendarDate } from "./time.js";
 
 export function str(body: Record<string, unknown>, key: string): string {
@@ -41,6 +42,13 @@ export function donationCents(value: unknown): number | null {
 
 export function centsToAmount(cents: number | null): number | null {
   return cents === null ? null : cents / 100;
+}
+
+/** A category from the fixed list. null or an empty string clears it. Anything else is a 400. */
+export function categoryValue(value: unknown): string | null {
+  if (value === null || value === "") return null;
+  if (!isCategory(value)) throw new HttpError(400, "category must be one of the listed categories");
+  return value;
 }
 
 export function date(value: unknown, label: string): string {

@@ -57,7 +57,7 @@ export async function renderItem(id) {
       h("button", { class: "fab", type: "button", "aria-label": "Back", onclick: () => history_back(item) }, icon("back")),
     ),
     h("h1", null, item.name),
-    h("div", { class: "row" }, statusPill(item), item.mine ? h("span", { class: "muted small" }, "Yours") : null),
+    h("div", { class: "row" }, statusPill(item), item.category ? h("span", { class: "muted small", "data-category": "" }, item.category) : null, item.mine ? h("span", { class: "muted small" }, "Yours") : null),
     h("hr", { class: "rule" }),
     h("div", { class: "host" },
       h("span", { class: "avatar", "aria-hidden": "true" }, (item.owner.name || "?").slice(0, 1).toUpperCase()),

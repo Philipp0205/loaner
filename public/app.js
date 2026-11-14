@@ -2,6 +2,7 @@ import { api, getToken } from "./api.js";
 import { renderGate } from "./gate.js";
 import { renderBrowse, renderItem } from "./browse.js";
 import { renderMine, renderItemForm } from "./mine.js";
+import { renderCamera, stopCamera } from "./camera.js";
 import { renderRequests } from "./requests.js";
 import { renderAlerts } from "./alerts.js";
 import { renderYou } from "./you.js";
@@ -24,7 +25,8 @@ const ROUTES = [
   [/^#\/browse$/, "browse", () => renderBrowse()],
   [/^#\/item\/([^/]+)$/, "browse", (m) => renderItem(m[1])],
   [/^#\/mine$/, "mine", () => renderMine()],
-  [/^#\/mine\/new$/, "mine", () => renderItemForm(null)],
+  [/^#\/mine\/new$/, "mine", () => renderCamera()],
+  [/^#\/mine\/new\/form$/, "mine", () => renderItemForm(null)],
   [/^#\/mine\/edit\/([^/]+)$/, "mine", (m) => renderItemForm(m[1])],
   [/^#\/requests$/, "requests", () => renderRequests()],
   [/^#\/alerts$/, "alerts", () => renderAlerts()],
@@ -55,6 +57,7 @@ async function show() {
     return;
   }
   const [match, tab, view] = found;
+  stopCamera();
   root.replaceChildren(h("main", { class: "page" }, h("div", { class: "spinner" }, "Loading...")), tabbar(tab));
   let screen;
   try {

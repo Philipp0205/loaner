@@ -36,12 +36,17 @@ const MIME: Record<string, string> = {
   ".json": "application/json; charset=utf-8",
 };
 
+// The on-device photo suggester loads a pinned Transformers.js build from jsDelivr and its CLIP weights
+// from Hugging Face, so those two hosts are allowed for scripts and fetches. Nothing else is.
+const CDN = "https://cdn.jsdelivr.net";
+const HF = "https://huggingface.co https://*.huggingface.co https://*.hf.co";
+
 const SECURITY_HEADERS = {
   "x-content-type-options": "nosniff",
   "referrer-policy": "no-referrer",
   "x-frame-options": "DENY",
   "content-security-policy":
-    "default-src 'self'; img-src 'self' blob: data:; style-src 'self'; style-src-attr 'unsafe-inline'; script-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'",
+    `default-src 'self'; img-src 'self' blob: data:; media-src 'self' blob:; style-src 'self'; style-src-attr 'unsafe-inline'; script-src 'self' 'wasm-unsafe-eval' ${CDN}; connect-src 'self' ${CDN} ${HF}; object-src 'none'; base-uri 'none'; frame-ancestors 'none'`,
 };
 
 type Compiled = { route: Route; pattern: RegExp; keys: string[] };
