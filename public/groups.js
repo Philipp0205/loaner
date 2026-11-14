@@ -1,8 +1,12 @@
 import { api } from "./api.js";
-import { inviteLink, loadGroups, setGroup } from "./state.js";
+import { inviteLink, loadGroups, setGroup, stayedPut } from "./state.js";
 import { busy, copyText, h, toast } from "./util.js";
 
-/** Name field and button that create a group, then call onDone(group). */
+/**
+ * Name field and button that create a group, then call onDone(group).
+ * onDone only runs if the person is still on the screen they submitted from: if they tapped
+ * another tab while the request was out, they stay where they went.
+ */
 export function createGroupForm(onDone) {
   const input = h("input", { type: "text", id: "group-name", maxlength: "40", placeholder: "Flat 3B, Climbing club...", required: true });
   const error = h("p", { class: "error-text", role: "alert" });
@@ -10,12 +14,13 @@ export function createGroupForm(onDone) {
   const form = h("form", { class: "stack" }, h("label", { class: "field" }, h("span", null, "Group name"), input), error, button);
   form.addEventListener("submit", (event) => {
     event.preventDefault();
+    const samePlace = stayedPut();
     busy(button, async () => {
       try {
         const { group } = await api("POST", "/api/groups", { name: input.value });
         await loadGroups();
         setGroup(group.id);
-        await onDone(group);
+        if (samePlace()) await onDone(group);
       } catch (e) {
         error.textContent = e.message;
       }

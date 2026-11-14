@@ -1,11 +1,11 @@
 import { api, setToken } from "./api.js";
 import { createGroupForm, groupCard } from "./groups.js";
-import { go, loadGroups, loadMe, saveRecovery, savedRecovery, state } from "./state.js";
+import { redraw, loadGroups, loadMe, saveRecovery, savedRecovery, state } from "./state.js";
 import { busy, copyText, h, toast } from "./util.js";
 
 export async function renderYou() {
   await loadGroups();
-  const rerender = () => go("#/you");
+  const rerender = () => redraw("#/you");
   const parts = [h("h1", null, "You"), nameCard(rerender), recoveryCard(rerender), h("h2", null, "Your groups")];
   parts.push(state.groups.length ? state.groups.map((g) => groupCard(g, rerender)) : h("p", { class: "muted" }, "You are not in a group yet."));
   parts.push(h("div", { class: "card" }, h("h3", { style: "margin-bottom:8px" }, "Start a new group"), createGroupForm(rerender)));

@@ -1,5 +1,5 @@
 import { api } from "./api.js";
-import { go, state } from "./state.js";
+import { go, redraw, state } from "./state.js";
 import { emptyState, fmtMoment, h } from "./util.js";
 
 export async function renderAlerts() {
@@ -8,7 +8,7 @@ export async function renderAlerts() {
   const mark = h("button", { type: "button", id: "mark-read", onclick: async () => {
     await api("POST", "/api/notifications/read");
     state.unread = 0;
-    go("#/alerts");
+    redraw("#/alerts");
   } }, "Mark all as read");
   const head = h("div", { class: "row", style: "justify-content:space-between;margin-bottom:12px" }, h("h1", { style: "margin:0" }, "Alerts"), unread ? mark : null);
   if (!data.notifications.length) {

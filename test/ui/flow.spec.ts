@@ -79,7 +79,7 @@ test("Alice lends a drill to Bob, from invite to return", { timeout: 120_000 }, 
   await shot(alice, "alice-new-item");
   await alice.getByRole("button", { name: "Add item" }).click();
   await alice.getByRole("heading", { level: 1, name: "Cordless drill" }).waitFor();
-  await alice.getByText("Suggested donation: 5").waitFor();
+  await alice.getByText("Suggested donation: €5", { exact: true }).waitFor();
   await alice.locator("img.photo.big").waitFor();
   await alice.waitForFunction(() => (document.querySelector("img.photo.big") as HTMLImageElement | null)?.naturalWidth === 1200);
 
@@ -87,7 +87,7 @@ test("Alice lends a drill to Bob, from invite to return", { timeout: 120_000 }, 
   await tab(bob, "Browse");
   await bob.locator('button.tile', { hasText: "Cordless drill" }).waitFor();
   await bob.getByText("From Alice").waitFor();
-  await bob.getByText("Suggested donation: 5").waitFor();
+  await bob.getByText("Suggested donation: €5", { exact: true }).waitFor();
   await bob.locator(".tile .pill", { hasText: "Available" }).waitFor();
   await bob.waitForFunction(() => (document.querySelector(".tile img.photo") as HTMLImageElement | null)?.naturalWidth === 1200);
   await shot(bob, "bob-browse");
@@ -95,7 +95,7 @@ test("Alice lends a drill to Bob, from invite to return", { timeout: 120_000 }, 
   await bob.locator('button.tile', { hasText: "Cordless drill" }).waitFor();
   await bob.locator('button.tile', { hasText: "Cordless drill" }).click();
   await bob.getByRole("heading", { level: 1, name: "Cordless drill" }).waitFor();
-  await bob.getByText("Suggested donation: 5").waitFor();
+  await bob.getByText("Suggested donation: €5", { exact: true }).waitFor();
   await bob.getByText("Paid in person or by transfer, not in the app.").waitFor();
   await bob.getByText("Not lent out yet.").waitFor();
 
@@ -141,7 +141,7 @@ test("Alice lends a drill to Bob, from invite to return", { timeout: 120_000 }, 
   await bob.getByText("Nothing available right now").waitFor();
   await shot(bob, "bob-lent-filtered");
   await bob.locator("#available-only").uncheck();
-  await bob.locator(".tile .pill", { hasText: "Lent to Bob until" }).waitFor();
+  await bob.locator(".tile .pill", { hasText: "Lent until" }).waitFor();
 
   // Alice marks it returned: available again.
   await tab(alice, "Requests");

@@ -1,12 +1,12 @@
 import { api } from "./api.js";
 import { downscale, photoEl } from "./photo.js";
-import { go, state } from "./state.js";
-import { busy, emptyState, fmtAmount, h, statusPill, toast } from "./util.js";
+import { go, redraw, state, stayedPut } from "./state.js";
+import { busy, emptyState, fmtAmountPlain, h, statusPill, toast } from "./util.js";
 
 export async function renderMine() {
   const { items } = await api("GET", "/api/items/mine");
   const add = h("button", { class: "primary", type: "button", onclick: () => go("#/mine/new") }, "Add an item");
-  const rerender = () => go("#/mine");
+  const rerender = () => redraw("#/mine");
   const head = h("div", { class: "row", style: "justify-content:space-between;margin-bottom:12px" }, h("h1", { style: "margin:0" }, "My items"), add);
   if (!state.groups.length) {
     return h("div", null, head, emptyState("Join or create a group first", "Items are shared with your groups. Open the Browse tab to create one."));
@@ -56,8 +56,8 @@ export async function renderItemForm(id) {
     }
   } });
   const wantsDonation = h("input", { type: "checkbox", id: "item-donation-on", checked: !!(existing && existing.donation !== null) });
-  const amount = h("input", { type: "text", id: "item-donation", inputmode: "decimal", placeholder: "5", value: existing && existing.donation !== null ? fmtAmount(existing.donation) : "" });
-  const amountField = h("label", { class: "field" }, h("span", null, "Suggested amount"), amount);
+  const amount = h("input", { type: "text", id: "item-donation", inputmode: "decimal", placeholder: "5", value: existing && existing.donation !== null ? fmtAmountPlain(existing.donation) : "" });
+  const amountField = h("label", { class: "field" }, h("span", null, "Suggested amount (EUR)"), h("span", { class: "money-input" }, h("span", { class: "money-sign", "aria-hidden": "true" }, "€"), amount));
   const sync = () => amountField.classList.toggle("hidden", !wantsDonation.checked);
   wantsDonation.addEventListener("change", sync);
   sync();
@@ -80,12 +80,13 @@ export async function renderItemForm(id) {
   );
   form.addEventListener("submit", (event) => {
     event.preventDefault();
+    const samePlace = stayedPut();
     busy(save, async () => {
       try {
         let donation = null;
         if (wantsDonation.checked) {
           donation = Number(amount.value.replace(",", "."));
-          if (!amount.value.trim() || !Number.isFinite(donation)) throw new Error("Enter the suggested donation as a number.");
+          if (!amount.value.trim() || !Number.isFinite(donation)) throw new Error("Enter the suggested amount in euros as a number.");
         }
         const body = { name: name.value, note: note.value, donation, groupIds: [...chosen] };
         let itemId = id;
@@ -93,7 +94,7 @@ export async function renderItemForm(id) {
         else itemId = (await api("POST", "/api/items", body)).item.id;
         if (blob) await api("PUT", `/api/items/${itemId}/photo`, undefined, blob);
         toast(existing ? "Saved" : "Item added");
-        go(`#/item/${itemId}`);
+        if (samePlace()) go(`#/item/${itemId}`);
       } catch (e) {
         error.textContent = e.message;
       }
@@ -104,7 +105,7 @@ export async function renderItemForm(id) {
     const del = h("button", { class: "danger block", type: "button", style: "margin-top:20px", onclick: () => deleteItem(existing, del) }, "Delete item");
     parts.push(del);
     if (existing.hasPhoto) {
-      const drop = h("button", { class: "block", type: "button", style: "margin-top:10px", onclick: () => busy(drop, async () => { await api("DELETE", `/api/items/${id}/photo`); toast("Photo removed"); go(`#/mine/edit/${id}`); }) }, "Remove photo");
+      const drop = h("button", { class: "block", type: "button", style: "margin-top:10px", onclick: () => busy(drop, async () => { await api("DELETE", `/api/items/${id}/photo`); toast("Photo removed"); redraw(`#/mine/edit/${id}`); }) }, "Remove photo");
       parts.push(drop);
     }
   }
@@ -113,9 +114,10 @@ export async function renderItemForm(id) {
 
 async function deleteItem(item, button) {
   if (!confirm(`Delete ${item.name}? Open requests for it will be closed.`)) return;
+  const samePlace = stayedPut();
   await busy(button, async () => {
     await api("DELETE", `/api/items/${item.id}`);
     toast("Item deleted");
-    go("#/mine");
+    if (samePlace()) go("#/mine");
   });
 }
