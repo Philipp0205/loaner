@@ -1,11 +1,11 @@
-const CACHE = "loaner-v4";
+const CACHE = "loaner-v5";
 const SHELL = [
   "/",
   "/css/tokens.css", "/css/base.css", "/css/layout.css", "/css/items.css", "/css/forms.css", "/css/requests.css", "/css/feedback.css", "/css/sheet.css",
   "/fonts/inter-latin-var.woff2",
   "/app.js", "/util.js", "/api.js", "/state.js", "/photo.js", "/icons.js",
   "/gate.js", "/groups.js", "/browse.js", "/requests.js", "/mine.js", "/alerts.js", "/you.js",
-  "/whats-new.js", "/changelog.js", "/whats-new-ui.js",
+  "/whats-new.js", "/changelog.js", "/whats-new-ui.js", "/sheet.js", "/feedback-ui.js",
   "/manifest.webmanifest", "/icons/icon-192.png", "/icons/icon-512.png",
 ];
 
