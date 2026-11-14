@@ -106,9 +106,9 @@ test("the shipped changelog is newest first, well formed, and free of em dashes"
   assert.equal(CHANGELOG[0].date, "2026-11-14");
 });
 
-test("the service worker caches the What's new and feedback files and uses the v6 cache", () => {
+test("the service worker caches the What's new and feedback files and uses the v7 cache", () => {
   const sw = fs.readFileSync(new URL("../public/sw.js", import.meta.url), "utf8");
-  assert.equal(/const CACHE = "([^"]+)"/.exec(sw)?.[1], "loaner-v6");
+  assert.equal(/const CACHE = "([^"]+)"/.exec(sw)?.[1], "loaner-v7");
   const paths = [...(/const SHELL = \[([^\]]*)\]/.exec(sw)?.[1] ?? "").matchAll(/"([^"]+)"/g)].map((m) => m[1]);
   for (const file of ["/whats-new.js", "/changelog.js", "/whats-new-ui.js", "/sheet.js", "/feedback-ui.js", "/css/sheet.css"]) assert.ok(paths.includes(file), file);
   const html = fs.readFileSync(new URL("../public/index.html", import.meta.url), "utf8");

@@ -11,11 +11,16 @@ type Labels = {
   categoryFor: (name: string) => string;
   pickBest: (results: unknown, min?: number) => Guess;
 };
-type Suggest = { suggestFromPhoto: (blob: unknown, load?: () => Promise<(blob: unknown) => Promise<Result[]>>) => Promise<Guess> };
+type Suggest = {
+  suggestFromPhoto: (blob: unknown, load?: () => Promise<(blob: unknown) => Promise<Result[]>>, onProgress?: (text: string | null) => void) => Promise<Guess>;
+  raceTimeout: (work: Promise<Guess>, ms: number) => Promise<{ done: boolean; guess?: Guess }>;
+  progressText: (sizes: Map<string, { loaded: number; total: number }>) => string;
+  SUGGEST_TIMEOUT_MS: number;
+};
 
 // Both files are plain JS with no DOM use at import time, so node can load them directly.
 const { LABELS, PROMPT_LABELS, MIN_SCORE, categoryFor, pickBest } = (await import(new URL("../public/suggest-labels.js", import.meta.url).href)) as Labels;
-const { suggestFromPhoto } = (await import(new URL("../public/suggest-photo.js", import.meta.url).href)) as Suggest;
+const { suggestFromPhoto, raceTimeout, progressText, SUGGEST_TIMEOUT_MS } = (await import(new URL("../public/suggest-photo.js", import.meta.url).href)) as Suggest;
 const stubbed = globalThis as { __loanerSuggestFromPhoto?: unknown };
 
 test("the label list is 40 to 80 loanable things, each mapped to a real category", () => {
@@ -82,4 +87,48 @@ test("suggestFromPhoto turns model output into a suggestion, or null when unsure
   const sure = await suggestFromPhoto({}, async () => async () => [{ label: "tent", score: 0.8 }, { label: "kayak", score: 0.1 }]);
   assert.deepEqual(sure, { name: "Tent", category: "Camping", score: 0.8 });
   assert.equal(await suggestFromPhoto({}, async () => async () => [{ label: "tent", score: 0.05 }]), null);
+});
+
+test("the first try gives up after about 15 seconds", () => {
+  assert.ok(SUGGEST_TIMEOUT_MS >= 14000 && SUGGEST_TIMEOUT_MS <= 16000, String(SUGGEST_TIMEOUT_MS));
+});
+
+test("raceTimeout cuts off a suggester that never resolves", async () => {
+  const started = Date.now();
+  const got = await raceTimeout(new Promise<Guess>(() => {}), 60);
+  assert.deepEqual(got, { done: false });
+  assert.ok(Date.now() - started < 1000);
+});
+
+test("raceTimeout passes an answer through, and treats a rejection as no answer", async () => {
+  assert.deepEqual(await raceTimeout(Promise.resolve({ name: "Tent", category: "Camping" }), 1000), { done: true, guess: { name: "Tent", category: "Camping" } });
+  assert.deepEqual(await raceTimeout(Promise.resolve(null), 1000), { done: true, guess: null });
+  assert.deepEqual(await raceTimeout(Promise.reject(new Error("boom")), 1000), { done: true, guess: null });
+});
+
+test("a slow load still settles later, so a late answer can reach an open form", async () => {
+  let release: (c: (blob: unknown) => Promise<Result[]>) => void = () => {};
+  const work = suggestFromPhoto({}, () => new Promise((resolve) => { release = resolve; }));
+  assert.deepEqual(await raceTimeout(work, 30), { done: false });
+  release(async () => [{ label: "tent", score: 0.9 }]);
+  assert.equal((await work)?.name, "Tent");
+});
+
+test("progressText says what is downloading, with sizes once they are known", () => {
+  assert.equal(progressText(new Map()), "Downloading the on-device model...");
+  const sizes = new Map([["model.onnx", { loaded: 12 * 1048576, total: 147 * 1048576 }]]);
+  assert.equal(progressText(sizes), "Downloading the on-device model... 12 of 147 MB");
+});
+
+test("suggestFromPhoto hands the progress callback to the stub, and a failed load is null", async () => {
+  let got: unknown;
+  stubbed.__loanerSuggestFromPhoto = async (_blob: unknown, report: unknown) => { got = report; return null; };
+  const progress = () => {};
+  try {
+    await suggestFromPhoto({}, undefined, progress);
+    assert.equal(got, progress);
+  } finally {
+    delete stubbed.__loanerSuggestFromPhoto;
+  }
+  assert.equal(await suggestFromPhoto({}, async () => { throw new Error("blocked"); }, progress), null);
 });

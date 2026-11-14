@@ -1,7 +1,7 @@
 import { downscale } from "./photo.js";
-import { clearDraft, setDraft } from "./draft.js";
+import { NO_NAME, STILL_LOOKING, clearDraft, lateGuess, setDraft } from "./draft.js";
 import { go, stayedPut } from "./state.js";
-import { suggestFromPhoto } from "./suggest-photo.js";
+import { SUGGEST_TIMEOUT_MS, raceTimeout, suggestFromPhoto } from "./suggest-photo.js";
 import { h } from "./util.js";
 
 const FORM = "#/mine/new/form";
@@ -32,7 +32,7 @@ export function renderCamera() {
   const shutter = h("button", { id: "camera-shutter", class: "cam-shutter", type: "button", "aria-label": "Take photo" });
   const pick = h("input", { id: "camera-gallery", type: "file", accept: "image/*", class: "sr-only" });
   const gallery = h("label", { class: "cam-btn" }, "From gallery", pick);
-  const type = h("button", { id: "camera-type", class: "cam-btn", type: "button", onclick: () => { stopCamera(); go(FORM); } }, "Type it in");
+  const type = h("button", { id: "camera-type", class: "cam-btn", type: "button", onclick: () => typeItIn() }, "Type it in");
   const close = h("button", { id: "camera-close", class: "cam-close", type: "button", "aria-label": "Close", onclick: () => { stopCamera(); go("#/mine"); } }, "\u00d7");
 
   const lock = (on) => {
@@ -41,19 +41,58 @@ export function renderCamera() {
     gallery.classList.toggle("disabled", on);
   };
 
-  /** Shrinks the photo, asks the on-device model for a name, then opens the form with whatever came back. */
+  let chosen = null; // the photo being prepared, as a promise of the shrunk blob
+  let work = null; // the suggestion for it. It never rejects and may finish after the form is open.
+  let opened = false;
+
+  const begin = (blob) => (work ||= suggestFromPhoto(blob, undefined, (text) => { if (text && !opened) status.textContent = text; }));
+
+  /** Opens the form with the photo. `guess` is the answer if there is one yet; otherwise the form fills in later if the model finishes. */
+  function openForm(blob, finished, guess) {
+    opened = true;
+    const draft = setDraft({
+      blob,
+      name: guess ? guess.name : "",
+      category: guess ? guess.category : "",
+      hint: finished ? (guess ? "" : NO_NAME) : STILL_LOOKING,
+    });
+    if (!finished) begin(blob).then((late) => lateGuess(draft, late));
+    stopCamera();
+    go(FORM);
+  }
+
+  /** Type it in is never disabled. With a photo already chosen it opens the form with that photo. */
+  async function typeItIn() {
+    if (opened) return;
+    if (!chosen) {
+      opened = true;
+      stopCamera();
+      go(FORM);
+      return;
+    }
+    try {
+      const blob = await chosen;
+      if (!opened) openForm(blob, false);
+    } catch {
+      /* useBlob is already showing why the photo could not be used */
+    }
+  }
+
+  /** Shrinks the photo, asks the on-device model for a name for up to 15 seconds, then opens the form with whatever came back. */
   async function useBlob(source) {
     const samePlace = stayedPut();
     lock(true);
+    opened = false;
+    work = null;
     status.textContent = "Looking at the photo...";
     try {
-      const blob = await downscale(source);
-      const guess = await suggestFromPhoto(blob);
-      if (!samePlace()) return;
-      setDraft({ blob, name: guess ? guess.name : "", category: guess ? guess.category : "" });
-      stopCamera();
-      go(FORM);
+      chosen = downscale(source);
+      const blob = await chosen;
+      const result = await raceTimeout(begin(blob), Number(globalThis.__loanerSuggestTimeoutMs) || SUGGEST_TIMEOUT_MS);
+      if (opened || !samePlace()) return;
+      openForm(blob, result.done, result.done ? result.guess : null);
     } catch (e) {
+      chosen = null;
       status.textContent = e.message || "Could not use that photo.";
       lock(false);
     }

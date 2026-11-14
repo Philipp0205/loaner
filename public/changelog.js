@@ -7,6 +7,16 @@ import { normalizeEntries } from "./whats-new.js";
  */
 const RAW = [
   {
+    id: "2026-11-14-photo-never-stuck",
+    date: "2026-11-14",
+    title: "Photos no longer get stuck",
+    bullets: [
+      "If Loaner cannot name your photo within about 15 seconds, the form opens anyway.",
+      "Your photo stays attached. Type the name, or let it fill in if it finishes.",
+      "Type it in now works while Loaner is looking at the photo.",
+    ],
+  },
+  {
     id: "2026-11-14-camera-add",
     date: "2026-11-14",
     title: "Add an item with the camera",

@@ -46,6 +46,19 @@ export async function renderItemForm(id) {
     h("option", { value: "" }, "Choose a category"),
     CATEGORIES.map((c) => h("option", { value: c }, c)));
   category.value = existing ? existing.category || "" : draft.category;
+  // A late suggestion may fill these, but never over something the person has started typing or chosen.
+  const hint = h("p", { class: "hint hidden", id: "suggest-note", role: "status" });
+  const showHint = (text) => { hint.textContent = text; hint.classList.toggle("hidden", !text); };
+  if (draft) {
+    showHint(draft.hint);
+    name.addEventListener("input", () => { draft.touched = true; draft.name = name.value; draft.hint = ""; showHint(""); });
+    category.addEventListener("change", () => { draft.category = category.value; });
+    draft.onchange = () => {
+      name.value = draft.name;
+      category.value = draft.category;
+      showHint(draft.hint);
+    };
+  }
   const note = h("textarea", { id: "item-note", maxlength: "280", placeholder: "Battery lasts about 30 min" });
   note.value = existing ? existing.note : "";
   let blob = draft ? draft.blob : null;
@@ -77,6 +90,7 @@ export async function renderItemForm(id) {
   const form = h("form", { class: "stack item-form" },
     h("h1", null, existing ? "Edit item" : "Add an item"),
     h("label", { class: "field" }, h("span", null, "Name"), name),
+    hint,
     h("label", { class: "field" }, h("span", null, "Category"), category),
     h("label", { class: "field" }, h("span", null, "Short note"), note),
     h("div", { class: "field" }, h("span", null, "Photo"), preview, file),

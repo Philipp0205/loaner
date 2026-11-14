@@ -245,3 +245,84 @@ test("with no camera at all, the view shows the no-camera message and Type it in
   assert.equal(await page.locator("#item-name").inputValue(), "");
   await ctx.close();
 });
+
+type Hooks = { __loanerSuggestFromPhoto?: () => Promise<unknown>; __loanerSuggestTimeoutMs?: number; __release?: (guess: unknown) => void };
+
+/** A phone context whose suggester waits until the test calls window.__release(guess), with a short timeout. */
+async function slowSuggester(timeoutMs: number) {
+  const ctx = await loaner.phone();
+  await ctx.addInitScript((ms) => {
+    const w = window as unknown as Hooks;
+    w.__loanerSuggestTimeoutMs = ms;
+    w.__loanerSuggestFromPhoto = () => new Promise((resolve) => { w.__release = resolve; });
+  }, timeoutMs);
+  const page = await ctx.newPage();
+  await startOnMyItems(page);
+  await page.getByRole("button", { name: "Add an item" }).click();
+  await page.locator("#camera-add").waitFor();
+  return { ctx, page };
+}
+const pickDrill = (page: Page) => page.locator("#camera-gallery").setInputFiles({ name: "drill.png", mimeType: "image/png", buffer: solidPng(400, 300, [200, 90, 40]) });
+
+test("a suggester that never answers is cut off: the form opens with the photo and a quiet note", { timeout: 60_000 }, async () => {
+  const { ctx, page } = await slowSuggester(1500);
+  const started = Date.now();
+  await pickDrill(page);
+  await page.locator("#camera-status", { hasText: "Looking at the photo..." }).waitFor();
+  assert.equal(await page.locator("#camera-type").isEnabled(), true, "Type it in stays on while looking");
+  await page.locator("#item-name").waitFor({ timeout: 10_000 });
+  assert.ok(Date.now() - started >= 1400, "waited for the timeout");
+  assert.equal(await page.locator("#item-name").inputValue(), "");
+  assert.equal(await page.locator("#item-category").inputValue(), "");
+  assert.match(await page.locator("#suggest-note").innerText(), /still looking/i);
+  await page.locator("img.preview").waitFor();
+  await shot(page, "06-timeout-form.png");
+  await ctx.close();
+});
+
+test("Type it in while looking opens the form with the photo, and a late answer fills an untouched name", { timeout: 60_000 }, async () => {
+  const { ctx, page } = await slowSuggester(30_000);
+  await pickDrill(page);
+  await page.locator("#camera-status", { hasText: "Looking at the photo..." }).waitFor();
+  await page.locator("#camera-type").click();
+  await page.locator("#item-name").waitFor();
+  assert.equal(await page.locator("#item-name").inputValue(), "");
+  await page.locator("img.preview").waitFor();
+  await page.waitForFunction(() => !!(window as unknown as Hooks).__release);
+  await page.evaluate(() => (window as unknown as Hooks).__release!({ name: "Cordless drill", category: "Tools" }));
+  await page.waitForFunction(() => (document.querySelector("#item-name") as HTMLInputElement).value === "Cordless drill");
+  assert.equal(await page.locator("#item-category").inputValue(), "Tools");
+  assert.match(await page.locator("#suggest-note").innerText(), /suggested/i);
+  await ctx.close();
+});
+
+test("a late answer never overwrites a name the person has started typing", { timeout: 60_000 }, async () => {
+  const { ctx, page } = await slowSuggester(800);
+  await pickDrill(page);
+  await page.locator("#item-name").waitFor({ timeout: 10_000 });
+  await page.locator("#item-name").fill("Dad's drill");
+  await page.waitForFunction(() => !!(window as unknown as Hooks).__release);
+  await page.evaluate(() => (window as unknown as Hooks).__release!({ name: "Cordless drill", category: "Tools" }));
+  await page.waitForTimeout(300);
+  assert.equal(await page.locator("#item-name").inputValue(), "Dad's drill");
+  assert.equal(await page.locator("#item-category").inputValue(), "", "an untouched category is left alone too when the name was typed");
+  assert.equal(await page.locator("#suggest-note").isVisible(), false);
+  await ctx.close();
+});
+
+test("a suggester that fails falls back the same way, with the photo and an empty editable form", { timeout: 60_000 }, async () => {
+  const ctx = await loaner.phone();
+  await ctx.addInitScript(() => {
+    (window as unknown as Hooks).__loanerSuggestFromPhoto = () => Promise.reject(new Error("model failed to load"));
+  });
+  const page = await ctx.newPage();
+  await startOnMyItems(page);
+  await page.getByRole("button", { name: "Add an item" }).click();
+  await pickDrill(page);
+  await page.locator("#item-name").waitFor();
+  assert.equal(await page.locator("#item-name").inputValue(), "");
+  assert.equal(await page.locator("#item-category").inputValue(), "");
+  assert.match(await page.locator("#suggest-note").innerText(), /type one in/i);
+  await page.locator("img.preview").waitFor();
+  await ctx.close();
+});
