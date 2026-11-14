@@ -1,6 +1,6 @@
 import { api, setToken } from "./api.js";
 import { go, loadGroups, loadMe, saveRecovery, setGroup, state } from "./state.js";
-import { busy, h, toast } from "./util.js";
+import { busy, h, toast, wordmarkHeading } from "./util.js";
 import { markNewAccountSeen } from "./whats-new-ui.js";
 
 /** The signed-out screen, or the join screen when the URL is /join/<code>. */
@@ -20,7 +20,7 @@ function nameField() {
 }
 
 function intro() {
-  return h("div", { class: "intro" }, h("h1", null, h("span", { class: "brand" }, "Loan some")), h("p", { class: "tag" }, "Lend things to your friends. Borrow what you need. Invite-only groups, no passwords."));
+  return h("div", { class: "intro" }, wordmarkHeading(), h("p", { class: "tag" }, "Lend things to your friends. Borrow what you need. Invite-only groups, no passwords."));
 }
 
 function welcome() {

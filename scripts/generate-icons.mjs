@@ -1,94 +1,114 @@
-// Writes the app icons to public/icons using only node built-ins. Run: npm run icons
+// Writes the app icons to public/icons. Run: npm run icons
+// Rasterises mark.svg with Chromium (via playwright-core, already a devDependency)
+// so the PNGs match the SVG exactly. No extra runtime or dev dependencies.
 import fs from "node:fs";
 import path from "node:path";
-import zlib from "node:zlib";
 import { fileURLToPath } from "node:url";
+import { chromium } from "playwright-core";
 
-const OUT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "public", "icons");
-const BG = [196, 87, 45];
-const FG = [255, 248, 240];
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const OUT = path.join(ROOT, "public", "icons");
+const TEAL = "#00857A";
+const SIZES = [192, 512];
+const SCALE = 3; // supersample, then downscale in the browser for smooth edges
+const CORNER = 0.22; // rounded-square radius for "any" icons, as a fraction of size
 
-function crc32(buf) {
-  let c;
-  let crc = ~0;
-  for (let i = 0; i < buf.length; i += 1) {
-    c = (crc ^ buf[i]) & 0xff;
-    for (let k = 0; k < 8; k += 1) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
-    crc = (crc >>> 8) ^ c;
-  }
-  return ~crc >>> 0;
+function markParts(svg) {
+  const viewBox = /viewBox="([^"]+)"/.exec(svg)[1];
+  const width = /stroke-width="([^"]+)"/.exec(svg)[1];
+  const d = /<path[^>]*\bd="([^"]+)"/.exec(svg)[1];
+  const points = /<polygon[^>]*\bpoints="([^"]+)"/.exec(svg)[1];
+  if (!viewBox || !width || !d || !points) throw new Error("mark.svg is missing viewBox, arc path, stroke-width, or polygon");
+  return { viewBox, width, d, points };
 }
 
-function chunk(type, data) {
-  const head = Buffer.alloc(8);
-  head.writeUInt32BE(data.length, 0);
-  head.write(type, 4, "latin1");
-  const crc = Buffer.alloc(4);
-  crc.writeUInt32BE(crc32(Buffer.concat([head.subarray(4), data])), 0);
-  return Buffer.concat([head, data, crc]);
+function iconSvg(size, maskable, parts) {
+  const corner = maskable ? "" : ` rx="${size * CORNER}" ry="${size * CORNER}"`;
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
+  <rect width="${size}" height="${size}"${corner} fill="${TEAL}"/>
+  <svg x="0" y="0" width="${size}" height="${size}" viewBox="${parts.viewBox}">
+    <path d="${parts.d}" fill="none" stroke="#FFFFFF" stroke-width="${parts.width}" stroke-linecap="round"/>
+    <polygon points="${parts.points}" fill="#FFFFFF"/>
+  </svg>
+</svg>`;
 }
 
-function png(size, pixel) {
-  const raw = Buffer.alloc((size * 4 + 1) * size);
-  for (let y = 0; y < size; y += 1) {
-    const row = y * (size * 4 + 1);
-    raw[row] = 0;
-    for (let x = 0; x < size; x += 1) {
-      const [r, g, b, a] = pixel(x, y, size);
-      raw.set([r, g, b, a], row + 1 + x * 4);
-    }
-  }
-  const ihdr = Buffer.alloc(13);
-  ihdr.writeUInt32BE(size, 0);
-  ihdr.writeUInt32BE(size, 4);
-  ihdr.set([8, 6, 0, 0, 0], 8);
-  return Buffer.concat([
-    Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
-    chunk("IHDR", ihdr),
-    chunk("IDAT", zlib.deflateSync(raw, { level: 9 })),
-    chunk("IEND", Buffer.alloc(0)),
-  ]);
-}
-
-const inRect = (u, v, x0, y0, x1, y1) => u >= x0 && u <= x1 && v >= y0 && v <= y1;
-const inCircle = (u, v, cx, cy, r) => (u - cx) ** 2 + (v - cy) ** 2 <= r * r;
-
-/** A letter L with a small dot, the lent thing. u and v run 0 to 1. */
-function glyph(u, v) {
-  return inRect(u, v, 0.32, 0.22, 0.45, 0.76) || inRect(u, v, 0.32, 0.63, 0.7, 0.76) || inCircle(u, v, 0.62, 0.34, 0.075);
-}
-
-function roundedSquare(u, v, radius) {
-  const dx = Math.max(radius - u, 0, u - (1 - radius));
-  const dy = Math.max(radius - v, 0, v - (1 - radius));
-  return dx * dx + dy * dy <= radius * radius;
-}
-
-function render(maskable) {
-  return (x, y, size) => {
-    const samples = 3;
-    let cover = 0;
-    let fg = 0;
-    for (let sy = 0; sy < samples; sy += 1) {
-      for (let sx = 0; sx < samples; sx += 1) {
-        const u = (x + (sx + 0.5) / samples) / size;
-        const v = (y + (sy + 0.5) / samples) / size;
-        if (maskable || roundedSquare(u, v, 0.22)) {
-          cover += 1;
-          if (glyph(u, v)) fg += 1;
-        }
+function pageHtml(size, svg) {
+  const big = size * SCALE;
+  const data = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+  return `<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    html, body { margin: 0; padding: 0; background: transparent; overflow: hidden; }
+    canvas { display: block; }
+  </style>
+</head>
+<body>
+  <canvas id="out" width="${size}" height="${size}"></canvas>
+  <script>
+    const done = (ok, err) => { window.__icon = ok ? "ok" : String(err || "fail"); };
+    const img = new Image();
+    img.onload = () => {
+      try {
+        const big = document.createElement("canvas");
+        big.width = ${big};
+        big.height = ${big};
+        const bctx = big.getContext("2d");
+        bctx.drawImage(img, 0, 0, ${big}, ${big});
+        const out = document.getElementById("out");
+        const ctx = out.getContext("2d");
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = "high";
+        ctx.drawImage(big, 0, 0, ${size}, ${size});
+        done(true);
+      } catch (error) {
+        done(false, error);
       }
-    }
-    if (cover === 0) return [0, 0, 0, 0];
-    const mix = fg / cover;
-    const channel = (i) => Math.round(BG[i] * (1 - mix) + FG[i] * mix);
-    return [channel(0), channel(1), channel(2), Math.round((255 * cover) / (samples * samples))];
-  };
+    };
+    img.onerror = () => done(false, "image error");
+    img.src = ${JSON.stringify(data)};
+  </script>
+</body>
+</html>`;
 }
 
-fs.mkdirSync(OUT, { recursive: true });
-for (const size of [192, 512]) {
-  fs.writeFileSync(path.join(OUT, `icon-${size}.png`), png(size, render(false)));
-  fs.writeFileSync(path.join(OUT, `icon-maskable-${size}.png`), png(size, render(true)));
+async function launchBrowser() {
+  const args = ["--hide-scrollbars"];
+  try {
+    return await chromium.launch({ channel: "chrome", headless: true, args });
+  } catch {
+    return await chromium.launch({ executablePath: "/usr/bin/google-chrome", headless: true, args });
+  }
+}
+
+const parts = markParts(fs.readFileSync(path.join(OUT, "mark.svg"), "utf8"));
+const browser = await launchBrowser();
+try {
+  fs.mkdirSync(OUT, { recursive: true });
+  for (const size of SIZES) {
+    for (const maskable of [false, true]) {
+      const name = maskable ? `icon-maskable-${size}.png` : `icon-${size}.png`;
+      const page = await browser.newPage({
+        deviceScaleFactor: 1,
+        viewport: { width: size, height: size },
+      });
+      await page.setContent(pageHtml(size, iconSvg(size, maskable, parts)), { waitUntil: "load" });
+      await page.waitForFunction(() => window.__icon === "ok");
+      const filled = await page.evaluate(() => {
+        const c = document.getElementById("out");
+        const { data } = c.getContext("2d").getImageData(Math.floor(c.width / 2), Math.floor(c.height / 2), 1, 1);
+        return data[3] > 0;
+      });
+      if (!filled) throw new Error(`${name}: canvas center is transparent after draw`);
+      const buf = await page.locator("#out").screenshot({ type: "png", omitBackground: true });
+      fs.writeFileSync(path.join(OUT, name), buf);
+      await page.close();
+    }
+  }
+} finally {
+  await browser.close();
 }
 console.log("wrote icons to", OUT);

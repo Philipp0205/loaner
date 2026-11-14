@@ -12,6 +12,12 @@ export function h(tag, attrs, ...children) {
   return el;
 }
 
+/** The "Loan some" wordmark as a heading. The heading carries the name, the image is decoration. */
+export function wordmarkHeading() {
+  return h("h1", { class: "wordmark-heading", "aria-label": "Loan some" },
+    h("img", { class: "wordmark", src: "/logo.svg", alt: "", draggable: "false" }));
+}
+
 function add(el, children) {
   for (const child of children) {
     if (Array.isArray(child)) add(el, child);
