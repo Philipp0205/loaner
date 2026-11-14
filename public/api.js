@@ -23,7 +23,7 @@ export async function api(method, path, body, raw) {
   try {
     res = await fetch(path, { method, headers, body: payload });
   } catch {
-    throw new Error("Cannot reach Loaner. Check your connection.");
+    throw new Error("Cannot reach Loan some. Check your connection.");
   }
   const type = res.headers.get("content-type") || "";
   const data = type.includes("json") ? await res.json() : null;

@@ -20,7 +20,7 @@ function nameField() {
 }
 
 function intro() {
-  return h("div", { class: "intro" }, h("h1", null, h("span", { class: "brand" }, "Loaner")), h("p", { class: "tag" }, "Lend things to your friends. Borrow what you need. Invite-only groups, no passwords."));
+  return h("div", { class: "intro" }, h("h1", null, h("span", { class: "brand" }, "Loan some")), h("p", { class: "tag" }, "Lend things to your friends. Borrow what you need. Invite-only groups, no passwords."));
 }
 
 function welcome() {
@@ -88,7 +88,7 @@ async function joinScreen(code) {
   try {
     group = (await api("GET", `/api/invites/${code}`)).group;
   } catch (e) {
-    return h("main", { class: "page gate" }, intro(), h("div", { class: "card" }, h("h2", null, "This invite link does not work"), h("p", { class: "muted" }, "Ask your friend for a new one."), h("a", { class: "btn", href: "/" }, "Open Loaner")));
+    return h("main", { class: "page gate" }, intro(), h("div", { class: "card" }, h("h2", null, "This invite link does not work"), h("p", { class: "muted" }, "Ask your friend for a new one."), h("a", { class: "btn", href: "/" }, "Open Loan some")));
   }
   const signedIn = !!localStorage.getItem("loaner_token");
   const error = h("p", { class: "error-text", role: "alert" });
