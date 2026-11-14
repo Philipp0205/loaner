@@ -37,16 +37,18 @@ const MIME: Record<string, string> = {
 };
 
 // The on-device photo suggester loads a pinned Transformers.js build from jsDelivr and its CLIP weights
-// from Hugging Face, so those two hosts are allowed for scripts and fetches. Nothing else is.
+// from Hugging Face, so those hosts are allowed for scripts and fetches. Nothing else is.
+// Hugging Face answers a weight download with a 302 to its CDN (for example us.aws.cdn.hf.co), and the
+// CDN host has several labels, so it is listed explicitly instead of relying on a single *.hf.co match.
 const CDN = "https://cdn.jsdelivr.net";
-const HF = "https://huggingface.co https://*.huggingface.co https://*.hf.co";
+const HF = "https://huggingface.co https://*.huggingface.co https://*.hf.co https://*.cdn.hf.co https://*.xethub.hf.co";
 
 const SECURITY_HEADERS = {
   "x-content-type-options": "nosniff",
   "referrer-policy": "no-referrer",
   "x-frame-options": "DENY",
   "content-security-policy":
-    `default-src 'self'; img-src 'self' blob: data:; media-src 'self' blob:; style-src 'self'; style-src-attr 'unsafe-inline'; script-src 'self' 'wasm-unsafe-eval' ${CDN}; connect-src 'self' ${CDN} ${HF}; object-src 'none'; base-uri 'none'; frame-ancestors 'none'`,
+    `default-src 'self'; img-src 'self' blob: data:; media-src 'self' blob:; style-src 'self'; style-src-attr 'unsafe-inline'; script-src 'self' 'wasm-unsafe-eval' ${CDN}; worker-src 'self' blob:; connect-src 'self' ${CDN} ${HF}; object-src 'none'; base-uri 'none'; frame-ancestors 'none'`,
 };
 
 type Compiled = { route: Route; pattern: RegExp; keys: string[] };
