@@ -91,6 +91,19 @@ export function groupRoutes(): Route[] {
       },
     },
     {
+      // Any member can rename: group membership is the trust, and created_by is not used for access.
+      method: "PATCH",
+      path: "/api/groups/:id",
+      handler(req) {
+        const user = me(req);
+        requireMember(req.ctx, user.id, req.params.id);
+        const name = text(jsonBody(req).name, "name", 1, 40);
+        run(req.ctx.db, "UPDATE groups SET name = ? WHERE id = ?", name, req.params.id);
+        const group = get<GroupRow>(req.ctx.db, "SELECT id, name, invite_code FROM groups WHERE id = ?", req.params.id)!;
+        return { group: groupView(req.ctx, group) };
+      },
+    },
+    {
       // Leaving removes the person's items from this group. Their open requests there stay as they are.
       method: "POST",
       path: "/api/groups/:id/leave",

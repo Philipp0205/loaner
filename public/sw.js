@@ -1,4 +1,4 @@
-const CACHE = "loaner-v9";
+const CACHE = "loaner-v10";
 const SHELL = [
   "/",
   "/css/tokens.css", "/css/base.css", "/css/layout.css", "/css/items.css", "/css/forms.css", "/css/requests.css", "/css/feedback.css", "/css/sheet.css", "/css/camera.css",
