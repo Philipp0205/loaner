@@ -25,11 +25,11 @@ Optional environment: `PORT` (3000), `DB_PATH` (`data/loaner.db`), `APP_TZ` (`UT
 
 ## Deploy on Railway
 
-The start command is `node --import tsx src/server.ts` (also what `npm start` runs). It is set in `railway.json` so Railway runs node directly and not through npm. With npm in the middle, a SIGTERM on redeploy made npm report a failed command and Railway showed a crash. Now the server handles SIGTERM and SIGINT itself: it stops accepting connections, stops the reminder timer, closes the database, logs one line and exits 0 (with a forced exit after 8 seconds if a connection hangs). `restartPolicyType` stays `ON_FAILURE`, so a clean exit is not restarted. `tsx` is a regular dependency because the start command needs it at runtime.
+The start command is `node --import tsx --import ./src/quiet-warnings.ts src/server.ts` (also what `npm start` runs). It is set in `railway.json` so Railway runs node directly and not through npm. With npm in the middle, a SIGTERM on redeploy made npm report a failed command and Railway showed a crash. Now the server handles SIGTERM and SIGINT itself: it stops accepting connections, stops the reminder timer, closes the database, logs one line and exits 0 (with a forced exit after 8 seconds if a connection hangs). `restartPolicyType` stays `ON_FAILURE`, so a clean exit is not restarted. `tsx` is a regular dependency because the start command needs it at runtime.
 
-Railway stops reading `railway.json` and `railway.toml` on 1 Dec 2026. Before then, set the service start command in the Railway dashboard to the same value, `node --import tsx src/server.ts`.
+Railway stops reading `railway.json` and `railway.toml` on 1 Dec 2026. Before then, set the service start command in the Railway dashboard to the same value, `node --import tsx --import ./src/quiet-warnings.ts src/server.ts`.
 
-The `node:sqlite` ExperimentalWarning is filtered out in `src/quiet-warnings.ts`. Other warnings are still printed.
+The `node:sqlite` ExperimentalWarning is filtered out by `src/quiet-warnings.ts`, which the start command preloads with `--import`. It has to be a preload because ESM links `node:sqlite` while the module graph is instantiated, before any app module runs, so an import inside `src/server.ts` would install the filter too late. Only that one warning is dropped; other warnings are still printed.
 
 ## Feedback
 

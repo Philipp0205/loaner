@@ -1,6 +1,8 @@
-// Import this first in the entry point. ES modules evaluate imports in order, so this runs
-// before node:sqlite is loaded. It drops only the node:sqlite ExperimentalWarning, which
-// Railway shows at error level. Every other warning still goes through.
+// Load this with `node --import tsx --import ./src/quiet-warnings.ts src/server.ts`, not as an
+// import inside the app. ESM links builtins like node:sqlite while the module graph is being
+// instantiated, before any module body runs, so only a preload installs the filter in time.
+// It drops only the node:sqlite ExperimentalWarning, which Railway shows at error level.
+// Every other warning still goes through.
 const emitWarning = process.emitWarning.bind(process);
 
 function isSqliteExperimental(warning: unknown, args: unknown[]): boolean {
