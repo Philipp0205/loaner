@@ -7,6 +7,16 @@ import { normalizeEntries } from "./whats-new.js";
  */
 const RAW = [
   {
+    id: "2026-11-14-camera-add",
+    date: "2026-11-14",
+    title: "Add an item with the camera",
+    bullets: [
+      "Add an item now opens the camera. Snap a photo, or pick one from your gallery.",
+      "Loaner suggests a name and category on your phone. You can change both.",
+      "Prefer typing? Tap Type it in. Items now have a category too.",
+    ],
+  },
+  {
     id: "2026-11-14-send-feedback",
     date: "2026-11-14",
     title: "Send feedback",

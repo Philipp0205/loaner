@@ -120,7 +120,14 @@ export function openDb(file: string): DatabaseSync {
   db.exec("PRAGMA foreign_keys = ON");
   if (file !== ":memory:") db.exec("PRAGMA journal_mode = WAL");
   db.exec(SCHEMA);
+  migrate(db);
   return db;
+}
+
+/** CREATE TABLE IF NOT EXISTS never alters a table that already exists, so add newer columns here. */
+function migrate(db: DatabaseSync): void {
+  const columns = db.prepare("PRAGMA table_info(items)").all() as unknown as { name: string }[];
+  if (!columns.some((column) => column.name === "category")) db.exec("ALTER TABLE items ADD COLUMN category TEXT");
 }
 
 /** Runs fn in one transaction. Rolls back and rethrows on error. Not reentrant. */

@@ -35,6 +35,14 @@ To read it, set `FEEDBACK_ADMIN_TOKEN` to a long random string of at least 32 ch
 
 Both admin routes answer 404 when `FEEDBACK_ADMIN_TOKEN` is unset. When it is set, a missing or wrong token also gets 404, so the endpoint does not show that it exists. A signed-in person's device token is not an admin token. There is no admin screen in the app.
 
+## Add an item with the camera
+
+On My items, Add an item opens a full-screen camera. Take a photo, pick one from the gallery, or tap Type it in to skip the photo. After a photo, the form opens with a suggested name and category already filled in. Both are always editable, and if the suggestion is unsure or fails the photo is kept and the name is left for you to type.
+
+Suggestions run on the device with CLIP (`Xenova/clip-vit-base-patch32`, MIT) through a pinned build of Transformers.js. There is no cloud vision API, no extra key, and the photo is not sent anywhere for this. The first time someone uses a photo, the browser downloads the library from jsDelivr and the model files from Hugging Face, then keeps them in its cache. That download is not small, so it can take a while on a slow connection. No model files are committed here, the service worker does not precache them, and the tests never download them (they stub the suggester). The Content-Security-Policy allows scripts and fetches from those two hosts for this reason.
+
+Categories are a fixed list (Tools, Kitchen, Camping, Sports, Garden, Electronics, Kids, Household, Other), kept in both `src/categories.ts` and `public/categories.js`.
+
 ## Check it
 
 ```

@@ -3,7 +3,7 @@ import { newId } from "./code.js";
 import { all, get, run, tx } from "./db.js";
 import { addNote, flush, type PendingPush } from "./notify.js";
 import { HttpError, Reply, jsonBody, me, type Ctx, type Route } from "./types.js";
-import { centsToAmount, donationCents, longText, stringArray, text } from "./validate.js";
+import { centsToAmount, categoryValue, donationCents, longText, stringArray, text } from "./validate.js";
 import { isoDate } from "./time.js";
 
 export const MAX_PHOTO_BYTES = 2 * 1024 * 1024;
@@ -41,6 +41,7 @@ export function itemView(ctx: Ctx, item: ItemRow, viewerId: string) {
     id: item.id,
     name: item.name,
     note: item.note,
+    category: item.category,
     owner: { id: item.owner_id, name: item.owner_name },
     mine: item.owner_id === viewerId,
     available: !!item.available,
@@ -101,14 +102,15 @@ export function itemRoutes(): Route[] {
         const name = text(body.name, "name", 1, 60);
         const note = longText(body.note, "note", 280);
         const cents = donationCents(body.donation);
+        const category = "category" in body ? categoryValue(body.category) : null;
         const groupIds = ownerGroups(req.ctx, user.id, body.groupIds);
         const id = newId();
         const now = req.ctx.now();
         tx(req.ctx.db, () => {
           run(
             req.ctx.db,
-            "INSERT INTO items (id, owner_id, name, note, available, donation_cents, created_at, updated_at) VALUES (?, ?, ?, ?, 1, ?, ?, ?)",
-            id, user.id, name, note, cents, now, now,
+            "INSERT INTO items (id, owner_id, name, note, category, available, donation_cents, created_at, updated_at) VALUES (?, ?, ?, ?, ?, 1, ?, ?, ?)",
+            id, user.id, name, note, category, cents, now, now,
           );
           setGroups(req.ctx, id, groupIds);
         });
@@ -166,6 +168,7 @@ export function itemRoutes(): Route[] {
         const name = "name" in body ? text(body.name, "name", 1, 60) : item.name;
         const note = "note" in body ? longText(body.note, "note", 280) : item.note;
         const cents = "donation" in body ? donationCents(body.donation) : item.donation_cents;
+        const category = "category" in body ? categoryValue(body.category) : item.category;
         let available = item.available;
         if ("available" in body) {
           if (typeof body.available !== "boolean") throw new HttpError(400, "available must be true or false");
@@ -173,7 +176,7 @@ export function itemRoutes(): Route[] {
         }
         const groupIds = "groupIds" in body ? ownerGroups(req.ctx, user.id, body.groupIds) : null;
         tx(req.ctx.db, () => {
-          run(req.ctx.db, "UPDATE items SET name = ?, note = ?, donation_cents = ?, available = ?, updated_at = ? WHERE id = ?", name, note, cents, available, req.ctx.now(), item.id);
+          run(req.ctx.db, "UPDATE items SET name = ?, note = ?, category = ?, donation_cents = ?, available = ?, updated_at = ? WHERE id = ?", name, note, category, cents, available, req.ctx.now(), item.id);
           if (groupIds) setGroups(req.ctx, item.id, groupIds);
         });
         return { item: itemView(req.ctx, requireVisibleItem(req.ctx, user.id, item.id), user.id) };

@@ -1,4 +1,6 @@
 import { api } from "./api.js";
+import { CATEGORIES } from "./categories.js";
+import { clearDraft, getDraft } from "./draft.js";
 import { downscale, photoEl } from "./photo.js";
 import { go, redraw, state, stayedPut } from "./state.js";
 import { busy, emptyState, fmtAmountPlain, h, statusPill, toast } from "./util.js";
@@ -25,7 +27,7 @@ function mineCard(item, rerender) {
   return h("article", { class: "card", "data-item": item.id },
     h("div", { class: "req-head" },
       h("div", { class: "thumb" }, photoEl(item)),
-      h("div", { class: "grow" }, h("h3", null, item.name), h("p", { class: "req-meta" }, `Shared with ${groupNames}`), statusPill(item)),
+      h("div", { class: "grow" }, h("h3", null, item.name), h("p", { class: "req-meta" }, `Shared with ${groupNames}`), item.category ? h("p", { class: "req-meta", "data-category": "" }, item.category) : null, statusPill(item)),
     ),
     h("div", { class: "acts" },
       h("button", { type: "button", onclick: () => go(`#/item/${item.id}`) }, "Open"),
@@ -38,11 +40,18 @@ function mineCard(item, rerender) {
 export async function renderItemForm(id) {
   const existing = id ? (await api("GET", `/api/items/${id}`)).item : null;
   if (id && !existing.mine) throw new Error("Only the owner can edit this item.");
-  const name = h("input", { type: "text", id: "item-name", maxlength: "60", required: true, value: existing ? existing.name : "" });
+  const draft = existing ? null : getDraft();
+  const name = h("input", { type: "text", id: "item-name", maxlength: "60", required: true, value: existing ? existing.name : draft.name });
+  const category = h("select", { id: "item-category" },
+    h("option", { value: "" }, "Choose a category"),
+    CATEGORIES.map((c) => h("option", { value: c }, c)));
+  category.value = existing ? existing.category || "" : draft.category;
   const note = h("textarea", { id: "item-note", maxlength: "280", placeholder: "Battery lasts about 30 min" });
   note.value = existing ? existing.note : "";
-  let blob = null;
-  const preview = h("div", null, existing && existing.hasPhoto ? photoEl(existing, "preview") : null);
+  let blob = draft ? draft.blob : null;
+  const preview = h("div", null,
+    existing && existing.hasPhoto ? photoEl(existing, "preview")
+      : blob ? h("img", { class: "preview", alt: "New photo preview", src: URL.createObjectURL(blob) }) : null);
   const file = h("input", { type: "file", id: "item-photo", accept: "image/*", onchange: async () => {
     const picked = file.files[0];
     if (!picked) return;
@@ -68,6 +77,7 @@ export async function renderItemForm(id) {
   const form = h("form", { class: "stack item-form" },
     h("h1", null, existing ? "Edit item" : "Add an item"),
     h("label", { class: "field" }, h("span", null, "Name"), name),
+    h("label", { class: "field" }, h("span", null, "Category"), category),
     h("label", { class: "field" }, h("span", null, "Short note"), note),
     h("div", { class: "field" }, h("span", null, "Photo"), preview, file),
     h("label", { class: "check toggle-row" }, wantsDonation, "Ask for a donation"),
@@ -76,7 +86,7 @@ export async function renderItemForm(id) {
     h("fieldset", null, h("legend", null, "Share with"), boxes),
     error,
     save,
-    h("button", { class: "link block", type: "button", onclick: () => go("#/mine") }, "Cancel"),
+    h("button", { class: "link block", type: "button", onclick: () => { clearDraft(); go("#/mine"); } }, "Cancel"),
   );
   form.addEventListener("submit", (event) => {
     event.preventDefault();
@@ -88,11 +98,12 @@ export async function renderItemForm(id) {
           donation = Number(amount.value.replace(",", "."));
           if (!amount.value.trim() || !Number.isFinite(donation)) throw new Error("Enter the suggested amount in euros as a number.");
         }
-        const body = { name: name.value, note: note.value, donation, groupIds: [...chosen] };
+        const body = { name: name.value, note: note.value, category: category.value || null, donation, groupIds: [...chosen] };
         let itemId = id;
         if (existing) await api("PATCH", `/api/items/${id}`, body);
         else itemId = (await api("POST", "/api/items", body)).item.id;
         if (blob) await api("PUT", `/api/items/${itemId}/photo`, undefined, blob);
+        if (!existing) clearDraft();
         toast(existing ? "Saved" : "Item added");
         if (samePlace()) go(`#/item/${itemId}`);
       } catch (e) {

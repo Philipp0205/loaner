@@ -14,12 +14,12 @@ export const PHONE = { width: 390, height: 844 };
 
 export type Server = { baseUrl: string; db: DatabaseSync; close: () => Promise<void> };
 
-/** Headless Chrome: the installed channel, else the system binary. */
-export async function launchChrome(): Promise<Browser> {
+/** Headless Chrome: the installed channel, else the system binary. `args` are extra Chrome flags for one spec. */
+export async function launchChrome(args: string[] = []): Promise<Browser> {
   try {
-    return await chromium.launch({ channel: "chrome", headless: true });
+    return await chromium.launch({ channel: "chrome", headless: true, args });
   } catch {
-    return await chromium.launch({ executablePath: "/usr/bin/google-chrome", headless: true });
+    return await chromium.launch({ executablePath: "/usr/bin/google-chrome", headless: true, args });
   }
 }
 
@@ -41,13 +41,13 @@ export async function startServer(env: NodeJS.ProcessEnv = {}): Promise<Server> 
   };
 }
 
-/** Registers test.before and test.after. Read baseUrl and browser inside tests. `env` is passed to the server's config. */
-export function useLoaner(env: NodeJS.ProcessEnv = {}) {
+/** Registers test.before and test.after. Read baseUrl and browser inside tests. `env` is passed to the server's config, `chromeArgs` to Chrome. */
+export function useLoaner(env: NodeJS.ProcessEnv = {}, chromeArgs: string[] = []) {
   let server: Server | undefined;
   let browser: Browser | undefined;
   test.before(async () => {
     server = await startServer(env);
-    browser = await launchChrome();
+    browser = await launchChrome(chromeArgs);
   });
   test.after(async () => {
     await browser?.close();

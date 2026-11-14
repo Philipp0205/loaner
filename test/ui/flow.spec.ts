@@ -66,6 +66,7 @@ test("Alice lends a drill to Bob, from invite to return", { timeout: 120_000 }, 
   // Alice lists a drill with a photo and a donation, shared to the group.
   await tab(alice, "My items");
   await alice.getByRole("button", { name: "Add an item" }).click();
+  await alice.locator("#camera-type").click();
   await alice.locator("#item-name").fill("Cordless drill");
   await alice.locator("#item-note").fill("Battery lasts about 30 min");
   await alice.locator("#item-photo").setInputFiles({ name: "drill.png", mimeType: "image/png", buffer: solidPng(1600, 1200, [200, 90, 40]) });

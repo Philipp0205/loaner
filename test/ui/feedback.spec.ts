@@ -5,6 +5,7 @@ import test from "node:test";
 import type { Page } from "playwright-core";
 import { useLoaner } from "./harness.js";
 import { solidPng } from "./png.js";
+import { LATEST_WHATS_NEW } from "./whats-new-seen.js";
 
 const SHOTS = path.resolve("test/ui/screenshots/feedback");
 // A fake value for the harness server only.
@@ -107,7 +108,7 @@ test("You has a Send feedback row; the sheet rejects empty text, sends, thanks, 
   assert.equal(rows[0].status, "new");
   assert.equal(rows[0].hasPhoto, false);
   assert.match(rows[0].userAgent, /Pixel 8/);
-  assert.match(rows[0].appVersion, /send-feedback/);
+  assert.equal(rows[0].appVersion, LATEST_WHATS_NEW, "the app version is the newest What's new id");
 
   // Reopening starts with a clean form.
   const again = await openFeedback(page);

@@ -7,6 +7,7 @@ export type ItemRow = {
   owner_name: string;
   name: string;
   note: string;
+  category: string | null;
   available: number;
   donation_cents: number | null;
   has_photo: number;
@@ -16,7 +17,7 @@ export type ItemRow = {
 
 /** Everything but the photo blob, so lists never load image bytes. */
 export const ITEM_SELECT = `
-  SELECT i.id, i.owner_id, u.name AS owner_name, i.name, i.note, i.available, i.donation_cents,
+  SELECT i.id, i.owner_id, u.name AS owner_name, i.name, i.note, i.category, i.available, i.donation_cents,
          (i.photo IS NOT NULL) AS has_photo, i.updated_at, i.created_at
   FROM items i JOIN users u ON u.id = i.owner_id`;
 
