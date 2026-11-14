@@ -7,6 +7,15 @@ import { normalizeEntries } from "./whats-new.js";
  */
 const RAW = [
   {
+    id: "2026-11-14-logo",
+    date: "2026-11-14",
+    title: "A new logo",
+    bullets: [
+      "Loan some has a wordmark now. The o is a teal loop, like something lent and returned.",
+      "The app icon uses the same loop.",
+    ],
+  },
+  {
     id: "2026-11-14-loan-some",
     date: "2026-11-14",
     title: "We are now Loan some",

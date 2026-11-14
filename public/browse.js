@@ -3,14 +3,14 @@ import { createGroupForm } from "./groups.js";
 import { photoEl } from "./photo.js";
 import { requestCard } from "./requests.js";
 import { go, currentGroup, redraw, setGroup, state } from "./state.js";
-import { busy, emptyState, fmtAmount, fmtDate, fmtMoment, fmtRange, h, statusPill, toast } from "./util.js";
+import { busy, emptyState, fmtAmount, fmtDate, fmtMoment, fmtRange, h, statusPill, toast, wordmarkHeading } from "./util.js";
 import { icon } from "./icons.js";
 
 export async function renderBrowse() {
   const group = currentGroup();
   if (!group) {
     return h("div", null,
-      h("div", { class: "page-head brandbar" }, h("h1", null, "Loan some")),
+      h("div", { class: "page-head brandbar" }, wordmarkHeading()),
       emptyState("No groups yet", "Create a group for your family, flatmates or club, then send them the invite link. Or open a link a friend sent you."),
       h("div", { class: "card" }, h("h2", { style: "margin-top:0" }, "Start a group"), createGroupForm(() => go("#/browse"))),
     );
@@ -27,7 +27,7 @@ export async function renderBrowse() {
       ? emptyState("Nothing available right now", "Everything in this group is lent out or paused. Uncheck the filter to see it all.")
       : emptyState("Nothing here yet", "Nobody has shared an item with this group. Be the first from the My items tab.");
   return h("div", null,
-    h("div", { class: "page-head brandbar" }, h("h1", null, "Loan some"), h("span", { class: "switch" }, select)),
+    h("div", { class: "page-head brandbar" }, wordmarkHeading(), h("span", { class: "switch" }, select)),
     h("div", { class: "chips" }, filter),
     body);
 }

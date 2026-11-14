@@ -1,12 +1,15 @@
 // Writes the app icons to public/icons using only node built-ins. Run: npm run icons
+// The white loop is read from public/icons/mark.svg (a stroked circle plus a stroked tail) and
+// rasterised here, so no image dependency is needed.
 import fs from "node:fs";
 import path from "node:path";
 import zlib from "node:zlib";
 import { fileURLToPath } from "node:url";
 
-const OUT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "public", "icons");
-const BG = [196, 87, 45];
-const FG = [255, 248, 240];
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const OUT = path.join(ROOT, "public", "icons");
+const BG = [0, 133, 122];
+const FG = [255, 255, 255];
 
 function crc32(buf) {
   let c;
@@ -50,12 +53,53 @@ function png(size, pixel) {
   ]);
 }
 
-const inRect = (u, v, x0, y0, x1, y1) => u >= x0 && u <= x1 && v >= y0 && v <= y1;
-const inCircle = (u, v, cx, cy, r) => (u - cx) ** 2 + (v - cy) ** 2 <= r * r;
+/** Reads the loop geometry from mark.svg: viewBox size, stroke width, ring circle, and the tail as a polyline. */
+function loadMark() {
+  const svg = fs.readFileSync(path.join(OUT, "mark.svg"), "utf8");
+  const num = (text) => text.match(/-?\d+(?:\.\d+)?/g).map(Number);
+  const box = num(/viewBox="([^"]+)"/.exec(svg)[1]);
+  const width = Number(/stroke-width="([^"]+)"/.exec(svg)[1]);
+  const [cx, cy, r] = ["cx", "cy", "r"].map((key) => Number(new RegExp(`<circle[^>]*\\b${key}="([^"]+)"`).exec(svg)[1]));
+  const nums = num(/<path[^>]*\bd="([^"]+)"/.exec(svg)[1]);
+  const points = [[nums[0], nums[1]]];
+  for (let i = 2; i + 5 < nums.length; i += 6) {
+    const [x0, y0] = points[points.length - 1];
+    const [x1, y1, x2, y2, x3, y3] = nums.slice(i, i + 6);
+    for (let step = 1; step <= 6; step += 1) {
+      const t = step / 6;
+      const m = 1 - t;
+      points.push([
+        m ** 3 * x0 + 3 * m * m * t * x1 + 3 * m * t * t * x2 + t ** 3 * x3,
+        m ** 3 * y0 + 3 * m * m * t * y1 + 3 * m * t * t * y2 + t ** 3 * y3,
+      ]);
+    }
+  }
+  return { view: box[2], half: width / 2, cx, cy, r, points };
+}
 
-/** A letter L with a small dot, the lent thing. u and v run 0 to 1. */
-function glyph(u, v) {
-  return inRect(u, v, 0.32, 0.22, 0.45, 0.76) || inRect(u, v, 0.32, 0.63, 0.7, 0.76) || inCircle(u, v, 0.62, 0.34, 0.075);
+const mark = loadMark();
+const tailBox = mark.points.reduce(
+  (b, [x, y]) => [Math.min(b[0], x), Math.min(b[1], y), Math.max(b[2], x), Math.max(b[3], y)],
+  [Infinity, Infinity, -Infinity, -Infinity],
+);
+
+function segmentDistance(px, py, [ax, ay], [bx, by]) {
+  const dx = bx - ax;
+  const dy = by - ay;
+  const len = dx * dx + dy * dy;
+  const t = len === 0 ? 0 : Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / len));
+  return Math.hypot(px - (ax + t * dx), py - (ay + t * dy));
+}
+
+/** True when the point (in mark units) is inside the stroked ring or the stroked tail. */
+function inLoop(px, py) {
+  if (Math.abs(Math.hypot(px - mark.cx, py - mark.cy) - mark.r) <= mark.half) return true;
+  const h = mark.half;
+  if (px < tailBox[0] - h || px > tailBox[2] + h || py < tailBox[1] - h || py > tailBox[3] + h) return false;
+  for (let i = 1; i < mark.points.length; i += 1) {
+    if (segmentDistance(px, py, mark.points[i - 1], mark.points[i]) <= h) return true;
+  }
+  return false;
 }
 
 function roundedSquare(u, v, radius) {
@@ -66,7 +110,7 @@ function roundedSquare(u, v, radius) {
 
 function render(maskable) {
   return (x, y, size) => {
-    const samples = 3;
+    const samples = 4;
     let cover = 0;
     let fg = 0;
     for (let sy = 0; sy < samples; sy += 1) {
@@ -75,7 +119,7 @@ function render(maskable) {
         const v = (y + (sy + 0.5) / samples) / size;
         if (maskable || roundedSquare(u, v, 0.22)) {
           cover += 1;
-          if (glyph(u, v)) fg += 1;
+          if (inLoop(u * mark.view, v * mark.view)) fg += 1;
         }
       }
     }

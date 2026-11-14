@@ -1,4 +1,4 @@
-const CACHE = "loaner-v8";
+const CACHE = "loaner-v9";
 const SHELL = [
   "/",
   "/css/tokens.css", "/css/base.css", "/css/layout.css", "/css/items.css", "/css/forms.css", "/css/requests.css", "/css/feedback.css", "/css/sheet.css", "/css/camera.css",
@@ -7,7 +7,7 @@ const SHELL = [
   "/gate.js", "/groups.js", "/browse.js", "/requests.js", "/mine.js", "/alerts.js", "/you.js",
   "/whats-new.js", "/changelog.js", "/whats-new-ui.js", "/sheet.js", "/feedback-ui.js",
   "/camera.js", "/draft.js", "/categories.js", "/suggest-photo.js", "/suggest-labels.js",
-  "/manifest.webmanifest", "/icons/icon-192.png", "/icons/icon-512.png",
+  "/manifest.webmanifest", "/logo.svg", "/icons/icon-192.png", "/icons/icon-512.png",
 ];
 
 self.addEventListener("install", (event) => {
