@@ -1,6 +1,6 @@
 // Writes the app icons to public/icons using only node built-ins. Run: npm run icons
-// The white loop is read from public/icons/mark.svg (a stroked circle plus a stroked tail) and
-// rasterised here, so no image dependency is needed.
+// The white circular arrow is read from public/icons/mark.svg (a stroked arc plus a triangular
+// arrowhead) and rasterised here, so no image dependency is needed.
 import fs from "node:fs";
 import path from "node:path";
 import zlib from "node:zlib";
@@ -53,53 +53,58 @@ function png(size, pixel) {
   ]);
 }
 
-/** Reads the loop geometry from mark.svg: viewBox size, stroke width, ring circle, and the tail as a polyline. */
+/** Reads the circular-arrow geometry from mark.svg: viewBox, stroked arc, and triangular head. */
 function loadMark() {
   const svg = fs.readFileSync(path.join(OUT, "mark.svg"), "utf8");
   const num = (text) => text.match(/-?\d+(?:\.\d+)?/g).map(Number);
   const box = num(/viewBox="([^"]+)"/.exec(svg)[1]);
   const width = Number(/stroke-width="([^"]+)"/.exec(svg)[1]);
-  const [cx, cy, r] = ["cx", "cy", "r"].map((key) => Number(new RegExp(`<circle[^>]*\\b${key}="([^"]+)"`).exec(svg)[1]));
-  const nums = num(/<path[^>]*\bd="([^"]+)"/.exec(svg)[1]);
-  const points = [[nums[0], nums[1]]];
-  for (let i = 2; i + 5 < nums.length; i += 6) {
-    const [x0, y0] = points[points.length - 1];
-    const [x1, y1, x2, y2, x3, y3] = nums.slice(i, i + 6);
-    for (let step = 1; step <= 6; step += 1) {
-      const t = step / 6;
-      const m = 1 - t;
-      points.push([
-        m ** 3 * x0 + 3 * m * m * t * x1 + 3 * m * t * t * x2 + t ** 3 * x3,
-        m ** 3 * y0 + 3 * m * m * t * y1 + 3 * m * t * t * y2 + t ** 3 * y3,
-      ]);
-    }
-  }
-  return { view: box[2], half: width / 2, cx, cy, r, points };
+  const d = /<path[^>]*\bd="([^"]+)"/.exec(svg)[1];
+  const [sx, sy, r, , , , , ex, ey] = num(d);
+  const pts = num(/<polygon[^>]*\bpoints="([^"]+)"/.exec(svg)[1]);
+  const cx = box[2] / 2;
+  const cy = box[3] / 2;
+  const angle = (x, y) => {
+    const a = Math.atan2(y - cy, x - cx);
+    return a < 0 ? a + Math.PI * 2 : a;
+  };
+  return {
+    view: box[2],
+    half: width / 2,
+    cx,
+    cy,
+    r,
+    start: [sx, sy],
+    end: [ex, ey],
+    startAng: angle(sx, sy),
+    endAng: angle(ex, ey),
+    triangle: [
+      [pts[0], pts[1]],
+      [pts[2], pts[3]],
+      [pts[4], pts[5]],
+    ],
+  };
 }
 
 const mark = loadMark();
-const tailBox = mark.points.reduce(
-  (b, [x, y]) => [Math.min(b[0], x), Math.min(b[1], y), Math.max(b[2], x), Math.max(b[3], y)],
-  [Infinity, Infinity, -Infinity, -Infinity],
-);
 
-function segmentDistance(px, py, [ax, ay], [bx, by]) {
-  const dx = bx - ax;
-  const dy = by - ay;
-  const len = dx * dx + dy * dy;
-  const t = len === 0 ? 0 : Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / len));
-  return Math.hypot(px - (ax + t * dx), py - (ay + t * dy));
+function inTriangle(px, py, [[ax, ay], [bx, by], [cx, cy]]) {
+  const d = (bx - ax) * (cy - ay) - (by - ay) * (cx - ax);
+  const s = ((px - ax) * (cy - ay) - (py - ay) * (cx - ax)) / d;
+  const t = ((bx - ax) * (py - ay) - (by - ay) * (px - ax)) / d;
+  return s >= 0 && t >= 0 && s + t <= 1;
 }
 
-/** True when the point (in mark units) is inside the stroked ring or the stroked tail. */
+/** True when the point (in mark units) is inside the stroked arc (with round caps) or the arrowhead. */
 function inLoop(px, py) {
-  if (Math.abs(Math.hypot(px - mark.cx, py - mark.cy) - mark.r) <= mark.half) return true;
-  const h = mark.half;
-  if (px < tailBox[0] - h || px > tailBox[2] + h || py < tailBox[1] - h || py > tailBox[3] + h) return false;
-  for (let i = 1; i < mark.points.length; i += 1) {
-    if (segmentDistance(px, py, mark.points[i - 1], mark.points[i]) <= h) return true;
-  }
-  return false;
+  if (inTriangle(px, py, mark.triangle)) return true;
+  if (Math.hypot(px - mark.start[0], py - mark.start[1]) <= mark.half) return true;
+  if (Math.hypot(px - mark.end[0], py - mark.end[1]) <= mark.half) return true;
+  if (Math.abs(Math.hypot(px - mark.cx, py - mark.cy) - mark.r) > mark.half) return false;
+  const a = Math.atan2(py - mark.cy, px - mark.cx);
+  const ang = a < 0 ? a + Math.PI * 2 : a;
+  // Arc runs the long way from startAng (~317°) down to endAng (~22°), i.e. endAng <= ang <= startAng.
+  return ang >= mark.endAng && ang <= mark.startAng;
 }
 
 function roundedSquare(u, v, radius) {

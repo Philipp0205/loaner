@@ -11,8 +11,8 @@ const RAW = [
     date: "2026-11-14",
     title: "A new logo",
     bullets: [
-      "Loan some has a wordmark now. The o is a teal loop, like something lent and returned.",
-      "The app icon uses the same loop.",
+      "Loan some has a wordmark now. The o is a teal circular arrow, like something lent and returned.",
+      "The app icon uses the same arrow.",
     ],
   },
   {
