@@ -1,4 +1,4 @@
-# Loaner
+# Loan some (formerly Loaner)
 
 Invite-only app for lending things to friends. Spec: `docs/brief.md`. Read it before changing anything.
 

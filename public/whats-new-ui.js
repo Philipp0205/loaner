@@ -56,7 +56,7 @@ function openSheet(entries, popup) {
   const head = h("div", { class: "sheet-head" },
     h("div", { class: "grabber" }),
     h("h2", { id: "wn-title" }, "What's new"),
-    h("p", { class: "muted small" }, popup ? "Since you last opened Loaner." : "Recent changes to Loaner."),
+    h("p", { class: "muted small" }, popup ? "Since you last opened Loan some." : "Recent changes to Loan some."),
   );
   const done = h("button", { type: "button", class: "primary block", onclick: () => control?.close() }, popup ? "Got it" : "Done");
   const sheet = h("div", { class: "sheet", role: "dialog", "aria-modal": "true", "aria-labelledby": "wn-title" },

@@ -1,6 +1,6 @@
-# Loaner
+# Loan some
 
-Loaner is a small app for lending things to friends. You have a drill you use twice a year, a friend needs one on Saturday. Loaner connects you and keeps track of who has what.
+Loan some (formerly called Loaner) is a small app for lending things to friends. You have a drill you use twice a year, a friend needs one on Saturday. Loan some connects you and keeps track of who has what.
 
 - Invite-only groups of people who know each other (family, flatmates, climbing club). You can be in several.
 - List an item with a photo, say which of your groups can see it, and optionally suggest a donation for valuable things. Money never moves in the app.

@@ -27,7 +27,7 @@ reminderTimer.unref?.();
 
 const server = http.createServer(createApp(ctx));
 server.listen(config.port, "0.0.0.0", () => {
-  console.log("Loaner");
+  console.log("Loan some");
   console.log(`  listening  http://localhost:${config.port}`);
   console.log(`  database   ${config.dbPath}`);
   console.log(`  timezone   ${config.tz}`);
@@ -51,7 +51,7 @@ function closeDb(): void {
 function shutdown(signal: string): void {
   if (shuttingDown) return;
   shuttingDown = true;
-  console.log(`Loaner stopping on ${signal}`);
+  console.log(`Loan some stopping on ${signal}`);
   clearInterval(reminderTimer);
   // If close hangs on a keep-alive socket, exit cleanly anyway.
   setTimeout(() => {

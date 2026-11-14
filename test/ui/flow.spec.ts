@@ -33,7 +33,7 @@ test("Alice lends a drill to Bob, from invite to return", { timeout: 120_000 }, 
 
   // Alice creates her account.
   await alice.goto(loaner.baseUrl);
-  await alice.getByRole("heading", { level: 1, name: "Loaner" }).waitFor();
+  await alice.getByRole("heading", { level: 1, name: "Loan some" }).waitFor();
   await shot(alice, "alice-welcome");
   await alice.locator("#name").fill("Alice");
   await alice.getByRole("button", { name: "Get started" }).click();

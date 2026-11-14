@@ -1,4 +1,4 @@
-const CACHE = "loaner-v7";
+const CACHE = "loaner-v8";
 const SHELL = [
   "/",
   "/css/tokens.css", "/css/base.css", "/css/layout.css", "/css/items.css", "/css/forms.css", "/css/requests.css", "/css/feedback.css", "/css/sheet.css", "/css/camera.css",
@@ -40,7 +40,7 @@ self.addEventListener("fetch", (event) => {
 });
 
 self.addEventListener("push", (event) => {
-  let data = { title: "Loaner", body: "You have a new alert", url: "/", tag: "loaner" };
+  let data = { title: "Loan some", body: "You have a new alert", url: "/", tag: "loaner" };
   try {
     if (event.data) data = { ...data, ...event.data.json() };
   } catch {

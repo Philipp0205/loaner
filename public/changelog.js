@@ -7,6 +7,15 @@ import { normalizeEntries } from "./whats-new.js";
  */
 const RAW = [
   {
+    id: "2026-11-14-loan-some",
+    date: "2026-11-14",
+    title: "We are now Loan some",
+    bullets: [
+      "The app used to be called Loaner. It is now Loan some.",
+      "Everything else works the same.",
+    ],
+  },
+  {
     id: "2026-11-14-photo-never-stuck",
     date: "2026-11-14",
     title: "Photos no longer get stuck",

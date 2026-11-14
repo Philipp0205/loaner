@@ -1,7 +1,7 @@
 {
   "id": "/",
-  "name": "Loaner",
-  "short_name": "Loaner",
+  "name": "Loan some",
+  "short_name": "Loan some",
   "description": "Lend things to friends in invite-only groups.",
   "start_url": "/",
   "scope": "/",

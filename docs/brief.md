@@ -1,6 +1,6 @@
-# Loaner: brief
+# Loan some: brief
 
-Loaner lets people lend their things to people nearby. You have a drill you use twice a year. Your neighbour needs one on Saturday. Loaner connects the two of you and keeps track of who has what.
+Loan some (formerly called Loaner) lets people lend their things to people nearby. You have a drill you use twice a year. Your neighbour needs one on Saturday. Loan some connects the two of you and keeps track of who has what.
 
 ## Who it's for
 
@@ -42,4 +42,4 @@ In-app payments, deposits, damage and loss handling, ratings and reviews, maps a
 - **Valuable items.** A loaner can ask for a donation. The app shows the suggested amount; paying happens in person or by bank transfer, not in the app.
 - **Damage and loss.** Not handled in the app.
 - **Groups.** Several per person.
-- **Name.** The app is called Loaner.
+- **Name.** The app is called Loan some (formerly Loaner).

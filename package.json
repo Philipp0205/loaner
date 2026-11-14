@@ -2,7 +2,7 @@
   "name": "loaner",
   "version": "1.0.0",
   "private": true,
-  "description": "Loaner: lend things to friends in invite-only groups.",
+  "description": "Loan some: lend things to friends in invite-only groups.",
   "type": "module",
   "engines": {
     "node": ">=22.5.0"
