@@ -19,7 +19,7 @@ function nameField() {
 }
 
 function intro() {
-  return h("div", { class: "hero" }, h("h1", null, h("span", { class: "brand" }, "Loaner")), h("p", { class: "muted" }, "Lend things to your friends. Borrow what you need. Invite-only groups, no passwords."));
+  return h("div", { class: "intro" }, h("h1", null, h("span", { class: "brand" }, "Loaner")), h("p", { class: "tag" }, "Lend things to your friends. Borrow what you need. Invite-only groups, no passwords."));
 }
 
 function welcome() {

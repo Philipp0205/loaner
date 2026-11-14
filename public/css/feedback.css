@@ -1,0 +1,26 @@
+/* Toasts, spinner, empty states, errors */
+.error-text { color: var(--red); font-size: var(--fs-sm); font-weight: 500; margin: 6px 0; }
+.error-text:empty { display: none; }
+
+#toasts {
+  position: fixed; left: 0; right: 0; z-index: 20;
+  bottom: calc(var(--tab-h) + 12px + env(safe-area-inset-bottom));
+  display: flex; flex-direction: column; align-items: center; gap: var(--s2); pointer-events: none; padding: 0 var(--s4);
+}
+.toast {
+  background: var(--ink); color: var(--ink-inverse); padding: 12px 16px; border-radius: var(--r-btn);
+  font-size: var(--fs-md); font-weight: 500; max-width: 460px; box-shadow: 0 4px 16px rgb(0 0 0 / 0.25);
+}
+.toast.error { background: var(--red); color: #fff; }
+
+.spinner { text-align: center; color: var(--muted); font-size: var(--fs-sm); padding: 48px 0; }
+.spinner::before {
+  content: ""; display: block; width: 24px; height: 24px; margin: 0 auto 10px;
+  border: 2px solid var(--line); border-top-color: var(--ink); border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .spinner::before { animation-duration: 3s; } }
+
+.empty { text-align: center; padding: 40px var(--s3); color: var(--muted); }
+.empty h2 { color: var(--ink); margin-top: 0; }

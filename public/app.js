@@ -7,6 +7,7 @@ import { renderAlerts } from "./alerts.js";
 import { renderYou } from "./you.js";
 import { go, loadGroups, loadMe, state } from "./state.js";
 import { h, toast } from "./util.js";
+import { icon } from "./icons.js";
 
 const root = document.getElementById("root");
 
@@ -71,7 +72,8 @@ function tabbar(active) {
     { class: "tabbar", "aria-label": "Main" },
     TABS.map(([id, label]) =>
       h("button", { type: "button", "data-tab": id, "aria-current": id === active ? "page" : false, onclick: () => go(`#/${id}`) },
-        label,
+        icon(id),
+        h("span", null, label),
         id === "alerts" && state.unread > 0 ? h("span", { class: "badge", "aria-label": `${state.unread} unread` }, state.unread > 99 ? "99+" : state.unread) : null,
       ),
     ),

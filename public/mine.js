@@ -7,7 +7,7 @@ export async function renderMine() {
   const { items } = await api("GET", "/api/items/mine");
   const add = h("button", { class: "primary", type: "button", onclick: () => go("#/mine/new") }, "Add an item");
   const rerender = () => redraw("#/mine");
-  const head = h("div", { class: "row", style: "justify-content:space-between;margin-bottom:12px" }, h("h1", { style: "margin:0" }, "My items"), add);
+  const head = h("div", { class: "page-head" }, h("h1", null, "My items"), add);
   if (!state.groups.length) {
     return h("div", null, head, emptyState("Join or create a group first", "Items are shared with your groups. Open the Browse tab to create one."));
   }
@@ -23,11 +23,11 @@ function mineCard(item, rerender) {
   }) }, item.available ? "Pause" : "Make available");
   const groupNames = item.groupIds.map((id) => (state.groups.find((g) => g.id === id) || { name: "?" }).name).join(", ");
   return h("article", { class: "card", "data-item": item.id },
-    h("div", { class: "row" },
-      h("div", { style: "width:84px;flex:none" }, photoEl(item)),
-      h("div", { class: "grow" }, h("h3", null, item.name), statusPill(item), h("div", { class: "muted small" }, `Shared with ${groupNames}`)),
+    h("div", { class: "req-head" },
+      h("div", { class: "thumb" }, photoEl(item)),
+      h("div", { class: "grow" }, h("h3", null, item.name), h("p", { class: "req-meta" }, `Shared with ${groupNames}`), statusPill(item)),
     ),
-    h("div", { class: "row", style: "margin-top:10px" },
+    h("div", { class: "acts" },
       h("button", { type: "button", onclick: () => go(`#/item/${item.id}`) }, "Open"),
       h("button", { type: "button", onclick: () => go(`#/mine/edit/${item.id}`) }, "Edit"),
       toggle,
@@ -65,15 +65,15 @@ export async function renderItemForm(id) {
   const boxes = state.groups.map((g) => h("label", { class: "check" }, h("input", { type: "checkbox", value: g.id, "data-group": g.id, checked: chosen.has(g.id), onchange: (event) => (event.target.checked ? chosen.add(g.id) : chosen.delete(g.id)) }), g.name));
   const error = h("p", { class: "error-text", role: "alert" });
   const save = h("button", { class: "primary block", type: "submit" }, existing ? "Save changes" : "Add item");
-  const form = h("form", { class: "stack" },
+  const form = h("form", { class: "stack item-form" },
     h("h1", null, existing ? "Edit item" : "Add an item"),
     h("label", { class: "field" }, h("span", null, "Name"), name),
     h("label", { class: "field" }, h("span", null, "Short note"), note),
     h("div", { class: "field" }, h("span", null, "Photo"), preview, file),
-    h("label", { class: "check" }, wantsDonation, "Ask for a donation"),
+    h("label", { class: "check toggle-row" }, wantsDonation, "Ask for a donation"),
     amountField,
-    h("p", { class: "muted small", style: "margin-top:-6px" }, "Display only. Money is never handled in the app."),
-    h("fieldset", { style: "border:0;padding:0;margin:0" }, h("legend", { class: "muted small" }, "Share with"), boxes),
+    h("p", { class: "hint" }, "Display only. Money is never handled in the app."),
+    h("fieldset", null, h("legend", null, "Share with"), boxes),
     error,
     save,
     h("button", { class: "link block", type: "button", onclick: () => go("#/mine") }, "Cancel"),

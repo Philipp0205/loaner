@@ -1,0 +1,44 @@
+/* Cards: requests, alerts, groups, account */
+.card { background: var(--card); border: 1px solid var(--line); border-radius: var(--r-card); padding: 14px; margin: 0 0 var(--s3); }
+.card.unread { border-color: var(--ink); box-shadow: inset 4px 0 0 var(--teal); }
+.card h3 { overflow-wrap: anywhere; }
+
+.req-head { display: flex; gap: var(--s3); align-items: center; }
+.req-head .thumb { width: 64px; height: 64px; flex: none; }
+.req-head .thumb .photo { width: 64px; height: 64px; aspect-ratio: 1; border-radius: var(--r-btn); font-size: 0.625rem; text-align: center; }
+.req-head .grow { flex: 1; min-width: 0; }
+.req-head h3 { font-size: var(--fs-md); }
+.req-meta { margin: 3px 0 0; font-size: var(--fs-sm); color: var(--muted); }
+.req-meta .due { color: var(--teal); font-weight: 600; }
+.req-meta .due.late { color: var(--red); }
+.quote { margin: 10px 0 0; font-size: 0.875rem; color: var(--ink); overflow-wrap: anywhere; }
+.reply { margin: 6px 0 0; font-size: 0.875rem; color: var(--muted); overflow-wrap: anywhere; }
+.acts { display: flex; gap: var(--s2); margin-top: 14px; }
+.acts button { flex: 1; min-height: 44px; }
+
+/* Status pills */
+.pill {
+  display: inline-block; align-self: flex-start; white-space: nowrap;
+  padding: 2px 10px; border-radius: var(--r-pill); font-size: var(--fs-xs); font-weight: 600; line-height: 1.2;
+  background: var(--grey-soft); color: var(--grey-ink);
+}
+.pill.available, .pill.approved { background: var(--teal-soft); color: var(--teal-ink); }
+.pill.lent { background: var(--ink); color: var(--ink-inverse); }
+.pill.late { background: var(--red-soft); color: var(--red); }
+.pill.pending { background: var(--amber-soft); color: var(--amber-ink); }
+.pill.declined, .pill.cancelled, .pill.returned, .pill.paused { background: var(--grey-soft); color: var(--grey-ink); }
+
+/* Lists, history, codes */
+.list { list-style: none; margin: 0; padding: 0; }
+.list li { padding: 10px 0; border-bottom: 1px solid var(--line); }
+.list li:last-child { border-bottom: 0; }
+.invite-link { display: block; word-break: break-all; font-size: var(--fs-sm); background: var(--soft); padding: 10px 12px; border-radius: var(--r-btn); margin: var(--s2) 0; user-select: all; }
+.code { font: 600 1.4rem/1.2 var(--mono); letter-spacing: 0.08em; background: var(--soft); padding: var(--s3); border-radius: var(--r-input); text-align: center; margin: var(--s2) 0; user-select: all; }
+.card-top { display: flex; align-items: center; justify-content: space-between; gap: var(--s3); }
+.card-top h3 { flex: 1; min-width: 0; }
+
+/* Sign-up, join, recover */
+.intro { padding: 24px 0 8px; }
+.intro h1 { font-size: 2rem; font-weight: 700; letter-spacing: -0.045em; }
+.brand { color: var(--ink); }
+.intro .tag { color: var(--muted); }
