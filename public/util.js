@@ -42,7 +42,16 @@ export function fmtMoment(ms) {
   return new Date(ms).toLocaleDateString("en-GB", { day: "numeric", month: "short" });
 }
 
+const wholeEuros = new Intl.NumberFormat("en-IE", { style: "currency", currency: "EUR", maximumFractionDigits: 0 });
+const euros = new Intl.NumberFormat("en-IE", { style: "currency", currency: "EUR", minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+/** A suggested amount as euros: 5 is "€5", 12.5 is "€12.50". Display only, the app never handles money. */
 export function fmtAmount(amount) {
+  return (Number.isInteger(amount) ? wholeEuros : euros).format(amount);
+}
+
+/** The number alone, as typed into the item form: 5 is "5", 12.5 is "12.50". */
+export function fmtAmountPlain(amount) {
   return Number.isInteger(amount) ? String(amount) : amount.toFixed(2);
 }
 
@@ -51,9 +60,12 @@ export function statusText(item) {
   return item.status === "paused" ? "Paused" : "Available";
 }
 
-export function statusPill(item) {
-  const cls = item.status === "lent" && item.lent.late ? "late" : item.status;
-  return h("span", { class: `pill ${cls}` }, statusText(item), item.status === "lent" && item.lent.late ? " (overdue)" : "");
+/** `short` drops the borrower's name, so the pill fits on one line in a browse tile. */
+export function statusPill(item, short = false) {
+  const late = item.status === "lent" && item.lent.late;
+  let text = statusText(item) + (late ? " (overdue)" : "");
+  if (short && item.status === "lent") text = late ? `Overdue, due ${fmtDate(item.lent.until)}` : `Lent until ${fmtDate(item.lent.until)}`;
+  return h("span", { class: `pill ${late ? "late" : item.status}` }, text);
 }
 
 /** Copies text. Falls back to a hidden textarea where the clipboard API is blocked. */

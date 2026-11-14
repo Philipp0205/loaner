@@ -43,3 +43,21 @@ export function go(hash) {
   if (location.hash === hash) window.dispatchEvent(new HashChangeEvent("hashchange"));
   else location.hash = hash;
 }
+
+/** The route being shown. An empty hash means Browse. */
+const here = () => location.hash || "#/browse";
+
+/**
+ * Call when an action starts. The returned function says whether the person is still on the route
+ * they started from. Use it after an await, so a slow request cannot pull them back from the tab
+ * they have since opened.
+ */
+export function stayedPut() {
+  const start = here();
+  return () => here() === start;
+}
+
+/** Redraws the screen at `hash` after an action, but only if the person is still on it. */
+export function redraw(hash) {
+  if (here() === hash) go(hash);
+}

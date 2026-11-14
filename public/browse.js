@@ -2,7 +2,7 @@ import { api } from "./api.js";
 import { createGroupForm } from "./groups.js";
 import { photoEl } from "./photo.js";
 import { requestCard } from "./requests.js";
-import { go, currentGroup, setGroup, state } from "./state.js";
+import { go, currentGroup, redraw, setGroup, state } from "./state.js";
 import { busy, emptyState, fmtAmount, fmtMoment, fmtRange, h, statusPill, toast } from "./util.js";
 
 export async function renderBrowse() {
@@ -32,14 +32,14 @@ function tile(item) {
     h("span", { class: "info" },
       h("span", { class: "name" }, item.name),
       h("span", { class: "muted small" }, item.mine ? "Yours" : `From ${item.owner.name}`),
-      statusPill(item),
-      item.donation !== null ? h("span", { class: "muted small" }, `Suggested donation: ${fmtAmount(item.donation)}`) : null,
+      statusPill(item, true),
+      item.donation !== null ? h("span", { class: "muted small donation" }, `Suggested donation: ${fmtAmount(item.donation)}`) : null,
     ),
   );
 }
 
 export async function renderItem(id) {
-  const rerender = () => go(`#/item/${id}`);
+  const rerender = () => redraw(`#/item/${id}`);
   const { item, history, myRequestIds } = await api("GET", `/api/items/${id}`);
   const parts = [
     h("button", { class: "link", type: "button", onclick: () => history_back(item) }, "Back"),

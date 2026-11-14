@@ -1,5 +1,5 @@
 import { api } from "./api.js";
-import { go, state } from "./state.js";
+import { redraw, state } from "./state.js";
 import { busy, emptyState, fmtRange, h, toast } from "./util.js";
 
 const LABEL = { pending: "Waiting", approved: "Approved", declined: "Declined", cancelled: "Cancelled", lent: "Lent out", returned: "Returned" };
@@ -51,7 +51,7 @@ export function actionsFor(r, role, reply, after) {
 }
 
 export async function renderRequests() {
-  const rerender = () => go("#/requests");
+  const rerender = () => redraw("#/requests");
   const [incoming, outgoing] = await Promise.all([api("GET", "/api/requests"), api("GET", "/api/requests?role=outgoing")]);
   const open = (list) => list.requests.filter((r) => ["pending", "approved", "lent"].includes(r.status));
   const closed = (list) => list.requests.filter((r) => !["pending", "approved", "lent"].includes(r.status));
