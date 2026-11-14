@@ -10,6 +10,16 @@ import { DatabaseSync } from "node:sqlite";
 
 const ROOT = path.resolve(import.meta.dirname, "..");
 
+/** The start command, read from package.json and railway.json so the tests run what Railway runs. */
+function startArgs(): string[] {
+  const npmStart = (JSON.parse(fs.readFileSync(path.join(ROOT, "package.json"), "utf8")) as { scripts: { start: string } }).scripts.start;
+  const railwayStart = (JSON.parse(fs.readFileSync(path.join(ROOT, "railway.json"), "utf8")) as { deploy: { startCommand: string } }).deploy.startCommand;
+  assert.equal(railwayStart, npmStart, "railway.json startCommand and the npm start script must match");
+  const [bin, ...args] = npmStart.split(/\s+/);
+  assert.equal(bin, "node");
+  return args;
+}
+
 async function freePort(): Promise<number> {
   return new Promise((resolve, reject) => {
     const probe = net.createServer();
@@ -21,22 +31,31 @@ async function freePort(): Promise<number> {
   });
 }
 
-type Started = { child: ChildProcess; output: () => string; exited: Promise<{ code: number | null; signal: NodeJS.Signals | null }> };
+type Started = {
+  child: ChildProcess;
+  output: () => string;
+  stderr: () => string;
+  exited: Promise<{ code: number | null; signal: NodeJS.Signals | null }>;
+};
 
-/** The same entry the Railway start command uses, run directly with node (no npm wrapper). */
+/** The same command Railway runs (see startArgs), run directly with node (no npm wrapper). */
 async function startServer(dbPath: string, port: number): Promise<Started> {
-  const child = spawn(process.execPath, ["--import", "tsx", "src/server.ts"], {
+  const child = spawn(process.execPath, startArgs(), {
     cwd: ROOT,
     env: { ...process.env, PORT: String(port), DB_PATH: dbPath, APP_TZ: "UTC", VAPID_PUBLIC_KEY: "", VAPID_PRIVATE_KEY: "", FEEDBACK_ADMIN_TOKEN: "" },
     stdio: ["ignore", "pipe", "pipe"],
   });
   let out = "";
+  let err = "";
   child.stdout?.on("data", (chunk: Buffer) => (out += chunk));
-  child.stderr?.on("data", (chunk: Buffer) => (out += chunk));
+  child.stderr?.on("data", (chunk: Buffer) => {
+    out += chunk;
+    err += chunk;
+  });
   const exited = new Promise<{ code: number | null; signal: NodeJS.Signals | null }>((resolve) => {
     child.once("exit", (code, signal) => resolve({ code, signal }));
   });
-  const started: Started = { child, output: () => out, exited };
+  const started: Started = { child, output: () => out, stderr: () => err, exited };
   const deadline = Date.now() + 20000;
   while (!out.includes("listening")) {
     if (child.exitCode !== null) throw new Error(`server exited early:\n${out}`);
@@ -58,6 +77,22 @@ test("quiet-warnings drops only the sqlite ExperimentalWarning", () => {
   assert.doesNotMatch(run.stderr, /SQLite/);
   assert.match(run.stderr, /Something else is experimental/);
   assert.match(run.stderr, /plain warning/);
+});
+
+test("the start command boots the server with no sqlite ExperimentalWarning on stderr", async () => {
+  // Only meaningful on Node 22, where importing node:sqlite emits the warning. Node 24 never
+  // emits it, so there this passes without exercising the preload. Railway runs Node 22.
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "loaner-warning-"));
+  let started: Started | undefined;
+  try {
+    started = await startServer(path.join(dir, "loaner.db"), await freePort());
+    assert.doesNotMatch(started.stderr(), /ExperimentalWarning|SQLite is an experimental/i);
+    started.child.kill("SIGTERM");
+    await started.exited;
+  } finally {
+    if (started && started.child.exitCode === null) started.child.kill("SIGKILL");
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
 });
 
 for (const signal of ["SIGTERM", "SIGINT"] as const) {
