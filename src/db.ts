@@ -96,6 +96,21 @@ CREATE TABLE IF NOT EXISTS push_subscriptions (
   created_at INTEGER NOT NULL
 );
 CREATE INDEX IF NOT EXISTS push_user ON push_subscriptions(user_id);
+
+-- In-app feedback. status: new, seen, done. display_name is the sender's name at send time.
+CREATE TABLE IF NOT EXISTS feedback (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL REFERENCES users(id),
+  display_name TEXT NOT NULL,
+  text TEXT NOT NULL,
+  app_version TEXT,
+  user_agent TEXT,
+  created_at INTEGER NOT NULL,
+  status TEXT NOT NULL DEFAULT 'new',
+  photo BLOB,
+  photo_type TEXT
+);
+CREATE INDEX IF NOT EXISTS feedback_created ON feedback(created_at);
 `;
 
 /** Opens (and creates) the database. ":memory:" for tests. */

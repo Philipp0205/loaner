@@ -15,14 +15,26 @@ export type Config = {
   tz: string;
   /** Null unless both VAPID keys are set. Without it nothing is pushed. */
   vapid: VapidConfig | null;
+  /** Bearer token for the feedback admin routes. Null when unset, and then those routes answer 404. */
+  adminToken: string | null;
 };
+
+export const ADMIN_TOKEN_MIN = 32;
 
 export function loadConfig(env: NodeJS.ProcessEnv = process.env, cwd = process.cwd()): Config {
   const rawDb = env.DB_PATH?.trim() ?? "";
   const dbPath = rawDb === ":memory:" ? rawDb : rawDb ? path.resolve(cwd, rawDb) : path.join(cwd, "data", "loaner.db");
   const tz = env.APP_TZ?.trim() || "UTC";
   assertTimeZone(tz);
-  return { port: readPort(env.PORT), dbPath, tz, vapid: readVapid(env) };
+  return { port: readPort(env.PORT), dbPath, tz, vapid: readVapid(env), adminToken: readAdminToken(env) };
+}
+
+function readAdminToken(env: NodeJS.ProcessEnv): string | null {
+  const token = env.FEEDBACK_ADMIN_TOKEN?.trim() ?? "";
+  if (!token) return null;
+  // Fail loudly rather than run with a guessable token. The value is never echoed.
+  if (token.length < ADMIN_TOKEN_MIN) throw new Error(`FEEDBACK_ADMIN_TOKEN must be at least ${ADMIN_TOKEN_MIN} characters, or unset`);
+  return token;
 }
 
 function readPort(value: string | undefined): number {

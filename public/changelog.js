@@ -7,6 +7,16 @@ import { normalizeEntries } from "./whats-new.js";
  */
 const RAW = [
   {
+    id: "2026-11-14-send-feedback",
+    date: "2026-11-14",
+    title: "Send feedback",
+    bullets: [
+      "Got an idea or hit a bug? Tap Send feedback on the You tab.",
+      "Write a message, and add a photo or screenshot if it helps.",
+      "Your name is sent with it, so we know who to thank.",
+    ],
+  },
+  {
     id: "2026-11-14-whats-new-sheet",
     date: "2026-11-14",
     title: "A What's new note",

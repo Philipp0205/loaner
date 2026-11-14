@@ -8,6 +8,7 @@ import { get } from "./db.js";
 import type { DatabaseSync } from "node:sqlite";
 import type { PushSender } from "./push.js";
 import { authRoutes } from "./routes-auth.js";
+import { feedbackRoutes } from "./routes-feedback.js";
 import { groupRoutes } from "./routes-groups.js";
 import { itemRoutes } from "./routes-items.js";
 import { notificationRoutes } from "./routes-notifications.js";
@@ -64,6 +65,7 @@ export function createApp(deps: AppDeps): http.RequestListener {
     ...itemRoutes(),
     ...requestRoutes(),
     ...notificationRoutes(),
+    ...feedbackRoutes(),
     {
       method: "GET",
       path: "/api/config",
@@ -119,7 +121,11 @@ export function createApp(deps: AppDeps): http.RequestListener {
       }
       return;
     }
-    if (pathMatched) throw new HttpError(405, "method not allowed");
+    // Admin paths never admit they exist, not even through a wrong method.
+    if (pathMatched) {
+      if (url.pathname.startsWith("/api/admin/")) throw new HttpError(404, "not found");
+      throw new HttpError(405, "method not allowed");
+    }
     throw new HttpError(404, "not found");
   }
 

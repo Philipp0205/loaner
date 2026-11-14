@@ -37,6 +37,18 @@ html.sheet-open { overflow: hidden; }
 .wn-entry li { font-size: var(--fs-md); line-height: 1.45; overflow-wrap: anywhere; }
 .wn-entry li + li { margin-top: 6px; }
 
+/* Send feedback form inside the sheet */
+.sheet .field:last-child { margin-bottom: 0; }
+.sheet textarea { min-height: 140px; }
+.sheet textarea[aria-invalid] { border-color: var(--red); }
+.fb-meta { display: flex; justify-content: space-between; align-items: flex-start; gap: var(--s3); margin: calc(-1 * var(--s2)) 0 var(--s4); }
+.fb-meta .error-text { flex: 1; min-width: 0; margin: 0; }
+.fb-count { margin-left: auto; font-size: var(--fs-xs); color: var(--muted); font-variant-numeric: tabular-nums; }
+.fb-preview { display: flex; align-items: center; gap: var(--s3); margin-top: var(--s2); }
+.fb-preview:empty { display: none; }
+.fb-thumb { width: 64px; height: 64px; object-fit: cover; border-radius: var(--r-photo); border: 1px solid var(--line); }
+.sheet.fb-done .sheet-head { padding-bottom: var(--s4); }
+
 @keyframes sheet-up { from { transform: translateY(100%); } to { transform: translateY(0); } }
 @keyframes scrim-in { from { opacity: 0; } to { opacity: 1; } }
 @media (prefers-reduced-motion: reduce) {

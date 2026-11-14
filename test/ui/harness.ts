@@ -24,9 +24,9 @@ export async function launchChrome(): Promise<Browser> {
 }
 
 /** The app on 127.0.0.1 with a random port and an in-memory db. */
-export async function startServer(): Promise<Server> {
+export async function startServer(env: NodeJS.ProcessEnv = {}): Promise<Server> {
   const db = openDb(":memory:");
-  const config = loadConfig({ PORT: "3000", DB_PATH: ":memory:", APP_TZ: "UTC" });
+  const config = loadConfig({ PORT: "3000", DB_PATH: ":memory:", APP_TZ: "UTC", ...env });
   const server = http.createServer(createApp({ db, config, push: createNoopPushSender(), now: () => Date.now() }));
   await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", () => resolve()));
   const baseUrl = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
@@ -41,12 +41,12 @@ export async function startServer(): Promise<Server> {
   };
 }
 
-/** Registers test.before and test.after. Read baseUrl and browser inside tests. */
-export function useLoaner() {
+/** Registers test.before and test.after. Read baseUrl and browser inside tests. `env` is passed to the server's config. */
+export function useLoaner(env: NodeJS.ProcessEnv = {}) {
   let server: Server | undefined;
   let browser: Browser | undefined;
   test.before(async () => {
-    server = await startServer();
+    server = await startServer(env);
     browser = await launchChrome();
   });
   test.after(async () => {

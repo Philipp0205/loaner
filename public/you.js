@@ -1,5 +1,6 @@
 import { api, setToken } from "./api.js";
 import { createGroupForm, groupCard } from "./groups.js";
+import { openFeedback } from "./feedback-ui.js";
 import { redraw, loadGroups, loadMe, saveRecovery, savedRecovery, state } from "./state.js";
 import { busy, copyText, h, toast } from "./util.js";
 import { openWhatsNewList } from "./whats-new-ui.js";
@@ -11,7 +12,11 @@ export async function renderYou() {
   parts.push(state.groups.length ? state.groups.map((g) => groupCard(g, rerender)) : h("p", { class: "muted" }, "You are not in a group yet."));
   parts.push(h("div", { class: "card" }, h("h3", { style: "margin-bottom:8px" }, "Start a new group"), createGroupForm(rerender)));
   parts.push(pushCard());
-  parts.push(h("h2", null, "About"), h("button", { type: "button", class: "block", id: "open-whats-new", onclick: openWhatsNewList }, "What's new"));
+  parts.push(h("h2", null, "About"),
+    h("div", { class: "stack" },
+      h("button", { type: "button", class: "block", id: "open-whats-new", onclick: openWhatsNewList }, "What's new"),
+      h("button", { type: "button", class: "block", id: "open-feedback", onclick: openFeedback }, "Send feedback"),
+    ));
   parts.push(h("h2", null, "This phone"), h("button", { type: "button", class: "block", id: "sign-out", onclick: signOut }, "Sign out of this phone"));
   return h("div", null, parts);
 }
