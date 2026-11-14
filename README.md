@@ -23,6 +23,14 @@ Then open http://localhost:3000 on your phone or in a browser.
 
 Optional environment: `PORT` (3000), `DB_PATH` (`data/loaner.db`), `APP_TZ` (`UTC`, used for due dates and reminders). Web push is off unless `VAPID_PUBLIC_KEY` and `VAPID_PRIVATE_KEY` are set; `npm run vapid` prints a fresh pair. Never commit them.
 
+## Deploy on Railway
+
+The start command is `node --import tsx src/server.ts` (also what `npm start` runs). It is set in `railway.json` so Railway runs node directly and not through npm. With npm in the middle, a SIGTERM on redeploy made npm report a failed command and Railway showed a crash. Now the server handles SIGTERM and SIGINT itself: it stops accepting connections, stops the reminder timer, closes the database, logs one line and exits 0 (with a forced exit after 8 seconds if a connection hangs). `restartPolicyType` stays `ON_FAILURE`, so a clean exit is not restarted. `tsx` is a regular dependency because the start command needs it at runtime.
+
+Railway stops reading `railway.json` and `railway.toml` on 1 Dec 2026. Before then, set the service start command in the Railway dashboard to the same value, `node --import tsx src/server.ts`.
+
+The `node:sqlite` ExperimentalWarning is filtered out in `src/quiet-warnings.ts`. Other warnings are still printed.
+
 ## Feedback
 
 The You tab has a Send feedback row. It opens a sheet where a signed-in person writes a message (1 to 2000 characters) and can attach one photo or screenshot. The server stores it with their name, the app version, and their user agent. Each person can send 10 per hour.
