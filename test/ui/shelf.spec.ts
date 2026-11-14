@@ -5,6 +5,7 @@ import test from "node:test";
 import type { Page } from "playwright-core";
 import { useLoaner } from "./harness.js";
 import { solidPng } from "./png.js";
+import { skipWhatsNew } from "./whats-new-seen.js";
 
 const SHOTS = path.resolve("test/ui/screenshots/shelf");
 const loaner = useLoaner();
@@ -42,6 +43,7 @@ async function seed() {
 async function open(token: string, size: { width: number; height: number }, hash = ""): Promise<{ page: Page; hosts: Set<string> }> {
   const ctx = await loaner.phone();
   await ctx.addInitScript((t) => localStorage.setItem("loaner_token", t), token);
+  await skipWhatsNew(ctx);
   const page = await ctx.newPage();
   const hosts = new Set<string>();
   page.on("request", (req) => {

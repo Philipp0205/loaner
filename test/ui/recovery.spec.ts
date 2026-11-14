@@ -35,6 +35,11 @@ test("recovery code: copy it on one phone, sign back in on another, wrong code i
   await fresh.locator("#recover-code").fill(code.toLowerCase());
   await fresh.getByRole("button", { name: "Sign back in" }).click();
   await fresh.locator("nav.tabbar").waitFor();
+  // Signing back in is not a new sign-up, so the new phone still gets the What's new sheet.
+  const sheet = fresh.getByRole("dialog", { name: "What's new" });
+  await sheet.waitFor();
+  await sheet.getByRole("button", { name: "Got it" }).click();
+  await sheet.waitFor({ state: "detached" });
   await fresh.locator(".tabbar").getByRole("button", { name: "You" }).click();
   assert.equal(await fresh.locator("#profile-name").inputValue(), "Dana");
   await fresh.screenshot({ path: path.join(SHOTS, "recovery-signed-back-in.png") });

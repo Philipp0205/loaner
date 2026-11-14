@@ -1,6 +1,7 @@
 import { api, setToken } from "./api.js";
 import { go, loadGroups, loadMe, saveRecovery, setGroup, state } from "./state.js";
 import { busy, h, toast } from "./util.js";
+import { markNewAccountSeen } from "./whats-new-ui.js";
 
 /** The signed-out screen, or the join screen when the URL is /join/<code>. */
 export async function renderGate() {
@@ -32,6 +33,7 @@ function welcome() {
     busy(start, async () => {
       try {
         const res = await api("POST", "/api/auth/start", { name: input.querySelector("input").value });
+        markNewAccountSeen();
         await finish(res);
         go("#/browse");
       } catch (e) {
@@ -111,6 +113,7 @@ async function joinScreen(code) {
           setGroup(groupId);
         } else {
           const res = await api("POST", "/api/auth/start", { name: input.querySelector("input").value, inviteCode: code });
+          markNewAccountSeen();
           await finish(res, res.groupId);
         }
         history.replaceState(null, "", "/");

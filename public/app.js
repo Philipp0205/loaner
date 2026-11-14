@@ -8,6 +8,7 @@ import { renderYou } from "./you.js";
 import { go, loadGroups, loadMe, state } from "./state.js";
 import { h, toast } from "./util.js";
 import { icon } from "./icons.js";
+import { considerWhatsNew } from "./whats-new-ui.js";
 
 const root = document.getElementById("root");
 
@@ -64,6 +65,7 @@ async function show() {
   if (mine !== serial) return;
   root.replaceChildren(h("main", { class: "page" }, screen), tabbar(tab));
   window.scrollTo(0, 0);
+  considerWhatsNew();
 }
 
 function tabbar(active) {
