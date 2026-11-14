@@ -1,7 +1,7 @@
 {
   "$schema": "https://railway.com/railway.schema.json",
   "deploy": {
-    "startCommand": "node --import tsx src/server.ts",
+    "startCommand": "node --import tsx --import ./src/quiet-warnings.ts src/server.ts",
     "restartPolicyType": "ON_FAILURE"
   }
 }

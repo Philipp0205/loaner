@@ -1,4 +1,3 @@
-import "./quiet-warnings.js";
 import http from "node:http";
 import { createApp } from "./app.js";
 import { loadConfig } from "./config.js";
