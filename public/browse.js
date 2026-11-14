@@ -3,37 +3,47 @@ import { createGroupForm } from "./groups.js";
 import { photoEl } from "./photo.js";
 import { requestCard } from "./requests.js";
 import { go, currentGroup, redraw, setGroup, state } from "./state.js";
-import { busy, emptyState, fmtAmount, fmtMoment, fmtRange, h, statusPill, toast } from "./util.js";
+import { busy, emptyState, fmtAmount, fmtDate, fmtMoment, fmtRange, h, statusPill, toast } from "./util.js";
+import { icon } from "./icons.js";
 
 export async function renderBrowse() {
   const group = currentGroup();
   if (!group) {
     return h("div", null,
-      h("h1", null, "Browse"),
+      h("div", { class: "page-head brandbar" }, h("h1", null, "Loaner")),
       emptyState("No groups yet", "Create a group for your family, flatmates or club, then send them the invite link. Or open a link a friend sent you."),
       h("div", { class: "card" }, h("h2", { style: "margin-top:0" }, "Start a group"), createGroupForm(() => go("#/browse"))),
     );
   }
-  const switcher = h("select", { id: "group-switch", "aria-label": "Group", onchange: (event) => { setGroup(event.target.value); go("#/browse"); } },
+  const select = h("select", { id: "group-switch", "aria-label": "Group", onchange: (event) => { setGroup(event.target.value); go("#/browse"); } },
     state.groups.map((g) => h("option", { value: g.id, selected: g.id === group.id }, g.name)));
-  const filter = h("label", { class: "check" }, h("input", { type: "checkbox", id: "available-only", checked: state.availableOnly, onchange: (event) => { state.availableOnly = event.target.checked; go("#/browse"); } }), "Available only");
+  const filter = h("label", { class: "chip" },
+    h("input", { type: "checkbox", id: "available-only", checked: state.availableOnly, onchange: (event) => { state.availableOnly = event.target.checked; go("#/browse"); } }),
+    "Available only");
   const { items } = await api("GET", `/api/groups/${group.id}/items${state.availableOnly ? "?available=1" : ""}`);
   const body = items.length
     ? h("div", { class: "grid" }, items.map(tile))
     : state.availableOnly
       ? emptyState("Nothing available right now", "Everything in this group is lent out or paused. Uncheck the filter to see it all.")
       : emptyState("Nothing here yet", "Nobody has shared an item with this group. Be the first from the My items tab.");
-  return h("div", null, h("h1", null, "Browse"), h("label", { class: "field" }, h("span", null, "Group"), switcher), filter, body);
+  return h("div", null,
+    h("div", { class: "page-head brandbar" }, h("h1", null, "Loaner"), h("span", { class: "switch" }, select)),
+    h("div", { class: "chips" }, filter),
+    body);
 }
 
 function tile(item) {
+  const lent = item.status === "lent";
   return h("button", { class: "tile", type: "button", "data-item": item.id, onclick: () => go(`#/item/${item.id}`) },
-    photoEl(item),
+    h("span", { class: "shot" }, photoEl(item), lent ? h("span", { class: "lent-badge" }, "Lent") : null),
     h("span", { class: "info" },
       h("span", { class: "name" }, item.name),
-      h("span", { class: "muted small" }, item.mine ? "Yours" : `From ${item.owner.name}`),
+      lent ? h("span", { class: "who" }, `With ${item.lent.to.name} \u00b7 back ${fmtDate(item.lent.until)}`) : null,
+      item.donation !== null
+        ? h("span", { class: "donation" }, `Suggested donation: ${fmtAmount(item.donation)}`)
+        : lent ? null : h("span", { class: "free" }, "Free to borrow"),
+      h("span", { class: "who" }, item.mine ? "Yours" : `From ${item.owner.name}`),
       statusPill(item, true),
-      item.donation !== null ? h("span", { class: "muted small donation" }, `Suggested donation: ${fmtAmount(item.donation)}`) : null,
     ),
   );
 }
@@ -42,23 +52,33 @@ export async function renderItem(id) {
   const rerender = () => redraw(`#/item/${id}`);
   const { item, history, myRequestIds } = await api("GET", `/api/items/${id}`);
   const parts = [
-    h("button", { class: "link", type: "button", onclick: () => history_back(item) }, "Back"),
-    photoEl(item, "big"),
+    h("div", { class: "hero" },
+      photoEl(item, "big"),
+      h("button", { class: "fab", type: "button", "aria-label": "Back", onclick: () => history_back(item) }, icon("back")),
+    ),
     h("h1", null, item.name),
-    h("div", { class: "row" }, statusPill(item), h("span", { class: "muted" }, item.mine ? "Yours" : `Owned by ${item.owner.name}`)),
-    item.note ? h("p", { style: "margin-top:10px" }, item.note) : null,
-    item.donation !== null ? donationNote(item) : null,
+    h("div", { class: "row" }, statusPill(item), item.mine ? h("span", { class: "muted small" }, "Yours") : null),
+    h("hr", { class: "rule" }),
+    h("div", { class: "host" },
+      h("span", { class: "avatar", "aria-hidden": "true" }, (item.owner.name || "?").slice(0, 1).toUpperCase()),
+      h("div", null, h("b", null, item.mine ? "Lent by you" : `Owned by ${item.owner.name}`), h("span", { class: "sub" }, item.mine ? "Shared with your groups" : "Member of the group")),
+    ),
+    item.note ? [h("hr", { class: "rule" }), h("p", { class: "note" }, item.note)] : null,
+    item.donation !== null ? [h("hr", { class: "rule" }), donationNote(item)] : null,
   ];
+  let bar = null;
 
   if (item.mine) {
-    parts.push(h("div", { class: "row", style: "margin:12px 0" }, h("button", { type: "button", onclick: () => go(`#/mine/edit/${item.id}`) }, "Edit item")));
+    bar = stickyBar(item, h("button", { class: "primary", type: "button", onclick: () => go(`#/mine/edit/${item.id}`) }, "Edit item"));
     const incoming = (await api("GET", "/api/requests")).requests.filter((r) => r.item.id === item.id && ["pending", "approved", "lent"].includes(r.status));
     parts.push(h("h2", null, "Requests"));
     parts.push(incoming.length ? incoming.map((r) => requestCard(r, "owner", rerender)) : h("p", { class: "muted" }, "No open requests."));
   } else if (item.status === "paused") {
     parts.push(h("p", { class: "callout" }, `${item.owner.name} has paused this item for now.`));
   } else {
-    parts.push(h("h2", null, "Request this item"), requestForm(item, rerender));
+    const { form, submit } = requestForm(item, rerender);
+    parts.push(form);
+    bar = stickyBar(item, submit);
   }
 
   if (!item.mine && myRequestIds.length) {
@@ -76,7 +96,15 @@ export async function renderItem(id) {
           )))
       : h("p", { class: "muted" }, "Not lent out yet."),
   );
-  return h("div", null, parts);
+  return h("div", { class: "detail" }, parts, bar);
+}
+
+/** Sticky bar above the tab bar: the suggested amount on the left, the main action on the right. */
+function stickyBar(item, action) {
+  const left = item.donation !== null
+    ? h("div", { class: "left" }, h("div", { class: "amt" }, fmtAmount(item.donation)), h("div", { class: "sub" }, "suggested donation"))
+    : h("div", { class: "left" }, h("div", { class: "amt" }, "Free"), h("div", { class: "sub" }, "to borrow"));
+  return h("div", { class: "bar", "data-bar": "" }, left, action);
 }
 
 function history_back() {
@@ -85,12 +113,13 @@ function history_back() {
 }
 
 function donationNote(item) {
-  return h("div", { class: "callout", "data-donation": "" },
+  return h("div", { class: "donation-note", "data-donation": "" },
     h("strong", null, `Suggested donation: ${fmtAmount(item.donation)}`),
-    h("div", { class: "small" }, "Paid in person or by transfer, not in the app."),
+    "Paid in person or by transfer, not in the app.",
   );
 }
 
+/** The date block and message stay on the page. The submit button lives in the sticky bar. */
 function requestForm(item, rerender) {
   const today = state.today;
   const from = h("input", { type: "date", id: "req-from", value: today, min: today, required: true });
@@ -101,15 +130,14 @@ function requestForm(item, rerender) {
   });
   const message = h("textarea", { id: "req-message", maxlength: "280", placeholder: "What do you need it for?" });
   const error = h("p", { class: "error-text", role: "alert" });
-  const send = h("button", { class: "primary block", type: "submit" }, "Send request");
-  const form = h("form", { class: "card" },
-    h("div", { class: "row" },
-      h("label", { class: "field grow" }, h("span", null, "From"), from),
-      h("label", { class: "field grow" }, h("span", null, "Until"), until),
+  const send = h("button", { class: "primary", type: "submit", form: "request-form", "aria-label": "Send request" }, "Request");
+  const form = h("form", { class: "request-form", id: "request-form" },
+    h("div", { class: "dates" },
+      h("label", { class: "date" }, h("span", null, "From"), from),
+      h("label", { class: "date" }, h("span", null, "Until"), until),
     ),
     h("label", { class: "field" }, h("span", null, "Message"), message),
     error,
-    send,
   );
   form.addEventListener("submit", (event) => {
     event.preventDefault();
@@ -123,6 +151,6 @@ function requestForm(item, rerender) {
       }
     });
   });
-  return form;
+  return { form, submit: send };
 }
 

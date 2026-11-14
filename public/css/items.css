@@ -1,0 +1,46 @@
+/* Photo-first tiles */
+.photo { width: 100%; aspect-ratio: 4 / 5; object-fit: cover; display: block; background: var(--soft); border-radius: var(--r-photo); }
+.photo.none { display: flex; align-items: center; justify-content: center; color: var(--muted); font-size: var(--fs-sm); }
+.photo.big { aspect-ratio: 4 / 3; border-radius: 0; }
+.photo.preview, .preview { max-width: 160px; aspect-ratio: 4 / 5; border-radius: var(--r-photo); display: block; margin-bottom: var(--s2); }
+
+.tile {
+  display: flex; flex-direction: column; align-items: stretch; justify-content: flex-start;
+  text-align: left; padding: 0; min-height: 0; gap: 0;
+  border: 0; border-radius: 0; background: none; font-weight: 400;
+}
+.shot { position: relative; display: block; }
+.lent-badge {
+  position: absolute; top: 8px; left: 8px; height: 22px; padding: 0 8px; border-radius: 4px;
+  background: var(--ink); color: var(--ink-inverse); font-size: 0.6875rem; font-weight: 600; letter-spacing: 0.01em;
+  display: inline-flex; align-items: center;
+}
+.tile .info { display: flex; flex-direction: column; gap: 2px; min-width: 0; padding: var(--s2) 0 0; }
+.tile .name { font-size: var(--fs-md); font-weight: 600; letter-spacing: -0.015em; line-height: 1.25; overflow-wrap: anywhere; }
+.tile .donation, .tile .free { font-size: 0.6875rem; font-weight: 600; letter-spacing: -0.01em; color: var(--teal); white-space: nowrap; }
+.tile .who { font-size: var(--fs-xs); color: var(--muted); overflow-wrap: anywhere; }
+.tile .pill { margin: 2px 0; }
+
+/* Item detail */
+.detail { padding-bottom: 0; }
+.hero { position: relative; margin: calc(-1 * (var(--s4) + env(safe-area-inset-top))) calc(-1 * var(--gutter)) var(--s4); }
+.hero .photo.none { aspect-ratio: 4 / 3; border-radius: 0; }
+.fab {
+  position: absolute; top: calc(10px + env(safe-area-inset-top)); left: var(--gutter);
+  width: 44px; height: 44px; min-height: 44px; padding: 0; border-radius: 22px; border: 0;
+  background: #fff; box-shadow: 0 1px 4px rgb(0 0 0 / 0.18);
+}
+.fab svg { width: 20px; height: 20px; fill: none; stroke: var(--ink); stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+.detail h1 { font-size: 1.5rem; letter-spacing: -0.03em; margin-bottom: var(--s2); }
+.rule { height: 1px; background: var(--line); margin: var(--s4) 0; border: 0; }
+.host { display: flex; align-items: center; gap: var(--s3); }
+.host b { display: block; font-size: var(--fs-md); font-weight: 600; }
+.host span.sub { font-size: var(--fs-sm); color: var(--muted); }
+.avatar {
+  width: 40px; height: 40px; border-radius: 20px; flex: none; background: var(--ink); color: var(--ink-inverse);
+  display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: var(--fs-md);
+}
+.note { font-size: var(--fs-md); line-height: 1.5; margin: 0; }
+.donation-note { margin: 0 0 var(--s3); font-size: var(--fs-sm); color: var(--muted); line-height: 1.4; }
+.donation-note strong { color: var(--teal); font-size: var(--fs-md); display: block; font-weight: 600; }
+.callout { background: var(--soft); border-radius: var(--r-photo); padding: var(--s3) 14px; margin: 0 0 14px; }

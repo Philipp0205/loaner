@@ -10,7 +10,7 @@ export async function renderAlerts() {
     state.unread = 0;
     redraw("#/alerts");
   } }, "Mark all as read");
-  const head = h("div", { class: "row", style: "justify-content:space-between;margin-bottom:12px" }, h("h1", { style: "margin:0" }, "Alerts"), unread ? mark : null);
+  const head = h("div", { class: "page-head" }, h("h1", null, "Alerts"), unread ? mark : null);
   if (!data.notifications.length) {
     state.unread = 0;
     return h("div", null, head, emptyState("All quiet", "You will see requests, answers and reminders here."));
@@ -18,9 +18,9 @@ export async function renderAlerts() {
   state.unread = data.unread;
   const cards = data.notifications.map((n) =>
     h("article", { class: `card${n.read ? "" : " unread"}`, "data-note": n.type },
-      h("div", { class: "row" }, h("h3", { class: "grow" }, n.title), h("span", { class: "muted small" }, fmtMoment(n.createdAt))),
+      h("div", { class: "card-top" }, h("h3", null, n.title), h("span", { class: "muted small" }, fmtMoment(n.createdAt))),
       h("p", { style: "margin:6px 0 0" }, n.body),
-      n.requestId || n.itemId ? h("div", { class: "row", style: "margin-top:6px" }, h("button", { type: "button", class: "link", onclick: () => open(n) }, n.type === "request_new" ? "Review request" : "Open")) : null,
+      n.requestId || n.itemId ? h("div", { style: "margin-top:6px" }, h("button", { type: "button", class: "link", onclick: () => open(n) }, n.type === "request_new" ? "Review request" : "Open")) : null,
     ),
   );
   return h("div", null, head, cards);

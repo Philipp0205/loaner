@@ -1,0 +1,39 @@
+/* Request form: bordered two-cell date block */
+.request-form { margin: var(--s4) 0 0; }
+.dates {
+  display: grid; grid-template-columns: 1fr 1fr; margin: 0 0 var(--s3);
+  border: 1px solid var(--line-strong); border-radius: var(--r-input); overflow: hidden;
+}
+.date { display: block; margin: 0; padding: 10px 14px 6px; min-width: 0; }
+.date + .date { border-left: 1px solid var(--line-strong); }
+.date > span {
+  display: block; font-size: 0.625rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--muted); margin: 0 0 2px;
+}
+.date input[type="date"] {
+  min-height: 32px; padding: 0; border: 0; border-radius: 0; box-shadow: none;
+  font-size: var(--fs-md); font-weight: 600; background: none;
+}
+.date:focus-within { background: var(--soft); }
+.date input[type="date"]:focus { box-shadow: none; }
+.request-form .pay-hint { font-size: var(--fs-sm); color: var(--muted); line-height: 1.4; margin: 0 0 var(--s3); }
+
+/* Sticky bottom bar: amount left, black Request right, above the tab bar */
+.bar {
+  position: fixed; left: 0; right: 0; z-index: 9;
+  bottom: calc(var(--tab-h) + env(safe-area-inset-bottom));
+  height: var(--bar-h); display: flex; align-items: center; justify-content: space-between; gap: var(--s3);
+  padding: 0 calc(20px + env(safe-area-inset-right)) 0 calc(20px + env(safe-area-inset-left));
+  background: var(--card); box-shadow: 0 -1px 0 var(--line);
+}
+.bar .left { min-width: 0; }
+.bar .amt { font-size: var(--fs-lg); font-weight: 600; line-height: 1.2; }
+.bar .sub { font-size: var(--fs-xs); color: var(--muted); }
+.bar button { min-height: 48px; padding: 0 28px; font-size: var(--fs-lg); flex: none; }
+body:has(.bar) #toasts { bottom: calc(var(--tab-h) + var(--bar-h) + 12px + env(safe-area-inset-bottom)); }
+
+/* New and edit item form */
+.item-form fieldset { border: 0; padding: 0; margin: var(--s4) 0 0; }
+.item-form legend { font-size: var(--fs-sm); font-weight: 500; color: var(--muted); padding: 0; margin-bottom: 2px; }
+.toggle-row { border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); padding: var(--s1) 0; }
+.hint { font-size: var(--fs-sm); color: var(--muted); margin: 0; }

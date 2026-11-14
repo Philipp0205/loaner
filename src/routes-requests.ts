@@ -10,6 +10,8 @@ export type RequestRow = {
   id: string;
   item_id: string;
   item_name: string;
+  item_has_photo: number;
+  item_updated_at: number;
   owner_id: string;
   owner_name: string;
   borrower_id: string;
@@ -27,7 +29,8 @@ export type RequestRow = {
 };
 
 const REQUEST_SELECT = `
-  SELECT r.id, r.item_id, i.name AS item_name, i.owner_id, o.name AS owner_name,
+  SELECT r.id, r.item_id, i.name AS item_name, (i.photo IS NOT NULL) AS item_has_photo, i.updated_at AS item_updated_at,
+         i.owner_id, o.name AS owner_name,
          r.borrower_id, b.name AS borrower_name, r.from_date, r.until_date, r.message, r.reply,
          r.status, r.auto_declined, r.created_at, r.decided_at, r.handed_over_at, r.returned_at
   FROM requests r
@@ -40,7 +43,7 @@ const MAX_DAYS = 365;
 function requestView(row: RequestRow) {
   return {
     id: row.id,
-    item: { id: row.item_id, name: row.item_name },
+    item: { id: row.item_id, name: row.item_name, hasPhoto: !!row.item_has_photo, photoVersion: row.item_updated_at },
     owner: { id: row.owner_id, name: row.owner_name },
     borrower: { id: row.borrower_id, name: row.borrower_name },
     from: row.from_date,

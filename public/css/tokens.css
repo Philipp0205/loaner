@@ -1,0 +1,62 @@
+/* Shelf design tokens. Every other stylesheet reads these variables. */
+@font-face {
+  font-family: "Inter";
+  src: url("/fonts/inter-latin-var.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  --font: Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* colour */
+  --bg: #ffffff;
+  --card: #ffffff;
+  --ink: #222222;
+  --ink-inverse: #ffffff;
+  --muted: #717171;
+  --line: #ebebeb;
+  --line-strong: #b0b0b0;
+  --soft: #f4f4f4;
+  --teal: #00857a;
+  --teal-ink: #006b62;
+  --teal-soft: #e3f3f1;
+  --amber-ink: #7a4e00;
+  --amber-soft: #fdf0d5;
+  --red: #b3261e;
+  --red-soft: #fbe7e5;
+  --grey-ink: #5f5f5f;
+  --grey-soft: #f0f0f0;
+
+  /* shape */
+  --r-photo: 12px;
+  --r-input: 12px;
+  --r-card: 16px;
+  --r-btn: 10px;
+  --r-pill: 999px;
+
+  /* space */
+  --s1: 4px;
+  --s2: 8px;
+  --s3: 12px;
+  --s4: 16px;
+  --s5: 24px;
+  --gutter: 16px;
+
+  /* type */
+  --fs-xs: 0.75rem;
+  --fs-sm: 0.8125rem;
+  --fs-md: 0.9375rem;
+  --fs-lg: 1rem;
+  --fs-h2: 1.125rem;
+  --fs-h1: 1.75rem;
+
+  /* chrome */
+  --tab-h: 64px;
+  --bar-h: 72px;
+  --ring: 0 0 0 2px var(--bg), 0 0 0 4px var(--ink);
+
+  color-scheme: light;
+}
