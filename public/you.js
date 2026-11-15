@@ -16,6 +16,7 @@ export async function renderYou() {
     h("div", { class: "stack" },
       h("button", { type: "button", class: "block", id: "open-whats-new", onclick: openWhatsNewList }, "What's new"),
       h("button", { type: "button", class: "block", id: "open-feedback", onclick: openFeedback }, "Send feedback"),
+      h("a", { class: "btn block", id: "open-privacy", href: "/privacy" }, "Privacy"),
     ));
   parts.push(h("h2", null, "This phone"), h("button", { type: "button", class: "block", id: "sign-out", onclick: signOut }, "Sign out of this phone"));
   return h("div", null, parts);
