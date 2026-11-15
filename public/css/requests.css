@@ -23,7 +23,7 @@
   background: var(--grey-soft); color: var(--grey-ink);
 }
 .pill.available, .pill.approved { background: var(--teal-soft); color: var(--teal-ink); }
-.pill.lent { background: var(--ink); color: var(--ink-inverse); }
+.pill.lent { background: var(--fill); color: var(--fill-ink); }
 .pill.late { background: var(--red-soft); color: var(--red); }
 .pill.pending { background: var(--amber-soft); color: var(--amber-ink); }
 .pill.declined, .pill.cancelled, .pill.returned, .pill.paused { background: var(--grey-soft); color: var(--grey-ink); }

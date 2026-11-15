@@ -1,64 +1,67 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { loadKit } from "./kit-harness.js";
 
-type Helpers = {
-  rgbToHex: (value: unknown) => string | null;
-  pageBackground: (doc: FakeDoc, win: FakeWin) => string | null;
-  applyThemeColor: (doc: FakeDoc, win: FakeWin) => string | null;
-};
-type FakeEl = { setAttribute: (name: string, value: string) => void; content?: string };
-type FakeDoc = { documentElement: unknown; body: unknown; querySelector: (sel: string) => FakeEl | null };
-type FakeWin = { getComputedStyle: (el: unknown) => { backgroundColor: string } };
+const themeMetas = (head: { children: { tagName: string; getAttribute: (n: string) => string | null }[] }) =>
+  head.children.filter((n) => n.tagName === "META" && n.getAttribute("name") === "theme-color");
 
-const { rgbToHex, pageBackground, applyThemeColor } = (await import(
-  new URL("../public/theme-color.js", import.meta.url).href
-)) as Helpers;
-
-test("rgbToHex turns computed rgb into #rrggbb", () => {
-  assert.equal(rgbToHex("rgb(15, 28, 31)"), "#0f1c1f");
-  assert.equal(rgbToHex("rgb(255, 255, 255)"), "#ffffff");
-  assert.equal(rgbToHex("rgba(0, 0, 0, 1)"), "#000000");
-  assert.equal(rgbToHex("rgba(34, 34, 34, 0.45)"), "#222222");
+test("toHex turns computed rgb into #rrggbb, comma or space separated", () => {
+  const { toHex } = loadKit(["theme-color.js"]).window.AppKit.themeColor;
+  assert.equal(toHex("rgb(15, 28, 31)"), "#0f1c1f");
+  assert.equal(toHex("rgb(255, 255, 255)"), "#ffffff");
+  assert.equal(toHex("rgba(0, 0, 0, 1)"), "#000000");
+  assert.equal(toHex("rgb(15 28 31)"), "#0f1c1f");
+  assert.equal(toHex("rgb(15 28 31 / 50%)"), "#0f1c1f");
+  assert.equal(toHex("  rgb(0, 0, 0)  "), "#000000");
 });
 
-test("rgbToHex rejects transparent and unknown values", () => {
-  assert.equal(rgbToHex("rgba(0, 0, 0, 0)"), null);
-  assert.equal(rgbToHex("transparent"), null);
-  assert.equal(rgbToHex("#0f1c1f"), null);
-  assert.equal(rgbToHex(""), null);
-  assert.equal(rgbToHex(undefined), null);
+test("toHex rejects transparent and unknown values", () => {
+  const { toHex } = loadKit(["theme-color.js"]).window.AppKit.themeColor;
+  assert.equal(toHex("rgba(0, 0, 0, 0)"), null);
+  assert.equal(toHex("rgb(0 0 0 / 0)"), null);
+  assert.equal(toHex("transparent"), null);
+  assert.equal(toHex("#0f1c1f"), null);
+  assert.equal(toHex(""), null);
+  assert.equal(toHex(undefined), null);
 });
 
-function fakeDocument(htmlColor: string, bodyColor: string) {
-  const meta: FakeEl = { setAttribute(name, value) { if (name === "content") this.content = value; } };
-  const html = { id: "html" };
-  const body = { id: "body" };
-  const colors = new Map<unknown, string>([[html, htmlColor], [body, bodyColor]]);
-  const doc: FakeDoc = {
-    documentElement: html,
-    body,
-    querySelector: (sel) => (sel === 'meta[name="theme-color"]' ? meta : null),
-  };
-  const win: FakeWin = { getComputedStyle: (el) => ({ backgroundColor: colors.get(el) ?? "" }) };
-  return { doc, win, meta };
-}
-
-test("pageBackground reads html first, then body, and skips transparent html", () => {
-  const painted = fakeDocument("rgb(15, 28, 31)", "rgb(255, 255, 255)");
-  assert.equal(pageBackground(painted.doc, painted.win), "#0f1c1f");
-  const bodyOnly = fakeDocument("rgba(0, 0, 0, 0)", "rgb(15, 28, 31)");
-  assert.equal(pageBackground(bodyOnly.doc, bodyOnly.win), "#0f1c1f");
-  const none = fakeDocument("rgba(0, 0, 0, 0)", "rgba(0, 0, 0, 0)");
-  assert.equal(pageBackground(none.doc, none.win), null);
+test("start() replaces the media-bound metas with one meta that holds the painted page colour", () => {
+  const env = loadKit(["theme-color.js"], { htmlBackground: "rgb(0, 0, 0)", bodyBackground: "rgb(255, 255, 255)" });
+  for (const [content, media] of [["#000000", "(prefers-color-scheme: dark) and (max-width: 719px)"], ["#ffffff", "(prefers-color-scheme: light) and (max-width: 719px)"]]) {
+    const meta = env.document.createElement("meta");
+    meta.setAttribute("name", "theme-color");
+    meta.setAttribute("content", content);
+    meta.setAttribute("media", media);
+    env.head.appendChild(meta);
+  }
+  env.window.AppKit.themeColor.start();
+  const metas = themeMetas(env.head);
+  assert.equal(metas.length, 1, "exactly one theme-color meta is left");
+  assert.equal(metas[0].getAttribute("media"), null, "and it has no media attribute");
+  assert.equal(metas[0].getAttribute("content"), "#000000", "html wins over body");
 });
 
-test("applyThemeColor writes the painted background into the meta and keeps the old value when none is found", () => {
-  const dark = fakeDocument("rgb(15, 28, 31)", "rgb(15, 28, 31)");
-  assert.equal(applyThemeColor(dark.doc, dark.win), "#0f1c1f");
-  assert.equal(dark.meta.content, "#0f1c1f");
+test("start() follows a scheme change, and falls back to body when html is transparent", () => {
+  const env = loadKit(["theme-color.js"], { htmlBackground: "rgb(255, 255, 255)" });
+  env.window.AppKit.themeColor.start();
+  assert.equal(themeMetas(env.head)[0].getAttribute("content"), "#ffffff");
+  env.style.html = "rgb(0, 0, 0)";
+  env.setMedia(["(prefers-color-scheme: dark)"]);
+  assert.equal(themeMetas(env.head).length, 1, "still one meta");
+  assert.equal(themeMetas(env.head)[0].getAttribute("content"), "#000000");
+  env.style.html = "rgba(0, 0, 0, 0)";
+  env.style.body = "rgb(15, 28, 31)";
+  env.setMedia([]);
+  assert.equal(themeMetas(env.head)[0].getAttribute("content"), "#0f1c1f");
+});
 
-  const none = fakeDocument("rgba(0, 0, 0, 0)", "rgba(0, 0, 0, 0)");
-  none.meta.content = "#ffffff";
-  assert.equal(applyThemeColor(none.doc, none.win), null);
-  assert.equal(none.meta.content, "#ffffff");
+test("start() leaves the page alone when no solid colour is painted yet", () => {
+  const env = loadKit(["theme-color.js"]);
+  const meta = env.document.createElement("meta");
+  meta.setAttribute("name", "theme-color");
+  meta.setAttribute("content", "#ffffff");
+  env.head.appendChild(meta);
+  env.window.AppKit.themeColor.start();
+  assert.equal(themeMetas(env.head).length, 1);
+  assert.equal(themeMetas(env.head)[0].getAttribute("content"), "#ffffff");
 });

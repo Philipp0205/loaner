@@ -1,4 +1,6 @@
-/* Full-screen camera for adding an item. Sits above the tab bar (z-index 10) and the What's new sheet (30). */
+/* Full-screen camera for adding an item. Sits above the tab bar (20) and the What's new sheet (30 and 31).
+   The kit's standalone status strip (60) is hidden while the camera is open, so the viewfinder fills the screen. */
+html:has(.camera).ak-status-strip body::before { display: none; }
 .camera {
   position: fixed; inset: 0; z-index: 40; background: var(--cam-bg); color: var(--cam-ink);
   display: flex; flex-direction: column; overflow: hidden;

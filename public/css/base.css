@@ -35,7 +35,7 @@ button, .btn {
   text-decoration: none;
 }
 button:disabled { opacity: 0.5; cursor: default; }
-button.primary { background: var(--ink); border-color: var(--ink); color: var(--ink-inverse); }
+button.primary { background: var(--fill); border-color: var(--fill); color: var(--fill-ink); }
 button.danger { color: var(--red); border-color: var(--red); }
 button.link { border: 0; background: none; color: var(--teal-ink); padding: 0 6px; text-decoration: underline; font-weight: 500; }
 button.block { width: 100%; }

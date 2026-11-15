@@ -40,13 +40,13 @@ test("after sign-up the install prompt is on screen, with a close button and a n
   await signUp(page, "Ines");
   const banner = bannerOf(page);
   await banner.waitFor();
-  assert.equal(await page.locator("#install-prompt").count(), 1);
+  assert.equal(await page.locator("#ak-install-prompt").count(), 1);
   await banner.getByText("Install Loan some", { exact: true }).waitFor();
   await banner.getByRole("button", { name: "Not now" }).waitFor();
   // The app behind it still works: the tab bar buttons are there and the group button is clickable.
-  await page.locator(".tabbar").getByRole("button", { name: "You" }).click();
+  await page.locator(".ak-tabbar").getByRole("button", { name: "You" }).click();
   await page.getByRole("heading", { level: 1, name: "You" }).waitFor();
-  assert.equal(await page.locator("#install-prompt").count(), 1, "still one copy after navigating");
+  assert.equal(await page.locator("#ak-install-prompt").count(), 1, "still one copy after navigating");
   await ctx.close();
 });
 
@@ -72,9 +72,9 @@ test("Android: the Install button appears when beforeinstallprompt arrives, prom
   await banner.getByRole("button", { name: "Install", exact: true }).waitFor();
   await page.evaluate(() => window.dispatchEvent(new Event("appinstalled")));
   await banner.waitFor({ state: "detached" });
-  await page.locator(".tabbar").getByRole("button", { name: "You" }).click();
+  await page.locator(".ak-tabbar").getByRole("button", { name: "You" }).click();
   await page.getByRole("heading", { level: 1, name: "You" }).waitFor();
-  assert.equal(await page.locator("#install-prompt").count(), 0, "stays hidden after navigation");
+  assert.equal(await page.locator("#ak-install-prompt").count(), 0, "stays hidden after navigation");
   await ctx.close();
 });
 
@@ -98,7 +98,7 @@ test("iOS Safari: shows Share then Add to Home Screen with a share icon, and no 
   await banner.waitFor();
   await banner.getByText("Tap Share", { exact: false }).waitFor();
   await banner.getByText("Add to Home Screen", { exact: false }).waitFor();
-  assert.equal(await banner.locator(".ip-steps svg").count(), 1, "the share icon");
+  assert.equal(await banner.locator(".ak-ip-steps svg").count(), 1, "the share icon");
   // Even if a beforeinstallprompt shows up, iOS has no working Install button.
   await fireInstallEvent(page, "accepted");
   assert.equal(await banner.getByRole("button", { name: "Install", exact: true }).count(), 0);
@@ -113,19 +113,19 @@ test("closing hides it for this visit, across navigation, and a new visit shows 
   await banner.waitFor();
   await banner.getByRole("button", { name: "Not now" }).click();
   await banner.waitFor({ state: "detached" });
-  assert.equal(await page.evaluate(() => sessionStorage.getItem("loaner_install_prompt_dismissed")), "1");
-  assert.equal(await page.evaluate(() => localStorage.getItem("loaner_install_prompt_dismissed")), null, "not kept in localStorage");
+  assert.equal(await page.evaluate(() => sessionStorage.getItem("ak-install-prompt-dismissed")), "1");
+  assert.equal(await page.evaluate(() => localStorage.getItem("ak-install-prompt-dismissed")), null, "not kept in localStorage");
 
   for (const tab of ["My items", "Requests", "Alerts", "You", "Browse"]) {
-    await page.locator(".tabbar").getByRole("button", { name: tab, exact: true }).click();
-    await page.waitForFunction((label) => document.querySelector(".tabbar [aria-current]")?.textContent?.includes(label), tab);
+    await page.locator(".ak-tabbar").getByRole("button", { name: tab, exact: true }).click();
+    await page.waitForFunction((label) => document.querySelector(".ak-tabbar [aria-current]")?.textContent?.includes(label), tab);
   }
-  assert.equal(await page.locator("#install-prompt").count(), 0, "stays gone while navigating");
+  assert.equal(await page.locator("#ak-install-prompt").count(), 0, "stays gone while navigating");
 
   // A reload in the same session keeps it closed. A new visit has empty sessionStorage, so it comes back.
   await page.reload();
   await page.getByRole("heading", { name: "No groups yet" }).waitFor();
-  assert.equal(await page.locator("#install-prompt").count(), 0);
+  assert.equal(await page.locator("#ak-install-prompt").count(), 0);
   await page.evaluate(() => sessionStorage.clear());
   await page.reload();
   await banner.waitFor();
@@ -148,16 +148,16 @@ test("the installed app never shows it, for display-mode standalone and navigato
   })()`);
   await signUp(media.page, "Sam");
   await media.page.waitForTimeout(600);
-  assert.equal(await media.page.locator("#install-prompt").count(), 0, "display-mode standalone");
+  assert.equal(await media.page.locator("#ak-install-prompt").count(), 0, "display-mode standalone");
   await fireInstallEvent(media.page, "accepted");
-  assert.equal(await media.page.locator("#install-prompt").count(), 0, "not even when the install event arrives");
+  assert.equal(await media.page.locator("#ak-install-prompt").count(), 0, "not even when the install event arrives");
   await media.ctx.close();
 
   const ios = await open(await loaner.phone({ userAgent: IPHONE_UA }));
   await ios.ctx.addInitScript(`Object.defineProperty(navigator, "standalone", { value: true, configurable: true })`);
   await signUp(ios.page, "Ines");
   await ios.page.waitForTimeout(600);
-  assert.equal(await ios.page.locator("#install-prompt").count(), 0, "navigator.standalone");
+  assert.equal(await ios.page.locator("#ak-install-prompt").count(), 0, "navigator.standalone");
   await ios.ctx.close();
 });
 
@@ -165,7 +165,7 @@ test("the banner stays clear of the tab bar and leaves the buttons reachable", {
   const { ctx, page } = await open();
   await signUp(page, "Bea");
   await bannerOf(page).waitFor();
-  const [banner, tabbar] = await Promise.all([bannerOf(page).boundingBox(), page.locator(".tabbar").boundingBox()]);
+  const [banner, tabbar] = await Promise.all([bannerOf(page).boundingBox(), page.locator(".ak-tabbar").boundingBox()]);
   assert.ok(banner && tabbar);
   const apart = banner.y + banner.height <= tabbar.y || tabbar.y + tabbar.height <= banner.y;
   assert.ok(apart, `banner ${JSON.stringify(banner)} overlaps tab bar ${JSON.stringify(tabbar)}`);
@@ -173,9 +173,9 @@ test("the banner stays clear of the tab bar and leaves the buttons reachable", {
 
   // The tab bar's centre points hit the tab buttons, not the banner.
   for (const label of ["Browse", "My items", "Requests", "Alerts", "You"]) {
-    const button = page.locator(".tabbar").getByRole("button", { name: label, exact: true });
+    const button = page.locator(".ak-tabbar").getByRole("button", { name: label, exact: true });
     const box = (await button.boundingBox())!;
-    const hit = await page.evaluate(({ x, y }) => !!document.elementFromPoint(x, y)?.closest(".tabbar"), { x: box.x + box.width / 2, y: box.y + box.height / 2 });
+    const hit = await page.evaluate(({ x, y }) => !!document.elementFromPoint(x, y)?.closest(".ak-tabbar"), { x: box.x + box.width / 2, y: box.y + box.height / 2 });
     assert.ok(hit, `${label} is not covered`);
   }
   await ctx.close();

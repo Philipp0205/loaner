@@ -1,33 +1,11 @@
-/* Bottom sheet and the What's new list inside it. */
-html.sheet-open { overflow: hidden; }
-
-.scrim {
-  position: fixed; inset: 0; z-index: 30; width: 100%; min-height: 0; padding: 0; border: 0; border-radius: 0;
-  background: var(--scrim);
-  animation: scrim-in 0.2s ease-out;
-}
-.sheet {
-  position: fixed; left: 0; right: 0; bottom: 0; z-index: 31;
-  display: flex; flex-direction: column;
-  max-width: 640px; margin: 0 auto;
-  max-height: min(85dvh, calc(100dvh - 24px - env(safe-area-inset-top)));
-  background: var(--card); color: var(--ink);
-  border-radius: 20px 20px 0 0;
-  box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.16);
-  padding: 0 calc(var(--gutter) + env(safe-area-inset-right)) calc(var(--s4) + env(safe-area-inset-bottom)) calc(var(--gutter) + env(safe-area-inset-left));
-  animation: sheet-up 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
-  transition: transform 0.2s ease-out;
-}
-.sheet.dragging { transition: none; }
-.sheet-head { flex: none; padding: 0 0 var(--s3); touch-action: none; cursor: grab; }
-.sheet-head h2 { margin: 0; font-size: 1.5rem; font-weight: 700; letter-spacing: -0.03em; }
-.sheet-head p { margin: var(--s1) 0 0; }
-.grabber { width: 40px; height: 5px; border-radius: var(--r-pill); background: var(--line-strong); margin: 10px auto 14px; }
-.sheet-scroll { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: var(--s2) 2px var(--s4); }
-.sheet-dock { flex: none; padding-top: var(--s3); box-shadow: 0 -1px 0 var(--line); }
-
-.sheet-layer.closing .sheet { transform: translateY(100%); animation: none; }
-.sheet-layer.closing .scrim { opacity: 0; transition: opacity 0.2s ease-in; animation: none; }
+/* What's new list and the Send feedback form. The sheet itself (scrim, motion, grabber, dock) is the kit's .ak-sheet. */
+/* Kit gap: .ak-sheet-layer is position: fixed with no z-index, so it is its own stacking context and the sheet's
+   z-index 31 only counts inside it. Without this the tab bar (z-index 20) paints over the sheet and eats taps. */
+.ak-sheet-layer { z-index: 31; }
+.ak-sheet-head h2 { margin: 0; font-size: 1.5rem; font-weight: 700; letter-spacing: -0.03em; }
+.ak-sheet-head p { margin: var(--s1) 0 0; }
+.ak-sheet-dock { box-shadow: 0 -1px 0 var(--line); padding-top: var(--s3); }
+.ak-grabber { background: var(--line-strong); }
 
 /* What's new entries */
 .wn-entry + .wn-entry { margin-top: var(--s4); padding-top: var(--s4); border-top: 1px solid var(--line); }
@@ -38,19 +16,13 @@ html.sheet-open { overflow: hidden; }
 .wn-entry li + li { margin-top: 6px; }
 
 /* Send feedback form inside the sheet */
-.sheet .field:last-child { margin-bottom: 0; }
-.sheet textarea { min-height: 140px; }
-.sheet textarea[aria-invalid] { border-color: var(--red); }
+.ak-sheet .field:last-child { margin-bottom: 0; }
+.ak-sheet textarea { min-height: 140px; }
+.ak-sheet textarea[aria-invalid] { border-color: var(--red); }
 .fb-meta { display: flex; justify-content: space-between; align-items: flex-start; gap: var(--s3); margin: calc(-1 * var(--s2)) 0 var(--s4); }
 .fb-meta .error-text { flex: 1; min-width: 0; margin: 0; }
 .fb-count { margin-left: auto; font-size: var(--fs-xs); color: var(--muted); font-variant-numeric: tabular-nums; }
 .fb-preview { display: flex; align-items: center; gap: var(--s3); margin-top: var(--s2); }
 .fb-preview:empty { display: none; }
 .fb-thumb { width: 64px; height: 64px; object-fit: cover; border-radius: var(--r-photo); border: 1px solid var(--line); }
-.sheet.fb-done .sheet-head { padding-bottom: var(--s4); }
-
-@keyframes sheet-up { from { transform: translateY(100%); } to { transform: translateY(0); } }
-@keyframes scrim-in { from { opacity: 0; } to { opacity: 1; } }
-@media (prefers-reduced-motion: reduce) {
-  .sheet, .scrim, .sheet-layer.closing .sheet, .sheet-layer.closing .scrim { animation: none; transition: none; }
-}
+.ak-sheet.fb-done .ak-sheet-head { padding-bottom: var(--s4); }

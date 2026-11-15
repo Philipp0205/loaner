@@ -20,7 +20,7 @@ async function startOnMyItems(page: Page) {
   await page.getByRole("heading", { name: "No groups yet" }).waitFor();
   await page.locator("#group-name").fill("Flat 3B");
   await page.getByRole("button", { name: "Create group" }).click();
-  await page.locator(".tabbar").getByRole("button", { name: "My items" }).click();
+  await page.locator(".ak-tabbar").getByRole("button", { name: "My items" }).click();
   await page.getByRole("heading", { level: 1, name: "My items" }).waitFor();
   await page.getByRole("button", { name: "Add an item" }).click();
   await page.locator("#camera-add").waitFor();

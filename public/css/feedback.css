@@ -1,17 +1,14 @@
-/* Toasts, spinner, empty states, errors */
+/* Toasts (the kit's #ak-toasts), spinner, empty states, errors */
 .error-text { color: var(--red); font-size: var(--fs-sm); font-weight: 500; margin: 6px 0; }
 .error-text:empty { display: none; }
 
-#toasts {
-  position: fixed; left: 0; right: 0; z-index: 20;
-  bottom: calc(var(--tab-h) + 12px + env(safe-area-inset-bottom));
-  display: flex; flex-direction: column; align-items: center; gap: var(--s2); pointer-events: none; padding: 0 var(--s4);
-}
-.toast {
-  background: var(--ink); color: var(--ink-inverse); padding: 12px 16px; border-radius: var(--r-btn);
-  font-size: var(--fs-md); font-weight: 500; max-width: 460px; box-shadow: 0 4px 16px rgb(0 0 0 / 0.25);
-}
-.toast.error { background: var(--red); color: var(--ink-inverse); }
+/* Kit gaps: toasts must not catch taps, the sticky action bar must not hide them, and the kit's
+   error text colour fails AA on its toast background, so errors read in the loaner red instead. */
+#ak-toasts { pointer-events: none; }
+.ak-toast { background: var(--card); box-shadow: 0 4px 16px rgb(0 0 0 / 0.25), inset 0 0 0 1px var(--line); font-weight: 500; }
+.ak-toast-error, .ak-toast-danger { color: var(--red); }
+body:has(.bar) .ak-toast { bottom: calc(var(--tab-h) + var(--bar-h) + 12px); }
+body:has(.bar) .ak-toast + .ak-toast { bottom: calc(var(--tab-h) + var(--bar-h) + 12px + 56px); }
 
 .spinner { text-align: center; color: var(--muted); font-size: var(--fs-sm); padding: 48px 0; }
 .spinner::before {

@@ -16,7 +16,7 @@ async function shot(page: Page, label: string): Promise<void> {
   await page.screenshot({ path: path.join(SHOTS, `${String(step).padStart(2, "0")}-${label}.png`) });
 }
 
-const tab = (page: Page, name: string) => page.locator(".tabbar").getByRole("button", { name, exact: false }).click();
+const tab = (page: Page, name: string) => page.locator(".ak-tabbar").getByRole("button", { name, exact: false }).click();
 
 test("Alice lends a drill to Bob, from invite to return", { timeout: 120_000 }, async () => {
   const errors: string[] = [];
@@ -37,7 +37,7 @@ test("Alice lends a drill to Bob, from invite to return", { timeout: 120_000 }, 
   await shot(alice, "alice-welcome");
   await alice.locator("#name").fill("Alice");
   await alice.getByRole("button", { name: "Get started" }).click();
-  await alice.locator("nav.tabbar").waitFor();
+  await alice.locator("nav.ak-tabbar").waitFor();
   await alice.getByRole("heading", { name: "No groups yet" }).waitFor();
 
   // She creates a group and copies the invite link.
@@ -58,7 +58,7 @@ test("Alice lends a drill to Bob, from invite to return", { timeout: 120_000 }, 
   await shot(bob, "bob-join");
   await bob.locator("#name").fill("Bob");
   await bob.getByRole("button", { name: "Join Flat 3B" }).click();
-  await bob.locator("nav.tabbar").waitFor();
+  await bob.locator("nav.ak-tabbar").waitFor();
   await bob.getByText("Nothing here yet").waitFor();
   assert.equal(new URL(bob.url()).pathname, "/");
   assert.equal(await bob.locator("#group-switch option:checked").textContent(), "Flat 3B");
@@ -114,8 +114,8 @@ test("Alice lends a drill to Bob, from invite to return", { timeout: 120_000 }, 
 
   // Alice sees the notification (unread badge) and approves.
   await alice.evaluate(() => document.dispatchEvent(new Event("visibilitychange")));
-  await alice.locator(".tabbar .badge").waitFor();
-  assert.equal(await alice.locator(".tabbar .badge").textContent(), "1");
+  await alice.locator(".ak-tabbar .ak-badge").waitFor();
+  assert.equal(await alice.locator(".ak-tabbar .ak-badge").textContent(), "1");
   await tab(alice, "Alerts");
   const note = alice.locator("article.card.unread", { hasText: "New request" });
   await note.getByText("Bob would like Cordless drill").waitFor();
@@ -173,7 +173,7 @@ test("Alice lends a drill to Bob, from invite to return", { timeout: 120_000 }, 
   for (const page of [alice, bob]) {
     const fit = await page.evaluate(() => ({ scroll: document.documentElement.scrollWidth, client: document.documentElement.clientWidth }));
     assert.equal(fit.scroll, fit.client, "no horizontal scroll");
-    for (const box of await page.locator(".tabbar button").evaluateAll((els) => els.map((el) => el.getBoundingClientRect().height))) {
+    for (const box of await page.locator(".ak-tabbar button").evaluateAll((els) => els.map((el) => el.getBoundingClientRect().height))) {
       assert.ok(box >= 44, "tab bar targets are at least 44px tall");
     }
   }
