@@ -7,6 +7,15 @@ import { normalizeEntries } from "./whats-new.js";
  */
 const RAW = [
   {
+    id: "2026-11-15-group-members",
+    date: "2026-11-15",
+    title: "See who is in your group",
+    bullets: [
+      "The You tab now lists everyone in each group.",
+      "Each person shows whether their notifications are on.",
+    ],
+  },
+  {
     id: "2026-11-15-dark-mode",
     date: "2026-11-15",
     title: "Dark mode",
