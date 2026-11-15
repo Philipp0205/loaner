@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import type http from "node:http";
 import test from "node:test";
-import { clientKey } from "../src/client-key.js";
+import { clientKey } from "../src/app-kit/index.ts";
 import { api, withApp, type AppCtx } from "./http.js";
 
 function fakeReq(forwarded: string | string[] | undefined, remoteAddress: string | undefined = "10.0.0.1"): http.IncomingMessage {
@@ -25,8 +25,9 @@ test("clientKey: a missing, empty or invalid header falls back to the socket add
   assert.equal(clientKey(fakeReq(undefined, "")), "unknown");
 });
 
-test("clientKey: an array header uses its first value", () => {
-  assert.equal(clientKey(fakeReq(["1.1.1.1, 203.0.113.9", "5.5.5.5"])), "203.0.113.9");
+test("clientKey: several header lines are joined in order, and the last hop is the proxy's", () => {
+  assert.equal(clientKey(fakeReq(["1.1.1.1, 203.0.113.9", "5.5.5.5"])), "5.5.5.5");
+  assert.equal(clientKey(fakeReq(["203.0.113.9"])), "203.0.113.9");
   assert.equal(clientKey(fakeReq([])), "10.0.0.1");
 });
 

@@ -1,7 +1,4 @@
 /* What's new list and the Send feedback form. The sheet itself (scrim, motion, grabber, dock) is the kit's .ak-sheet. */
-/* Kit gap: .ak-sheet-layer is position: fixed with no z-index, so it is its own stacking context and the sheet's
-   z-index 31 only counts inside it. Without this the tab bar (z-index 20) paints over the sheet and eats taps. */
-.ak-sheet-layer { z-index: 31; }
 .ak-sheet-head h2 { margin: 0; font-size: 1.5rem; font-weight: 700; letter-spacing: -0.03em; }
 .ak-sheet-head p { margin: var(--s1) 0 0; }
 .ak-sheet-dock { box-shadow: 0 -1px 0 var(--line); padding-top: var(--s3); }

@@ -1,8 +1,7 @@
-import { clientKey } from "./client-key.js";
+import { clientKey, createRateLimiter } from "./app-kit/index.ts";
 import { newId, newToken, normalizeRecoveryCode, recoveryCode, sha256 } from "./code.js";
 import { get, run, tx } from "./db.js";
 import { unreadCount } from "./notify.js";
-import { createRateLimiter } from "./rate-limit.js";
 import { isoDate } from "./time.js";
 import { joinGroup, groupByInvite } from "./routes-groups.js";
 import { HttpError, jsonBody, me, type Ctx, type Route } from "./types.js";

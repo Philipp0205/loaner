@@ -21,6 +21,7 @@ AppKit.installPrompt.init({
   title: "Install Loan some",
   text: "Add it to your home screen so it is easy to open.",
   closeLabel: "Not now",
+  iosNonSafari: "share-steps",
 });
 
 const root = document.getElementById("root");
@@ -44,13 +45,12 @@ const bar = AppKit.tabbar({
   active: currentTab,
   onSelect: (id) => go(`#/${id}`),
   label: "Main",
+  badgeLabel: "unread",
 });
 
-/** The kit badge has no accessible name, so it gets one here. */
 function updateBar(active = currentTab) {
   currentTab = active;
   bar.update({ active, badge: { alerts: state.unread > 0 ? state.unread : 0 } });
-  bar.el.querySelector('[data-tab="alerts"] .ak-badge')?.setAttribute("aria-label", `${state.unread} unread`);
 }
 
 function showBar(active) {

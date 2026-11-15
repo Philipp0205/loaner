@@ -7,6 +7,16 @@ import { normalizeEntries } from "./whats-new.js";
  */
 const RAW = [
   {
+    id: "2026-11-15-app-kit-v030",
+    date: "2026-11-15",
+    title: "Easier to read, and a fix for iPhone Chrome",
+    bullets: [
+      "Grey text, red warnings and the error pop-up are easier to read in light and dark mode.",
+      "On iPhone Chrome, the install prompt shows the Share steps again.",
+      "Sheets still sit above the tab bar, so Done and Send always work.",
+    ],
+  },
+  {
     id: "2026-11-15-notification-tap",
     date: "2026-11-15",
     title: "Notifications open the right screen",

@@ -2,6 +2,9 @@ import type http from "node:http";
 import type { DatabaseSync } from "node:sqlite";
 import type { Config } from "./config.js";
 import type { PushSender } from "./push.js";
+import { HttpError } from "./app-kit/index.ts";
+
+export { HttpError };
 
 export type Ctx = {
   db: DatabaseSync;
@@ -11,15 +14,6 @@ export type Ctx = {
 };
 
 export type User = { id: string; name: string };
-
-export class HttpError extends Error {
-  constructor(
-    public status: number,
-    message: string,
-  ) {
-    super(message);
-  }
-}
 
 export type Req = {
   ctx: Ctx;

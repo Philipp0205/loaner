@@ -91,17 +91,15 @@ const USED = [
 ];
 
 test("the Loan some tokens load after the kit tokens and only recolour (and set the font) inside the scheme blocks", () => {
-  const allowed = /^--(ak-(accent|accent-2|accent-strong|accent-ink|muted|danger|font)|line-strong|teal-ink|teal-soft|amber-ink|amber-soft|red-soft)$/;
+  const allowed = /^--(ak-(accent|accent-2|accent-strong|accent-ink|font)|line-strong|teal-ink|teal-soft|amber-ink|amber-soft|red-soft)$/;
   const schemeBlocks = loanerRules.filter((rule) => rule.media || rule.selectors.some((s) => s.startsWith("html[data-ak-scheme")));
   assert.ok(schemeBlocks.length >= 3, "dark, light media and forced light blocks");
   for (const rule of schemeBlocks) {
     for (const name of Object.keys(rule.vars)) assert.match(name, allowed, `${name} does not belong in a scheme block (space, type and shape stay the same in both)`);
   }
-  const lightNames = ["--ak-accent", "--ak-accent-2", "--ak-accent-strong", "--ak-accent-ink", "--ak-muted", "--ak-danger", "--line-strong", "--teal-ink", "--teal-soft", "--amber-ink", "--amber-soft", "--red-soft"];
-  const darkNames = lightNames.filter((name) => name !== "--ak-muted");
+  const names = ["--ak-accent", "--ak-accent-2", "--ak-accent-strong", "--ak-accent-ink", "--line-strong", "--teal-ink", "--teal-soft", "--amber-ink", "--amber-soft", "--red-soft"];
   for (const rule of schemeBlocks) {
-    const isLight = rule.media === "light" || rule.selectors.includes('html[data-ak-scheme="light"]');
-    for (const name of isLight ? lightNames : darkNames) assert.ok(name in rule.vars, `${rule.selectors.join(", ")} sets ${name}`);
+    for (const name of names) assert.ok(name in rule.vars, `${rule.selectors.join(", ")} sets ${name}`);
   }
 });
 
@@ -180,12 +178,26 @@ test("text tokens meet WCAG AA on their surfaces in both schemes", () => {
   }
 });
 
-test("the kit's light muted grey and light danger red fail AA on white, so Loan some overrides them", () => {
-  const kit = Object.assign({}, ...kitRules.filter((r) => r.media === "light").map((r) => r.vars));
-  assert.ok(contrast(kit["--ak-muted"], "#ffffff") < 4.5, "kit muted on white");
-  assert.ok(contrast(kit["--ak-danger"], "#ffffff") < 4.5, "kit danger on white");
-  assert.notEqual(L("muted"), kit["--ak-muted"]);
-  assert.notEqual(L("red"), kit["--ak-danger"]);
+test("the kit's own muted and danger text reach AA, so Loan some does not override them", () => {
+  const kitScheme = (scheme: "light" | "dark") =>
+    Object.assign({}, ...kitRules.filter((r) => r.selectors.includes(":root") && (r.media === null || r.media === scheme)).map((r) => r.vars));
+  for (const scheme of ["light", "dark"] as const) {
+    const kit = kitScheme(scheme);
+    const t = pick(scheme);
+    // The surfaces text sits on: page, card, soft panel, and the error toast (kit --ak-surface-2).
+    for (const surface of [t("bg"), t("card"), t("soft"), kit["--ak-surface-2"]]) {
+      for (const name of ["--ak-muted", "--ak-danger"]) {
+        const value = contrast(kit[name], surface);
+        assert.ok(value >= 4.5, `${scheme}: kit ${name} on ${surface} is ${value.toFixed(2)}`);
+      }
+    }
+    // Loan some uses the kit values as they are.
+    assert.equal(t("muted"), kit["--ak-muted"], `${scheme}: muted is the kit's`);
+    assert.equal(t("red"), kit["--ak-danger"], `${scheme}: danger is the kit's`);
+  }
+  for (const rule of loanerRules) {
+    assert.ok(!("--ak-muted" in rule.vars) && !("--ak-danger" in rule.vars), "tokens.css does not override muted or danger");
+  }
 });
 
 test("every custom property the Loan some stylesheets read is defined somewhere", () => {
@@ -210,15 +222,26 @@ test("nothing still uses the pre-kit names, and no UI colours are hardcoded outs
     assert.doesNotMatch(read(file), pattern, file);
   }
   assert.match(strip(read("css/layout.css")), /\.ak-tabbar \.ak-badge\s*\{[^}]*color:\s*var\(--ak-accent-ink\)/, "the tab badge text is the accent ink");
-  assert.match(strip(read("css/feedback.css")), /\.ak-toast-error[^{]*\{[^}]*color:\s*var\(--red\)/, "error toast text is the AA red");
+  assert.doesNotMatch(strip(read("css/feedback.css")), /\.ak-toast-(error|danger)/, "the kit's error toast colour passes AA, so there is no loaner override");
   assert.match(strip(read("css/feedback.css")), /#ak-toasts\s*\{[^}]*pointer-events:\s*none/, "toasts never catch taps");
 });
 
-test("the sheet layer sits above the kit tab bar, or the bar eats taps on the sheet buttons (kit gap)", () => {
-  const layer = /\.ak-sheet-layer\s*\{[^}]*z-index:\s*(\d+)/.exec(strip(read("css/sheet.css")))?.[1];
-  const bar = /\.ak-tabbar\s*\{[^}]*z-index:\s*(\d+)/.exec(strip(read("app-kit/ak-components.css")))?.[1];
-  assert.ok(layer && bar, "both z-indexes are declared");
-  assert.ok(Number(layer) > Number(bar), `sheet layer ${layer} is above the tab bar ${bar}`);
+test("the kit's own sheet layer sits above its tab bar, so Loan some needs no z-index override", () => {
+  const components = strip(read("app-kit/ak-components.css"));
+  const tokens = strip(read("app-kit/ak-tokens.css"));
+  const zToken = (name: string) => Number(new RegExp(`--${name}:\\s*(\\d+)`).exec(tokens)?.[1]);
+  const zOf = (selector: string, token: string) => {
+    const rule = new RegExp(`${selector.replace(".", "\\.")}\\s*\\{[^}]*z-index:\\s*var\\(--${token}(?:,\\s*(\\d+))?\\)`).exec(components);
+    assert.ok(rule, `${selector} reads --${token}`);
+    return { token: zToken(token), fallback: Number(rule[1]) };
+  };
+  const layer = zOf(".ak-sheet-layer", "ak-z-sheet-layer");
+  const bar = zOf(".ak-tabbar", "ak-z-tabbar");
+  assert.ok(layer.token > bar.token, `sheet layer ${layer.token} is above the tab bar ${bar.token}`);
+  assert.ok(layer.fallback > bar.fallback, "and so are the fallbacks");
+  assert.ok(zToken("ak-z-toast") > layer.token, "toasts sit above the sheet layer");
+  assert.doesNotMatch(strip(read("css/sheet.css")), /\.ak-sheet-layer\s*\{[^}]*z-index/, "no loaner override of the sheet layer z-index");
+  assert.doesNotMatch(strip(read("css/layout.css")), /\.ak-tabbar\s*\{[^}]*z-index/, "no loaner override of the tab bar z-index");
 });
 
 test("the camera stays dark and is not reassigned in any scheme block", () => {
@@ -298,7 +321,8 @@ test("the dark mode and app kit entries are in What's new", async () => {
   assert.equal(dark.title, "Dark mode");
   const kit = CHANGELOG.find((item) => item.id === "2026-11-15-app-kit");
   assert.ok(kit, "the app kit entry is kept");
-  assert.equal(CHANGELOG[0].id, "2026-11-15-notification-tap", "the newest entry is the notification tap one");
+  assert.equal(CHANGELOG[0].id, "2026-11-15-app-kit-v030", "the newest entry is the app kit v0.3.0 one");
+  assert.ok(CHANGELOG.some((item) => item.id === "2026-11-15-notification-tap"), "the notification tap entry is kept");
   assert.ok(CHANGELOG[0].title.length <= 60);
   assert.ok(!/\u2014/.test([CHANGELOG[0].title, ...CHANGELOG[0].bullets].join(" ")), "no em dashes");
 });

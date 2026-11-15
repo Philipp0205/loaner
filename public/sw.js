@@ -1,4 +1,4 @@
-const CACHE = "loaner-v17";
+const CACHE = "loaner-v18";
 const SHELL = [
   "/",
   "/app-kit/ak-tokens.css", "/app-kit/app-kit.css", "/app-kit/ak-components.css", "/app-kit/install-prompt.css",

@@ -70,6 +70,10 @@ export class FakeNode {
   get textContent(): string {
     return this.nodeType === 3 ? this.text : this.children.map((c) => c.textContent).join("");
   }
+  set textContent(value: string) {
+    this.children = [];
+    this.appendChild(textNode(String(value)));
+  }
   walk(): FakeNode[] {
     return this.children.flatMap((c) => [c, ...c.walk()]);
   }

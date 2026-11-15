@@ -2,11 +2,9 @@
 .error-text { color: var(--red); font-size: var(--fs-sm); font-weight: 500; margin: 6px 0; }
 .error-text:empty { display: none; }
 
-/* Kit gaps: toasts must not catch taps, the sticky action bar must not hide them, and the kit's
-   error text colour fails AA on its toast background, so errors read in the loaner red instead. */
+/* Kit gaps: toasts must not catch taps and the sticky action bar must not hide them. */
 #ak-toasts { pointer-events: none; }
 .ak-toast { background: var(--card); box-shadow: 0 4px 16px rgb(0 0 0 / 0.25), inset 0 0 0 1px var(--line); font-weight: 500; }
-.ak-toast-error, .ak-toast-danger { color: var(--red); }
 body:has(.bar) .ak-toast { bottom: calc(var(--tab-h) + var(--bar-h) + 12px); }
 body:has(.bar) .ak-toast + .ak-toast { bottom: calc(var(--tab-h) + var(--bar-h) + 12px + 56px); }
 
