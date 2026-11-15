@@ -13,7 +13,8 @@ export type NoteType =
   | "returned"
   | "item_removed"
   | "reminder"
-  | "late";
+  | "late"
+  | "message";
 
 export type NoteInput = {
   userId: string;
@@ -22,6 +23,10 @@ export type NoteInput = {
   body: string;
   itemId?: string | null;
   requestId?: string | null;
+  /** For a message note: the borrower of the thread, so the alert can open it. */
+  borrowerId?: string | null;
+  /** Push tag. Defaults to the type plus the request or item id. */
+  tag?: string;
 };
 
 /**
@@ -31,7 +36,7 @@ export type NoteInput = {
 export function addNote(ctx: Ctx, input: NoteInput): PendingPush {
   run(
     ctx.db,
-    "INSERT INTO notifications (id, user_id, type, title, body, item_id, request_id, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+    "INSERT INTO notifications (id, user_id, type, title, body, item_id, request_id, created_at, borrower_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
     newId(),
     input.userId,
     input.type,
@@ -40,8 +45,14 @@ export function addNote(ctx: Ctx, input: NoteInput): PendingPush {
     input.itemId ?? null,
     input.requestId ?? null,
     ctx.now(),
+    input.borrowerId ?? null,
   );
-  return { userId: input.userId, title: input.title, body: input.body, tag: `${input.type}:${input.requestId ?? input.itemId ?? ""}` };
+  return {
+    userId: input.userId,
+    title: input.title,
+    body: input.body,
+    tag: input.tag ?? `${input.type}:${input.requestId ?? input.itemId ?? ""}`,
+  };
 }
 
 export type PendingPush = { userId: string; title: string; body: string; tag: string };

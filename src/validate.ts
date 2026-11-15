@@ -27,6 +27,13 @@ export function longText(value: unknown, label: string, max: number): string {
   return trimmed;
 }
 
+/** Like longText, but empty (or missing) is a 400. Line breaks inside are kept. */
+export function requiredLongText(value: unknown, label: string, max: number): string {
+  const trimmed = longText(value, label, max);
+  if (!trimmed) throw new HttpError(400, `${label} is required`);
+  return trimmed;
+}
+
 export const MAX_DONATION = 10_000;
 
 /** null or absent means no donation. Otherwise a number above 0 with at most 2 decimals; returns cents. */

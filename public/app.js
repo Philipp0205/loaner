@@ -4,6 +4,7 @@ import { renderBrowse, renderItem } from "./browse.js";
 import { renderMine, renderItemForm } from "./mine.js";
 import { renderCamera, stopCamera } from "./camera.js";
 import { renderRequests } from "./requests.js";
+import { renderMessages } from "./messages.js";
 import { renderAlerts } from "./alerts.js";
 import { renderYou } from "./you.js";
 import { go, loadGroups, loadMe, state } from "./state.js";
@@ -24,6 +25,8 @@ const TABS = [
 
 const ROUTES = [
   [/^#\/browse$/, "browse", () => renderBrowse()],
+  [/^#\/item\/([^/]+)\/messages\/([^/]+)$/, "browse", (m) => renderMessages(m[1], m[2])],
+  [/^#\/item\/([^/]+)\/messages$/, "browse", (m) => renderMessages(m[1], null)],
   [/^#\/item\/([^/]+)$/, "browse", (m) => renderItem(m[1])],
   [/^#\/mine$/, "mine", () => renderMine()],
   [/^#\/mine\/new$/, "mine", () => renderCamera()],

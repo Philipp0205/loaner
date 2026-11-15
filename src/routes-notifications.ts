@@ -10,6 +10,7 @@ type NoteRow = {
   body: string;
   item_id: string | null;
   request_id: string | null;
+  borrower_id: string | null;
   created_at: number;
   read_at: number | null;
 };
@@ -23,7 +24,7 @@ export function notificationRoutes(): Route[] {
         const user = me(req);
         const rows = all<NoteRow>(
           req.ctx.db,
-          "SELECT id, type, title, body, item_id, request_id, created_at, read_at FROM notifications WHERE user_id = ? ORDER BY created_at DESC, id LIMIT 100",
+          "SELECT id, type, title, body, item_id, request_id, borrower_id, created_at, read_at FROM notifications WHERE user_id = ? ORDER BY created_at DESC, id LIMIT 100",
           user.id,
         );
         return {
@@ -35,6 +36,7 @@ export function notificationRoutes(): Route[] {
             body: row.body,
             itemId: row.item_id,
             requestId: row.request_id,
+            borrowerId: row.borrower_id,
             createdAt: row.created_at,
             read: row.read_at !== null,
           })),

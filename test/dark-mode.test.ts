@@ -148,6 +148,6 @@ test("logo.svg keeps the light ink and teal arrow, and lightens only the letteri
 test("the dark mode entry is in What's new", async () => {
   const { CHANGELOG } = (await import(new URL("../public/changelog.js", import.meta.url).href)) as { CHANGELOG: { id: string; date: string; title: string }[] };
   const entry = CHANGELOG.find((item) => item.id === "2026-11-15-dark-mode");
-  assert.ok(entry, "the dark mode entry is still there");
+  assert.ok(entry, "the dark mode entry is still listed");
   assert.equal(entry.title, "Dark mode");
 });
