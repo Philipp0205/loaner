@@ -7,6 +7,15 @@ import { normalizeEntries } from "./whats-new.js";
  */
 const RAW = [
   {
+    id: "2026-11-15-privacy",
+    date: "2026-11-15",
+    title: "A privacy page",
+    bullets: [
+      "There is now a short privacy page that says what is stored and who can see it.",
+      "Find it in the You tab under About, or on the sign-in screen.",
+    ],
+  },
+  {
     id: "2026-11-15-status-bar",
     date: "2026-11-15",
     title: "Status bar matches the page",

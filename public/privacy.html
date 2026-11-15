@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light dark">
+  <title>Loan some privacy</title>
+  <link rel="icon" type="image/svg+xml" href="/icons/mark.svg">
+  <link rel="icon" href="/icons/icon-192.png">
+  <link rel="stylesheet" href="/css/tokens.css">
+  <link rel="stylesheet" href="/css/base.css">
+  <link rel="stylesheet" href="/css/layout.css">
+  <link rel="stylesheet" href="/css/privacy.css">
+</head>
+<body>
+  <main class="page article">
+    <a class="back" href="/">Back to Loan some</a>
+    <h1>Privacy</h1>
+    <p class="draft">This is a draft. The wording is still being reviewed.</p>
+    <p class="muted">What Loan some stores, who can see it, and how to get it deleted.</p>
+
+    <h2>1. Who runs it</h2>
+    <p>Loan some (it used to be called Loaner) is a friends-only, invite-only lending app at <a href="https://www.loanso.me">www.loanso.me</a>.</p>
+    <p>Philipp runs it. There is no company name or postal address to list yet. For any question about your data, use the contact in section 8.</p>
+
+    <h2>2. What we store and why</h2>
+    <p>On the server, in one SQLite database, so the app can work:</p>
+    <ul>
+      <li>Your display name, and a hash of your recovery code. The code itself is not stored.</li>
+      <li>A hash of each signed-in device token. The token itself is not stored.</li>
+      <li>Groups you create or join: the group name, the invite code, and who is in it.</li>
+      <li>Items you list: name, note, category, whether it is available, an optional suggested donation amount, timestamps, and an optional photo. A photo is stored in the database as image bytes, with its image type. There is no separate file store.</li>
+      <li>Which of your groups each item is shared with.</li>
+      <li>Borrow requests and loans: dates, the optional message and reply, status, and related timestamps.</li>
+      <li>In-app notifications.</li>
+      <li>Messages between a lender and a borrower about an item, and which messages each person has read.</li>
+      <li>Your browser's push subscription (an endpoint and keys), if you turn notifications on.</li>
+      <li>Feedback you send: your name at the time, the text, an optional photo or screenshot, the app version, and your browser's user agent. This is so the person who runs the app can read it and act on it.</li>
+    </ul>
+    <p>On your device only. This is not sent as cookies, and the app does not set cookies:</p>
+    <ul>
+      <li>localStorage: <code>loaner_token</code> (your device sign-in token), <code>loaner_group</code> (the group you used last), <code>loaner_recovery</code> (your recovery code, until you hide it) and <code>loaner_whats_new_seen</code> (which What's new entry you have seen).</li>
+      <li>sessionStorage: <code>loaner_install_prompt_dismissed</code>, only for this visit, so the install prompt stays closed.</li>
+      <li>After you first use photo naming, your browser may keep the on-device model files in its cache.</li>
+    </ul>
+    <p>IP addresses: the app looks at your IP address only in memory, to slow down new account creation (60 per hour) and recovery attempts (10 per 10 minutes). It does not write IP addresses to the database or to its own logs. Sending feedback is limited per account (10 per hour), not by IP. Your host does keep its own logs, see section 5.</p>
+
+    <h2>3. What we don't do</h2>
+    <ul>
+      <li>No ads.</li>
+      <li>No analytics or tracking scripts in the app.</li>
+      <li>We do not sell your data.</li>
+      <li>We do not use cookies.</li>
+      <li>We do not collect email addresses in the app today.</li>
+      <li>The Inter font is served from this app, not from Google Fonts or another font CDN.</li>
+      <li>Ordinary page loads do not call third-party scripts. The only third-party downloads are for the optional photo naming below.</li>
+    </ul>
+    <p><strong>Photo naming.</strong> When you take or pick a photo to add an item, the app can suggest a name. That runs on your device, not on our server. The first time you use it, your device downloads a pinned Transformers.js library from jsDelivr (<code>cdn.jsdelivr.net</code>) and the CLIP model weights (Xenova/clip-vit-base-patch32) from Hugging Face and its CDNs. Those services may see that your device asked for those files, including your IP address. Your photo is not sent to them. If you save the item, the photo is uploaded to Loan some's server and stored as described above.</p>
+
+    <h2>4. Where it's stored</h2>
+    <p>The app and its database run on Railway, in the <code>europe-west4</code> region (the Netherlands). The persistent volume that holds the database, and so the photos, is in the same region. So the app is hosted in the EU. Railway itself is a US company.</p>
+
+    <h2>5. Who else sees data</h2>
+    <p>Other people in the app:</p>
+    <ul>
+      <li>Members of a group can see your display name, the items you share with that group (with photos, notes, category and suggested donation), and whether your notifications are on.</li>
+      <li>A lender and a borrower can see the request and their messages about that item.</li>
+      <li>Anyone with a group's invite link can see the group name before they join.</li>
+      <li>The person who runs the app can read feedback you send: the text, your name, an optional photo, the app version and your user agent.</li>
+    </ul>
+    <p>Other services:</p>
+    <ul>
+      <li><strong>Railway</strong> hosts the app, so it can process the data the app stores. Railway also records its own HTTP request logs for every request to the public site. According to Railway's documentation, these include your IP address, the path, the host, the HTTP method and status, your browser's user agent, and a timestamp. Railway support has told us these logs are kept for 90 days and then deleted, and that they are stored in the United States (US West), even though the app runs in the EU. We did not find a setting to turn these logs off.</li>
+      <li><strong>Your browser's push service</strong>, if you turn on phone notifications. The notification title, text and a link go through it. Which service that is (for example Google, Apple or Mozilla) depends on your browser.</li>
+      <li><strong>jsDelivr and Hugging Face</strong>, only if you use photo naming, as described in section 3.</li>
+    </ul>
+
+    <h2>6. How long we keep it</h2>
+    <p>The app does not delete or expire anything by itself: not account data, items, messages, requests, notifications or feedback. Your data stays until it is deleted as described in section 7, or until the person who runs the app deletes it when you ask.</p>
+    <p>Railway's request logs are kept by Railway, for 90 days and then deleted, as in section 5.</p>
+
+    <h2>7. Your rights and getting your data deleted</h2>
+    <p>You have the right to see the data we hold about you, to have it corrected, and to have it deleted. You also have the right to complain to a data protection supervisory authority, for example the one in your country. In the Netherlands that is the Autoriteit Persoonsgegevens.</p>
+    <p>What you can do in the app today:</p>
+    <ul>
+      <li>Change your display name.</li>
+      <li>Delete an item you own. Mark it returned first if it is lent. This also removes its photo and the requests and messages attached to it.</li>
+      <li>Remove an item's photo without deleting the item.</li>
+      <li>Leave a group. This removes your membership and stops sharing your items with that group. It does not delete your account or your items.</li>
+      <li>Sign out of a phone. This drops that phone's token. You need your recovery code to get back in.</li>
+      <li>Hide your recovery code on a phone, or replace it. The old code then stops working.</li>
+      <li>Turn on phone notifications in the You tab.</li>
+    </ul>
+    <p>What you cannot do in the app today:</p>
+    <ul>
+      <li>There is no way to delete your whole account.</li>
+      <li>There is no button to download your data.</li>
+      <li>There is no way to delete feedback you already sent.</li>
+      <li>There is no button in the app to turn notifications off. You can revoke permission in your browser or phone settings.</li>
+    </ul>
+    <p>For a copy of your data, to correct something you cannot change in the app, or to delete your account and everything left, contact us using section 8. Deletion requests are handled by hand until deleting your account in the app exists.</p>
+
+    <h2>8. Contact</h2>
+    <!-- TODO Philipp: replace the placeholder below with a real name and email, then update test/privacy.test.ts. The test fails if the placeholder is removed, so it cannot be forgotten. -->
+    <p class="contact">[CONTACT NAME AND EMAIL — Philipp to fill in]</p>
+    <p class="muted small">Waiting for Philipp to fill in the contact.</p>
+
+    <p><a href="/">Back to Loan some</a></p>
+  </main>
+</body>
+</html>

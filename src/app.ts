@@ -37,6 +37,11 @@ const MIME: Record<string, string> = {
   ".json": "application/json; charset=utf-8",
 };
 
+/** Extensionless paths that serve their own static page instead of the app shell. */
+const PAGES: Record<string, string> = {
+  "/privacy": "privacy.html",
+};
+
 // The on-device photo suggester loads a pinned Transformers.js build from jsDelivr and its CLIP weights
 // from Hugging Face, so those hosts are allowed for scripts and fetches. Nothing else is.
 // Hugging Face answers a weight download with a 302 to its CDN (for example us.aws.cdn.hf.co), and the
@@ -212,7 +217,9 @@ async function serveStatic(req: http.IncomingMessage, res: http.ServerResponse, 
   if (relative.startsWith("..") || path.isAbsolute(relative)) throw new HttpError(404, "not found");
   const ext = path.extname(relative);
   // A path with no extension is an app route such as /join/ABC: serve the app shell.
-  const file = ext ? filePath : path.join(PUBLIC_DIR, "index.html");
+  // The few pages that are plain documents, not the app, are listed in PAGES.
+  const page = ext ? undefined : PAGES[decoded.replace(/\/+$/, "")];
+  const file = page ? path.join(PUBLIC_DIR, page) : ext ? filePath : path.join(PUBLIC_DIR, "index.html");
   let data: Buffer;
   try {
     data = await fs.promises.readFile(file);

@@ -19,6 +19,11 @@ function nameField() {
   return h("label", { class: "field" }, h("span", null, "Your first name"), h("input", { type: "text", id: "name", maxlength: "24", autocomplete: "given-name", required: true }));
 }
 
+/** A plain link to the static privacy page, reachable before sign-in. */
+function privacyLink() {
+  return h("p", { class: "muted small", style: "text-align:center;margin-top:var(--s5)" }, h("a", { href: "/privacy", id: "privacy-link" }, "Privacy"));
+}
+
 function intro() {
   return h("div", { class: "intro" }, wordmarkHeading(), h("p", { class: "tag" }, "Lend things to your friends. Borrow what you need. Invite-only groups, no passwords."));
 }
@@ -41,7 +46,7 @@ function welcome() {
       }
     });
   });
-  const page = h("main", { class: "page gate" }, intro(), form);
+  const page = h("main", { class: "page gate" }, intro(), form, privacyLink());
   return page;
 }
 
@@ -80,7 +85,7 @@ function recoverScreen() {
       }
     });
   });
-  return h("main", { class: "page gate" }, h("h1", null, "Welcome back"), form);
+  return h("main", { class: "page gate" }, h("h1", null, "Welcome back"), form, privacyLink());
 }
 
 async function joinScreen(code) {
@@ -88,7 +93,7 @@ async function joinScreen(code) {
   try {
     group = (await api("GET", `/api/invites/${code}`)).group;
   } catch (e) {
-    return h("main", { class: "page gate" }, intro(), h("div", { class: "card" }, h("h2", null, "This invite link does not work"), h("p", { class: "muted" }, "Ask your friend for a new one."), h("a", { class: "btn", href: "/" }, "Open Loan some")));
+    return h("main", { class: "page gate" }, intro(), h("div", { class: "card" }, h("h2", null, "This invite link does not work"), h("p", { class: "muted" }, "Ask your friend for a new one."), h("a", { class: "btn", href: "/" }, "Open Loan some")), privacyLink());
   }
   const signedIn = !!localStorage.getItem("loaner_token");
   const error = h("p", { class: "error-text", role: "alert" });
@@ -125,6 +130,6 @@ async function joinScreen(code) {
     });
   });
   const rest = signedIn ? [] : [h("button", { class: "link block", type: "button", onclick: () => page.replaceWith(recoverScreen()) }, "I have a recovery code")];
-  const page = h("main", { class: "page gate" }, intro(), h("div", { class: "callout" }, h("h2", { style: "margin:0" }, `Join ${group.name}?`)), form, ...rest);
+  const page = h("main", { class: "page gate" }, intro(), h("div", { class: "callout" }, h("h2", { style: "margin:0" }, `Join ${group.name}?`)), form, ...rest, privacyLink());
   return page;
 }

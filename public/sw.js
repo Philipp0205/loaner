@@ -1,6 +1,6 @@
-const CACHE = "loaner-v15";
+const CACHE = "loaner-v16";
 const SHELL = [
-  "/",
+  "/", "/privacy", "/css/privacy.css",
   "/css/tokens.css", "/css/base.css", "/css/layout.css", "/css/items.css", "/css/forms.css", "/css/requests.css", "/css/messages.css", "/css/feedback.css", "/css/sheet.css", "/css/camera.css", "/css/install-prompt.css",
   "/fonts/inter-latin-var.woff2",
   "/app.js", "/util.js", "/api.js", "/state.js", "/photo.js", "/icons.js", "/theme-color.js",
