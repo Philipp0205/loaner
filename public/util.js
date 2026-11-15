@@ -26,11 +26,9 @@ function add(el, children) {
   }
 }
 
+/** A short message at the bottom of the screen (the kit's AppKit.toast). `kind` is "info" or "error". */
 export function toast(message, kind = "info") {
-  const box = document.getElementById("toasts");
-  const el = h("div", { class: `toast ${kind}`, role: kind === "error" ? "alert" : "status" }, message);
-  box.append(el);
-  setTimeout(() => el.remove(), kind === "error" ? 5000 : 2800);
+  window.AppKit.toast(message, { kind });
 }
 
 /** "7 Jun" from "2026-06-07". */
@@ -74,27 +72,9 @@ export function statusPill(item, short = false) {
   return h("span", { class: `pill ${late ? "late" : item.status}` }, text);
 }
 
-/** Copies text. Falls back to a hidden textarea where the clipboard API is blocked. */
-export async function copyText(text) {
-  try {
-    await navigator.clipboard.writeText(text);
-    return true;
-  } catch {
-    const area = h("textarea", { "aria-hidden": "true", readonly: true });
-    area.value = text;
-    area.style.position = "fixed";
-    area.style.opacity = "0";
-    document.body.append(area);
-    area.select();
-    let done = false;
-    try {
-      done = document.execCommand("copy");
-    } catch {
-      done = false;
-    }
-    area.remove();
-    return done;
-  }
+/** Copies text (the kit's AppKit.copyText, which falls back to a hidden textarea). Resolves true or false. */
+export function copyText(text) {
+  return window.AppKit.copyText(text);
 }
 
 /** Runs fn with the button disabled, and shows any error as a toast. */

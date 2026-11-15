@@ -5,7 +5,7 @@ import { useLoaner } from "./harness.js";
 
 const loaner = useLoaner();
 
-const tab = (page: Page, name: string) => page.locator(".tabbar").getByRole("button", { name }).click();
+const tab = (page: Page, name: string) => page.locator(".ak-tabbar").getByRole("button", { name }).click();
 
 /** Stubs only the subscription: the same POST the app makes after the browser hands over a push subscription. */
 async function subscribe(page: Page, who: string): Promise<void> {
@@ -58,7 +58,7 @@ test("the You tab lists the members and who has notifications on", { timeout: 90
   await bo.getByRole("heading", { name: "Join Flat 3B?" }).waitFor();
   await bo.locator("#name").fill("Bo");
   await bo.getByRole("button", { name: "Join Flat 3B" }).click();
-  await bo.locator("nav.tabbar").waitFor();
+  await bo.locator("nav.ak-tabbar").waitFor();
 
   // Nobody has notifications on yet.
   let card = await openYou(bo);

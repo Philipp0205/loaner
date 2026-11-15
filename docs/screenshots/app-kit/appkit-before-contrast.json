@@ -1,0 +1,600 @@
+{
+  "light-welcome": {
+    "tokens": {
+      "bg": "#ffffff",
+      "accent": "#00857a",
+      "accentInk": "",
+      "ink": "#222222",
+      "themeColor": "#ffffff",
+      "pageBg": "rgb(255, 255, 255)",
+      "bodyBg": "rgb(255, 255, 255)"
+    },
+    "accent": [],
+    "all": [
+      {
+        "text": "Get started",
+        "className": "primary block",
+        "bg": [
+          34,
+          34,
+          34
+        ],
+        "fg": [
+          255,
+          255,
+          255
+        ],
+        "tag": "button",
+        "ratio": 15.91,
+        "aa": true,
+        "aaLarge": true
+      }
+    ]
+  },
+  "light-you": {
+    "tokens": {
+      "bg": "#ffffff",
+      "accent": "#00857a",
+      "accentInk": "",
+      "ink": "#222222",
+      "themeColor": "#ffffff",
+      "pageBg": "rgb(255, 255, 255)",
+      "bodyBg": "rgb(255, 255, 255)"
+    },
+    "accent": [
+      {
+        "text": "1",
+        "className": "badge",
+        "bg": [
+          0,
+          133,
+          122
+        ],
+        "fg": [
+          255,
+          255,
+          255
+        ],
+        "tag": "span",
+        "ratio": 4.53,
+        "aa": true,
+        "aaLarge": true
+      }
+    ],
+    "all": [
+      {
+        "text": "Save name",
+        "className": "",
+        "bg": [
+          255,
+          255,
+          255
+        ],
+        "fg": [
+          34,
+          34,
+          34
+        ],
+        "tag": "button",
+        "ratio": 15.91,
+        "aa": true,
+        "aaLarge": true
+      },
+      {
+        "text": "Show a recovery code",
+        "className": "",
+        "bg": [
+          255,
+          255,
+          255
+        ],
+        "fg": [
+          34,
+          34,
+          34
+        ],
+        "tag": "button",
+        "ratio": 15.91,
+        "aa": true,
+        "aaLarge": true
+      },
+      {
+        "text": "Rename",
+        "className": "group-rename-open",
+        "bg": [
+          255,
+          255,
+          255
+        ],
+        "fg": [
+          34,
+          34,
+          34
+        ],
+        "tag": "button",
+        "ratio": 15.91,
+        "aa": true,
+        "aaLarge": true
+      },
+      {
+        "text": "Copy invite link",
+        "className": "primary",
+        "bg": [
+          34,
+          34,
+          34
+        ],
+        "fg": [
+          255,
+          255,
+          255
+        ],
+        "tag": "button",
+        "ratio": 15.91,
+        "aa": true,
+        "aaLarge": true
+      },
+      {
+        "text": "Leave group",
+        "className": "danger",
+        "bg": [
+          255,
+          255,
+          255
+        ],
+        "fg": [
+          179,
+          38,
+          30
+        ],
+        "tag": "button",
+        "ratio": 6.54,
+        "aa": true,
+        "aaLarge": true
+      },
+      {
+        "text": "Create group",
+        "className": "primary",
+        "bg": [
+          34,
+          34,
+          34
+        ],
+        "fg": [
+          255,
+          255,
+          255
+        ],
+        "tag": "button",
+        "ratio": 15.91,
+        "aa": true,
+        "aaLarge": true
+      },
+      {
+        "text": "Turn on notifications",
+        "className": "",
+        "bg": [
+          255,
+          255,
+          255
+        ],
+        "fg": [
+          34,
+          34,
+          34
+        ],
+        "tag": "button",
+        "ratio": 15.91,
+        "aa": true,
+        "aaLarge": true
+      },
+      {
+        "text": "What's new",
+        "className": "block",
+        "bg": [
+          255,
+          255,
+          255
+        ],
+        "fg": [
+          34,
+          34,
+          34
+        ],
+        "tag": "button",
+        "ratio": 15.91,
+        "aa": true,
+        "aaLarge": true
+      },
+      {
+        "text": "Send feedback",
+        "className": "block",
+        "bg": [
+          255,
+          255,
+          255
+        ],
+        "fg": [
+          34,
+          34,
+          34
+        ],
+        "tag": "button",
+        "ratio": 15.91,
+        "aa": true,
+        "aaLarge": true
+      },
+      {
+        "text": "Sign out of this phone",
+        "className": "block",
+        "bg": [
+          255,
+          255,
+          255
+        ],
+        "fg": [
+          34,
+          34,
+          34
+        ],
+        "tag": "button",
+        "ratio": 15.91,
+        "aa": true,
+        "aaLarge": true
+      },
+      {
+        "text": "1",
+        "className": "badge",
+        "bg": [
+          0,
+          133,
+          122
+        ],
+        "fg": [
+          255,
+          255,
+          255
+        ],
+        "tag": "span",
+        "ratio": 4.53,
+        "aa": true,
+        "aaLarge": true
+      },
+      {
+        "text": "",
+        "className": "scrim",
+        "bg": [
+          34,
+          34,
+          34
+        ],
+        "fg": [
+          34,
+          34,
+          34
+        ],
+        "tag": "button",
+        "ratio": 1,
+        "aa": false,
+        "aaLarge": false
+      },
+      {
+        "text": "Done",
+        "className": "primary block",
+        "bg": [
+          34,
+          34,
+          34
+        ],
+        "fg": [
+          255,
+          255,
+          255
+        ],
+        "tag": "button",
+        "ratio": 15.91,
+        "aa": true,
+        "aaLarge": true
+      }
+    ]
+  },
+  "dark-welcome": {
+    "tokens": {
+      "bg": "#0f1c1f",
+      "accent": "#2bb3a3",
+      "accentInk": "",
+      "ink": "#e8f0f0",
+      "themeColor": "#0f1c1f",
+      "pageBg": "rgb(15, 28, 31)",
+      "bodyBg": "rgb(15, 28, 31)"
+    },
+    "accent": [],
+    "all": [
+      {
+        "text": "Get started",
+        "className": "primary block",
+        "bg": [
+          232,
+          240,
+          240
+        ],
+        "fg": [
+          15,
+          28,
+          31
+        ],
+        "tag": "button",
+        "ratio": 15.05,
+        "aa": true,
+        "aaLarge": true
+      }
+    ]
+  },
+  "dark-you": {
+    "tokens": {
+      "bg": "#0f1c1f",
+      "accent": "#2bb3a3",
+      "accentInk": "",
+      "ink": "#e8f0f0",
+      "themeColor": "#0f1c1f",
+      "pageBg": "rgb(15, 28, 31)",
+      "bodyBg": "rgb(15, 28, 31)"
+    },
+    "accent": [
+      {
+        "text": "1",
+        "className": "badge",
+        "bg": [
+          43,
+          179,
+          163
+        ],
+        "fg": [
+          15,
+          28,
+          31
+        ],
+        "tag": "span",
+        "ratio": 6.7,
+        "aa": true,
+        "aaLarge": true
+      }
+    ],
+    "all": [
+      {
+        "text": "Save name",
+        "className": "",
+        "bg": [
+          23,
+          42,
+          47
+        ],
+        "fg": [
+          232,
+          240,
+          240
+        ],
+        "tag": "button",
+        "ratio": 12.89,
+        "aa": true,
+        "aaLarge": true
+      },
+      {
+        "text": "Show a recovery code",
+        "className": "",
+        "bg": [
+          23,
+          42,
+          47
+        ],
+        "fg": [
+          232,
+          240,
+          240
+        ],
+        "tag": "button",
+        "ratio": 12.89,
+        "aa": true,
+        "aaLarge": true
+      },
+      {
+        "text": "Rename",
+        "className": "group-rename-open",
+        "bg": [
+          23,
+          42,
+          47
+        ],
+        "fg": [
+          232,
+          240,
+          240
+        ],
+        "tag": "button",
+        "ratio": 12.89,
+        "aa": true,
+        "aaLarge": true
+      },
+      {
+        "text": "Copy invite link",
+        "className": "primary",
+        "bg": [
+          232,
+          240,
+          240
+        ],
+        "fg": [
+          15,
+          28,
+          31
+        ],
+        "tag": "button",
+        "ratio": 15.05,
+        "aa": true,
+        "aaLarge": true
+      },
+      {
+        "text": "Leave group",
+        "className": "danger",
+        "bg": [
+          23,
+          42,
+          47
+        ],
+        "fg": [
+          255,
+          154,
+          145
+        ],
+        "tag": "button",
+        "ratio": 7.3,
+        "aa": true,
+        "aaLarge": true
+      },
+      {
+        "text": "Create group",
+        "className": "primary",
+        "bg": [
+          232,
+          240,
+          240
+        ],
+        "fg": [
+          15,
+          28,
+          31
+        ],
+        "tag": "button",
+        "ratio": 15.05,
+        "aa": true,
+        "aaLarge": true
+      },
+      {
+        "text": "Turn on notifications",
+        "className": "",
+        "bg": [
+          23,
+          42,
+          47
+        ],
+        "fg": [
+          232,
+          240,
+          240
+        ],
+        "tag": "button",
+        "ratio": 12.89,
+        "aa": true,
+        "aaLarge": true
+      },
+      {
+        "text": "What's new",
+        "className": "block",
+        "bg": [
+          23,
+          42,
+          47
+        ],
+        "fg": [
+          232,
+          240,
+          240
+        ],
+        "tag": "button",
+        "ratio": 12.89,
+        "aa": true,
+        "aaLarge": true
+      },
+      {
+        "text": "Send feedback",
+        "className": "block",
+        "bg": [
+          23,
+          42,
+          47
+        ],
+        "fg": [
+          232,
+          240,
+          240
+        ],
+        "tag": "button",
+        "ratio": 12.89,
+        "aa": true,
+        "aaLarge": true
+      },
+      {
+        "text": "Sign out of this phone",
+        "className": "block",
+        "bg": [
+          23,
+          42,
+          47
+        ],
+        "fg": [
+          232,
+          240,
+          240
+        ],
+        "tag": "button",
+        "ratio": 12.89,
+        "aa": true,
+        "aaLarge": true
+      },
+      {
+        "text": "1",
+        "className": "badge",
+        "bg": [
+          43,
+          179,
+          163
+        ],
+        "fg": [
+          15,
+          28,
+          31
+        ],
+        "tag": "span",
+        "ratio": 6.7,
+        "aa": true,
+        "aaLarge": true
+      },
+      {
+        "text": "",
+        "className": "scrim",
+        "bg": [
+          0,
+          0,
+          0
+        ],
+        "fg": [
+          232,
+          240,
+          240
+        ],
+        "tag": "button",
+        "ratio": 18.15,
+        "aa": true,
+        "aaLarge": true
+      },
+      {
+        "text": "Done",
+        "className": "primary block",
+        "bg": [
+          232,
+          240,
+          240
+        ],
+        "fg": [
+          15,
+          28,
+          31
+        ],
+        "tag": "button",
+        "ratio": 15.05,
+        "aa": true,
+        "aaLarge": true
+      }
+    ]
+  }
+}

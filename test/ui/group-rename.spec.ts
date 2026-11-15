@@ -18,7 +18,7 @@ test("a group can be renamed from the You tab, and an empty name is rejected", {
   await page.getByRole("button", { name: "Create group" }).click();
   await page.locator("#group-switch").waitFor();
 
-  await page.locator(".tabbar").getByRole("button", { name: "You" }).click();
+  await page.locator(".ak-tabbar").getByRole("button", { name: "You" }).click();
   const card = page.locator("section.card[data-group]");
   await card.getByRole("heading", { name: "Flat 3B" }).waitFor();
 
@@ -39,7 +39,7 @@ test("a group can be renamed from the You tab, and an empty name is rejected", {
   assert.equal(await page.locator("input#group-rename-name").count(), 0, "form closed after saving");
   assert.equal(await page.getByRole("heading", { name: "Flat 3B" }).count(), 0);
 
-  await page.locator(".tabbar").getByRole("button", { name: "Browse" }).click();
+  await page.locator(".ak-tabbar").getByRole("button", { name: "Browse" }).click();
   await page.locator("#group-switch").waitFor();
   assert.equal(await page.locator("#group-switch option:checked").textContent(), "Studio 4");
   assert.deepEqual(errors, []);

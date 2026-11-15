@@ -31,12 +31,12 @@ async function signUp(page: Page, name: string) {
 }
 
 async function openFeedback(page: Page) {
-  await page.locator(".tabbar").getByRole("button", { name: "You" }).click();
+  await page.locator(".ak-tabbar").getByRole("button", { name: "You" }).click();
   await page.getByRole("heading", { level: 1, name: "You" }).waitFor();
   const row = page.locator("#open-feedback");
   await row.scrollIntoViewIfNeeded();
   await row.click();
-  const sheet = page.locator(".sheet");
+  const sheet = page.locator(".ak-sheet");
   await page.getByRole("dialog", { name: "Send feedback" }).waitFor();
   return sheet;
 }
@@ -49,7 +49,7 @@ test("You has a Send feedback row; the sheet rejects empty text, sends, thanks, 
   await signUp(page, "Fiona");
 
   // 1. The row sits under About, next to What's new.
-  await page.locator(".tabbar").getByRole("button", { name: "You" }).click();
+  await page.locator(".ak-tabbar").getByRole("button", { name: "You" }).click();
   await page.getByRole("heading", { level: 1, name: "You" }).waitFor();
   assert.equal(await page.getByRole("button", { name: "Send feedback" }).count(), 1);
   assert.equal(await page.locator("#open-whats-new").count(), 1);
@@ -131,7 +131,7 @@ test("the sheet closes by scrim and swipe, and a photo can be attached", { timeo
 
   sheet = await openFeedback(page);
   await page.waitForTimeout(500);
-  const grab = (await page.locator(".grabber").boundingBox())!;
+  const grab = (await page.locator(".ak-grabber").boundingBox())!;
   const x = grab.x + grab.width / 2;
   const y = grab.y + grab.height / 2;
   await page.mouse.move(x, y);

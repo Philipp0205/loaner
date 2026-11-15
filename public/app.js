@@ -11,10 +11,17 @@ import { go, loadGroups, loadMe, state } from "./state.js";
 import { h, toast } from "./util.js";
 import { icon } from "./icons.js";
 import { considerWhatsNew } from "./whats-new-ui.js";
-import { considerInstallPrompt } from "./install-prompt.js";
-import { watchThemeColor } from "./theme-color.js";
 
-watchThemeColor();
+const { AppKit } = window;
+
+AppKit.themeColor.start();
+AppKit.installPrompt.init({
+  appName: "Loan some",
+  iconUrl: "/icons/icon-192.png",
+  title: "Install Loan some",
+  text: "Add it to your home screen so it is easy to open.",
+  closeLabel: "Not now",
+});
 
 const root = document.getElementById("root");
 
@@ -25,6 +32,31 @@ const TABS = [
   ["alerts", "Alerts"],
   ["you", "You"],
 ];
+
+let currentTab = "browse";
+
+/**
+ * One tab bar for the whole session. It lives on body (not in #root, which each screen replaces), is added
+ * when the main app shows and removed on the sign-in screens. update() moves the highlight and the badge in place.
+ */
+const bar = AppKit.tabbar({
+  tabs: TABS.map(([id, label]) => ({ id, label, icon: icon(id) })),
+  active: currentTab,
+  onSelect: (id) => go(`#/${id}`),
+  label: "Main",
+});
+
+/** The kit badge has no accessible name, so it gets one here. */
+function updateBar(active = currentTab) {
+  currentTab = active;
+  bar.update({ active, badge: { alerts: state.unread > 0 ? state.unread : 0 } });
+  bar.el.querySelector('[data-tab="alerts"] .ak-badge')?.setAttribute("aria-label", `${state.unread} unread`);
+}
+
+function showBar(active) {
+  if (!bar.el.isConnected) document.body.append(bar.el);
+  updateBar(active);
+}
 
 const ROUTES = [
   [/^#\/browse$/, "browse", () => renderBrowse()],
@@ -45,8 +77,8 @@ let serial = 0;
 async function show() {
   const mine = ++serial;
   if (!getToken() || /^\/join\//.test(location.pathname)) {
+    bar.el.remove();
     root.replaceChildren(await renderGate());
-    considerInstallPrompt();
     return;
   }
   try {
@@ -66,7 +98,8 @@ async function show() {
   }
   const [match, tab, view] = found;
   stopCamera();
-  root.replaceChildren(h("main", { class: "page" }, h("div", { class: "spinner" }, "Loading...")), tabbar(tab));
+  root.replaceChildren(h("main", { class: "page" }, h("div", { class: "spinner" }, "Loading...")));
+  showBar(tab);
   let screen;
   try {
     screen = await view(match);
@@ -74,24 +107,10 @@ async function show() {
     screen = h("div", null, h("p", { class: "error-text", role: "alert" }, error.message || "Something went wrong"), h("button", { onclick: show }, "Try again"));
   }
   if (mine !== serial) return;
-  root.replaceChildren(h("main", { class: "page" }, screen), tabbar(tab));
+  root.replaceChildren(h("main", { class: "page" }, screen));
+  updateBar(tab);
   window.scrollTo(0, 0);
   considerWhatsNew();
-  considerInstallPrompt();
-}
-
-function tabbar(active) {
-  return h(
-    "nav",
-    { class: "tabbar", "aria-label": "Main" },
-    TABS.map(([id, label]) =>
-      h("button", { type: "button", "data-tab": id, "aria-current": id === active ? "page" : false, onclick: () => go(`#/${id}`) },
-        icon(id),
-        h("span", null, label),
-        id === "alerts" && state.unread > 0 ? h("span", { class: "badge", "aria-label": `${state.unread} unread` }, state.unread > 99 ? "99+" : state.unread) : null,
-      ),
-    ),
-  );
 }
 
 /** Keeps the unread badge fresh without redrawing the screen. */
@@ -101,8 +120,7 @@ async function pollUnread() {
     const me = await api("GET", "/api/me");
     if (me.unread !== state.unread) {
       state.unread = me.unread;
-      const bar = document.querySelector(".tabbar");
-      if (bar) bar.replaceWith(tabbar(document.querySelector(".tabbar [aria-current]")?.dataset.tab));
+      updateBar();
     }
   } catch {
     /* a missed poll is fine */

@@ -1,5 +1,5 @@
 import { CHANGELOG } from "./changelog.js";
-import { showSheet } from "./sheet.js";
+import { showSheet } from "./overlay.js";
 import { SEEN_KEY, formatEntryDate, latestId, unseenEntries } from "./whats-new.js";
 import { h } from "./util.js";
 
@@ -53,16 +53,16 @@ function entryView(entry) {
 
 function openSheet(entries, popup) {
   let control = null;
-  const head = h("div", { class: "sheet-head" },
-    h("div", { class: "grabber" }),
+  const head = h("div", { class: "ak-sheet-head" },
+    h("div", { class: "ak-grabber" }),
     h("h2", { id: "wn-title" }, "What's new"),
     h("p", { class: "muted small" }, popup ? "Since you last opened Loan some." : "Recent changes to Loan some."),
   );
   const done = h("button", { type: "button", class: "primary block", onclick: () => control?.close() }, popup ? "Got it" : "Done");
-  const sheet = h("div", { class: "sheet", role: "dialog", "aria-modal": "true", "aria-labelledby": "wn-title" },
+  const sheet = h("div", { class: "ak-sheet", role: "dialog", "aria-modal": "true", "aria-labelledby": "wn-title" },
     head,
-    h("div", { class: "sheet-scroll" }, entries.map(entryView)),
-    h("div", { class: "sheet-dock" }, done),
+    h("div", { class: "ak-sheet-scroll" }, entries.map(entryView)),
+    h("div", { class: "ak-sheet-dock" }, done),
   );
-  control = showSheet(sheet, head, { onClose: () => writeSeen(latestId(CHANGELOG)), focus: done });
+  control = showSheet(sheet, { head, onClose: () => writeSeen(latestId(CHANGELOG)), focus: done });
 }

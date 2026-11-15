@@ -7,6 +7,15 @@ import { normalizeEntries } from "./whats-new.js";
  */
 const RAW = [
   {
+    id: "2026-11-15-app-kit",
+    date: "2026-11-15",
+    title: "A shared look",
+    bullets: [
+      "Loan some now shares its buttons, sheets and tab bar with our other apps.",
+      "Colours are crisper in dark and light mode, and the phone's Back button closes a sheet.",
+    ],
+  },
+  {
     id: "2026-11-15-status-bar",
     date: "2026-11-15",
     title: "Status bar matches the page",

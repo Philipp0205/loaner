@@ -26,7 +26,7 @@ test("creating a group does not pull you back to Browse after you tapped another
 
   await page.locator("#group-name").fill("Flat 3B");
   await page.getByRole("button", { name: "Create group" }).click();
-  await page.locator(".tabbar").getByRole("button", { name: "You" }).click();
+  await page.locator(".ak-tabbar").getByRole("button", { name: "You" }).click();
   await page.getByRole("heading", { level: 1, name: "You" }).waitFor();
 
   // The create request finishes while she is on You. Give it well over the delay.
@@ -39,7 +39,7 @@ test("creating a group does not pull you back to Browse after you tapped another
   assert.equal(await page.getByRole("heading", { level: 1, name: "Browse" }).count(), 0, "Browse is not showing");
 
   // The group was still created: Browse, opened on purpose, shows it.
-  await page.locator(".tabbar").getByRole("button", { name: "Browse" }).click();
+  await page.locator(".ak-tabbar").getByRole("button", { name: "Browse" }).click();
   await page.locator("#group-switch").waitFor();
   assert.equal(await page.locator("#group-switch option:checked").textContent(), "Flat 3B");
   assert.deepEqual(errors, []);
