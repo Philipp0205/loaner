@@ -7,6 +7,15 @@ import { normalizeEntries } from "./whats-new.js";
  */
 const RAW = [
   {
+    id: "2026-11-15-status-bar",
+    date: "2026-11-15",
+    title: "Status bar matches the page",
+    bullets: [
+      "The installed app's status bar now matches the page, not the teal accent.",
+      "If it still looks teal, reinstall the app.",
+    ],
+  },
+  {
     id: "2026-11-15-messages",
     date: "2026-11-15",
     title: "Messages",

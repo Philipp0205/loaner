@@ -117,16 +117,72 @@ for (const size of SIZES) {
   });
 }
 
-test("theme-color: the light meta equals the manifest theme_color and a dark one exists", { timeout: 30_000 }, async () => {
+test("theme-color: one meta follows the painted page background, and the manifest is the dark page colour", { timeout: 60_000 }, async () => {
   const html = await (await fetch(`${loaner.baseUrl}/`)).text();
   const metas = [...html.matchAll(/<meta name="theme-color"[^>]*>/g)].map((m) => m[0]);
-  const content = (tag: string) => /content="([^"]+)"/.exec(tag)?.[1];
-  const light = metas.find((tag) => tag.includes("prefers-color-scheme: light"));
-  const dark = metas.find((tag) => tag.includes("prefers-color-scheme: dark"));
+  assert.equal(metas.length, 1, "exactly one theme-color meta");
+  assert.doesNotMatch(metas[0], /media=/, "no media attribute");
   const manifest = await (await fetch(`${loaner.baseUrl}/manifest.webmanifest`)).json();
-  assert.equal(content(metas[0])?.toLowerCase(), String(manifest.theme_color).toLowerCase(), "the first theme-color is the manifest one");
-  assert.equal(content(light ?? "")?.toLowerCase(), String(manifest.theme_color).toLowerCase());
-  assert.ok(dark, "a dark scheme theme-color meta exists");
-  assert.notEqual(content(dark ?? "")?.toLowerCase(), String(manifest.theme_color).toLowerCase());
-  assert.equal(String(manifest.background_color).toLowerCase(), "#ffffff");
+  assert.equal(String(manifest.theme_color).toLowerCase(), "#0f1c1f");
+  assert.equal(String(manifest.background_color).toLowerCase(), "#0f1c1f");
+
+  const meta = (page: Page) => page.evaluate(() => document.querySelector('meta[name="theme-color"]')?.getAttribute("content")?.toLowerCase());
+
+  const lightCtx = await loaner.phone({ colorScheme: "light" });
+  const light = await lightCtx.newPage();
+  await light.goto(`${loaner.baseUrl}/`);
+  await light.waitForFunction(() => document.querySelector('meta[name="theme-color"]')?.getAttribute("content") === "#ffffff");
+  assert.equal(await meta(light), "#ffffff", "light mode matches the light page background");
+  assert.equal(await light.evaluate(() => getComputedStyle(document.documentElement).backgroundColor), "rgb(255, 255, 255)");
+
+  const darkCtx = await loaner.phone({ colorScheme: "dark" });
+  const dark = await darkCtx.newPage();
+  await dark.goto(`${loaner.baseUrl}/`);
+  await dark.waitForFunction(() => document.querySelector('meta[name="theme-color"]')?.getAttribute("content") === "#0f1c1f");
+  assert.equal(await meta(dark), "#0f1c1f", "dark mode matches the dark page background");
+  assert.equal(await dark.evaluate(() => getComputedStyle(document.documentElement).backgroundColor), "rgb(15, 28, 31)");
+
+  await dark.emulateMedia({ colorScheme: "light" });
+  await dark.waitForFunction(() => document.querySelector('meta[name="theme-color"]')?.getAttribute("content") === "#ffffff");
+  assert.equal(await meta(dark), "#ffffff", "switching the scheme updates the meta");
+  await dark.emulateMedia({ colorScheme: "dark" });
+  await dark.waitForFunction(() => document.querySelector('meta[name="theme-color"]')?.getAttribute("content") === "#0f1c1f");
+  assert.equal(await meta(dark), "#0f1c1f");
 });
+
+test("standalone: the top safe area paints the page background and content keeps its padding", { timeout: 60_000 }, async () => {
+  const { max, drill } = await seed();
+  const ctx = await loaner.phone({ colorScheme: "dark" });
+  await ctx.addInitScript((t) => localStorage.setItem("loaner_token", t), max.token);
+  await skipWhatsNew(ctx);
+  await ctx.addInitScript({
+    content: `(() => {
+      const real = window.matchMedia.bind(window);
+      window.matchMedia = (query) => query === "(display-mode: standalone)"
+        ? { matches: true, media: query, addEventListener() {}, removeEventListener() {} }
+        : real(query);
+    })();`,
+  });
+  const page = await ctx.newPage();
+  await page.setViewportSize(SIZES[0]);
+  await page.goto(`${loaner.baseUrl}/#/item/${drill.id}`);
+  await page.locator(".page").waitFor();
+  const info = await page.evaluate(() => {
+    const top = getComputedStyle(document.querySelector(".page")!).paddingTop;
+    return {
+      standalone: matchMedia("(display-mode: standalone)").matches,
+      htmlBg: getComputedStyle(document.documentElement).backgroundColor,
+      bodyBg: getComputedStyle(document.body).backgroundColor,
+      pagePadTop: top,
+      themeColor: document.querySelector('meta[name="theme-color"]')?.getAttribute("content")?.toLowerCase(),
+      statusBarStyle: document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]')?.getAttribute("content"),
+    };
+  });
+  assert.equal(info.standalone, true);
+  assert.equal(info.htmlBg, "rgb(15, 28, 31)", "html paints the dark page background behind the top inset");
+  assert.equal(info.bodyBg, "rgb(15, 28, 31)");
+  assert.equal(info.themeColor, "#0f1c1f");
+  assert.equal(info.statusBarStyle, "black-translucent");
+  assert.ok(parseFloat(info.pagePadTop) >= 16, "the page keeps its top padding, so content is not under the status bar");
+});
+
