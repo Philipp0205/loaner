@@ -1,11 +1,11 @@
-const CACHE = "loaner-v10";
+const CACHE = "loaner-v11";
 const SHELL = [
   "/",
-  "/css/tokens.css", "/css/base.css", "/css/layout.css", "/css/items.css", "/css/forms.css", "/css/requests.css", "/css/feedback.css", "/css/sheet.css", "/css/camera.css",
+  "/css/tokens.css", "/css/base.css", "/css/layout.css", "/css/items.css", "/css/forms.css", "/css/requests.css", "/css/feedback.css", "/css/sheet.css", "/css/camera.css", "/css/install-prompt.css",
   "/fonts/inter-latin-var.woff2",
   "/app.js", "/util.js", "/api.js", "/state.js", "/photo.js", "/icons.js",
   "/gate.js", "/groups.js", "/browse.js", "/requests.js", "/mine.js", "/alerts.js", "/you.js",
-  "/whats-new.js", "/changelog.js", "/whats-new-ui.js", "/sheet.js", "/feedback-ui.js",
+  "/whats-new.js", "/changelog.js", "/whats-new-ui.js", "/sheet.js", "/feedback-ui.js", "/install-prompt.js",
   "/camera.js", "/draft.js", "/categories.js", "/suggest-photo.js", "/suggest-labels.js",
   "/manifest.webmanifest", "/logo.svg", "/icons/icon-192.png", "/icons/icon-512.png",
 ];

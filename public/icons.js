@@ -8,6 +8,8 @@ const PATHS = {
   alerts: [["path", { d: "M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" }], ["path", { d: "M13.73 21a2 2 0 0 1-3.46 0" }]],
   you: [["path", { d: "M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" }], ["circle", { cx: 12, cy: 7, r: 4 }]],
   back: [["path", { d: "M15 18l-6-6 6-6" }]],
+  close: [["path", { d: "M6 6l12 12M18 6L6 18" }]],
+  share: [["path", { d: "M12 15V3M8 7l4-4 4 4" }], ["path", { d: "M7 10H6a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7a2 2 0 0 0-2-2h-1" }]],
 };
 
 /** An <svg> for a named icon. Colour comes from CSS (currentColor). */

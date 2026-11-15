@@ -2,7 +2,7 @@ import http from "node:http";
 import type { AddressInfo } from "node:net";
 import type { DatabaseSync } from "node:sqlite";
 import test from "node:test";
-import { chromium, type Browser, type BrowserContext } from "playwright-core";
+import { chromium, type Browser, type BrowserContext, type BrowserContextOptions } from "playwright-core";
 import { createApp } from "../../src/app.js";
 import { loadConfig } from "../../src/config.js";
 import { openDb } from "../../src/db.js";
@@ -60,14 +60,15 @@ export function useLoaner(env: NodeJS.ProcessEnv = {}, chromeArgs: string[] = []
   return {
     get baseUrl() { return live(server).baseUrl; },
     get db() { return live(server).db; },
-    /** A fresh phone-sized browser context: its own storage, so its own person. */
-    async phone(): Promise<BrowserContext> {
+    /** A fresh phone-sized browser context: its own storage, so its own person. `options` overrides the defaults, e.g. the user agent. */
+    async phone(options: BrowserContextOptions = {}): Promise<BrowserContext> {
       const context = await live(browser).newContext({
         viewport: PHONE,
         isMobile: true,
         hasTouch: true,
         userAgent: UA,
         permissions: ["clipboard-read", "clipboard-write"],
+        ...options,
       });
       context.on("dialog", (dialog) => void dialog.accept());
       return context;

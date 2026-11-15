@@ -10,6 +10,7 @@ import { go, loadGroups, loadMe, state } from "./state.js";
 import { h, toast } from "./util.js";
 import { icon } from "./icons.js";
 import { considerWhatsNew } from "./whats-new-ui.js";
+import { considerInstallPrompt } from "./install-prompt.js";
 
 const root = document.getElementById("root");
 
@@ -39,6 +40,7 @@ async function show() {
   const mine = ++serial;
   if (!getToken() || /^\/join\//.test(location.pathname)) {
     root.replaceChildren(await renderGate());
+    considerInstallPrompt();
     return;
   }
   try {
@@ -69,6 +71,7 @@ async function show() {
   root.replaceChildren(h("main", { class: "page" }, screen), tabbar(tab));
   window.scrollTo(0, 0);
   considerWhatsNew();
+  considerInstallPrompt();
 }
 
 function tabbar(active) {

@@ -1,0 +1,24 @@
+/* Install prompt: a slim card at the top of the page. It sits in the flow, so it never covers the tab bar or action bars. */
+#install-prompt {
+  display: flex; align-items: flex-start; gap: var(--s3);
+  width: calc(100% - 2 * var(--gutter)); max-width: 608px; margin: var(--s3) auto 0;
+  padding: var(--s3);
+  background: var(--teal-soft); color: var(--ink);
+  border: 1px solid var(--line); border-radius: var(--r-card);
+}
+/* The banner already spaces the page from the top edge. */
+body:has(#install-prompt) .page { padding-top: var(--s3); }
+
+.ip-mark { flex: none; width: 40px; height: 40px; border-radius: var(--r-btn); }
+.ip-body { flex: 1; min-width: 0; }
+.ip-title { margin: 0; font-size: var(--fs-md); font-weight: 650; }
+.ip-text { margin: 2px 0 var(--s2); font-size: var(--fs-sm); line-height: 1.4; }
+.ip-hint { margin: 0; font-size: var(--fs-sm); color: var(--teal-ink); font-weight: 500; line-height: 1.4; }
+.ip-steps { margin: 0; padding-left: 20px; font-size: var(--fs-sm); line-height: 1.5; font-weight: 500; }
+.ip-steps svg { display: inline-block; vertical-align: -5px; width: 20px; height: 20px; fill: none; stroke: var(--teal-ink); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+#install-prompt .ip-install { min-height: 40px; padding: 0 20px; background: var(--teal); border-color: var(--teal); color: var(--ink-inverse); }
+#install-prompt .ip-close {
+  flex: none; width: 44px; min-height: 44px; margin: calc(-1 * var(--s2)) calc(-1 * var(--s2)) 0 0; padding: 0;
+  border: 0; background: none; color: var(--ink);
+}
+#install-prompt .ip-close svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
