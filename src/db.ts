@@ -84,9 +84,30 @@ CREATE TABLE IF NOT EXISTS notifications (
   item_id TEXT,
   request_id TEXT,
   created_at INTEGER NOT NULL,
-  read_at INTEGER
+  read_at INTEGER,
+  borrower_id TEXT
 );
 CREATE INDEX IF NOT EXISTS notifications_user ON notifications(user_id, created_at);
+
+-- One thread per (item, borrower). created_at is strictly increasing within a thread (see routes-messages.ts).
+CREATE TABLE IF NOT EXISTS messages (
+  id TEXT PRIMARY KEY,
+  item_id TEXT NOT NULL REFERENCES items(id) ON DELETE CASCADE,
+  borrower_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  sender_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  body TEXT NOT NULL,
+  created_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS messages_thread ON messages(item_id, borrower_id, created_at, id);
+
+-- last_read_at is the created_at of the newest message this person has seen in the thread.
+CREATE TABLE IF NOT EXISTS message_reads (
+  item_id TEXT NOT NULL REFERENCES items(id) ON DELETE CASCADE,
+  borrower_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  last_read_at INTEGER NOT NULL,
+  PRIMARY KEY (item_id, borrower_id, user_id)
+);
 
 CREATE TABLE IF NOT EXISTS push_subscriptions (
   endpoint TEXT PRIMARY KEY,
@@ -128,6 +149,8 @@ export function openDb(file: string): DatabaseSync {
 function migrate(db: DatabaseSync): void {
   const columns = db.prepare("PRAGMA table_info(items)").all() as unknown as { name: string }[];
   if (!columns.some((column) => column.name === "category")) db.exec("ALTER TABLE items ADD COLUMN category TEXT");
+  const noteColumns = db.prepare("PRAGMA table_info(notifications)").all() as unknown as { name: string }[];
+  if (!noteColumns.some((column) => column.name === "borrower_id")) db.exec("ALTER TABLE notifications ADD COLUMN borrower_id TEXT");
 }
 
 /** Runs fn in one transaction. Rolls back and rethrows on error. Not reentrant. */

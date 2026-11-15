@@ -106,12 +106,13 @@ test("the shipped changelog is newest first, well formed, and free of em dashes"
   assert.equal(CHANGELOG[0].date, "2026-11-15");
 });
 
-test("the service worker caches the What's new, feedback, install prompt and theme colour files and uses the v15 cache", () => {
+test("the service worker caches the What's new, feedback, install prompt, messages and theme colour files and uses the v15 cache", () => {
   const sw = fs.readFileSync(new URL("../public/sw.js", import.meta.url), "utf8");
   assert.equal(/const CACHE = "([^"]+)"/.exec(sw)?.[1], "loaner-v15");
   const paths = [...(/const SHELL = \[([^\]]*)\]/.exec(sw)?.[1] ?? "").matchAll(/"([^"]+)"/g)].map((m) => m[1]);
-  for (const file of ["/whats-new.js", "/changelog.js", "/whats-new-ui.js", "/sheet.js", "/feedback-ui.js", "/css/sheet.css", "/logo.svg", "/install-prompt.js", "/css/install-prompt.css", "/theme-color.js"]) assert.ok(paths.includes(file), file);
+  for (const file of ["/whats-new.js", "/changelog.js", "/whats-new-ui.js", "/sheet.js", "/feedback-ui.js", "/css/sheet.css", "/logo.svg", "/install-prompt.js", "/css/install-prompt.css", "/theme-color.js", "/messages.js", "/css/messages.css"]) assert.ok(paths.includes(file), file);
   const html = fs.readFileSync(new URL("../public/index.html", import.meta.url), "utf8");
   assert.match(html, /href="\/css\/sheet\.css"/);
   assert.match(html, /href="\/css\/install-prompt\.css"/);
+  assert.match(html, /href="\/css\/messages\.css"/);
 });

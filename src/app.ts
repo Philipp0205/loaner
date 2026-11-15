@@ -11,6 +11,7 @@ import { authRoutes } from "./routes-auth.js";
 import { feedbackRoutes } from "./routes-feedback.js";
 import { groupRoutes } from "./routes-groups.js";
 import { itemRoutes } from "./routes-items.js";
+import { messageRoutes } from "./routes-messages.js";
 import { notificationRoutes } from "./routes-notifications.js";
 import { requestRoutes } from "./routes-requests.js";
 import { HttpError, Reply, type Ctx, type Route, type User } from "./types.js";
@@ -71,6 +72,7 @@ export function createApp(deps: AppDeps): http.RequestListener {
     ...groupRoutes(),
     ...itemRoutes(),
     ...requestRoutes(),
+    ...messageRoutes(),
     ...notificationRoutes(),
     ...feedbackRoutes(),
     {

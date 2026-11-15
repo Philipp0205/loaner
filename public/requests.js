@@ -1,4 +1,5 @@
 import { api } from "./api.js";
+import { messageButton } from "./messages.js";
 import { photoEl } from "./photo.js";
 import { redraw, state } from "./state.js";
 import { busy, emptyState, fmtDate, fmtRange, h, toast } from "./util.js";
@@ -28,7 +29,9 @@ export function requestCard(r, role, after) {
   );
   const actions = actionsFor(r, role, reply, after);
   if (role === "owner" && r.status === "pending") card.append(h("label", { class: "field", style: "margin:12px 0 0" }, h("span", null, "Reply"), reply));
-  if (actions.length) card.append(h("div", { class: "acts" }, actions));
+  // Both sides open the same (item, borrower) thread.
+  actions.push(messageButton(r.item.id, role === "owner" ? r.borrower.id : null, r.unreadMessages));
+  card.append(h("div", { class: "acts" }, actions));
   return card;
 }
 

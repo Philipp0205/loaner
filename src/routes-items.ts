@@ -2,6 +2,7 @@ import { ITEM_SELECT, VISIBLE, isMember, requireOwnedItem, requireVisibleItem, r
 import { newId } from "./code.js";
 import { all, get, run, tx } from "./db.js";
 import { addNote, flush, type PendingPush } from "./notify.js";
+import { threadUnread } from "./routes-messages.js";
 import { HttpError, Reply, jsonBody, me, type Ctx, type Route } from "./types.js";
 import { centsToAmount, categoryValue, donationCents, longText, stringArray, text } from "./validate.js";
 import { isoDate } from "./time.js";
@@ -155,7 +156,13 @@ export function itemRoutes(): Route[] {
           item.id,
           user.id,
         ).map((row) => row.id);
-        return { item: itemView(req.ctx, item, user.id), history: history(req.ctx, item.id), myRequestIds: mine };
+        return {
+          item: itemView(req.ctx, item, user.id),
+          history: history(req.ctx, item.id),
+          myRequestIds: mine,
+          // For a borrower: their thread with the owner has something they have not opened. Owners get false here (their threads are per borrower).
+          unreadMessages: item.owner_id !== user.id && threadUnread(req.ctx, item.id, user.id, user.id),
+        };
       },
     },
     {
