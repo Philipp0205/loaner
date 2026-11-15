@@ -7,6 +7,8 @@ import { markNewAccountSeen } from "./whats-new-ui.js";
 export async function renderGate() {
   const code = inviteFromPath();
   if (code) return joinScreen(code);
+  // The home page links here so a person with a recovery code lands on the recovery form.
+  if (location.hash === "#/recover") return recoverScreen();
   return welcome();
 }
 
@@ -63,7 +65,7 @@ function recoverScreen() {
     h("label", { class: "field" }, h("span", null, "Recovery code"), code),
     error,
     submit,
-    h("button", { class: "link block", type: "button", onclick: () => location.reload() }, "Back"),
+    h("button", { class: "link block", type: "button", onclick: () => (location.hash === "#/recover" ? location.replace(location.pathname) : location.reload()) }, "Back"),
   );
   form.addEventListener("submit", (event) => {
     event.preventDefault();
@@ -88,7 +90,7 @@ async function joinScreen(code) {
   try {
     group = (await api("GET", `/api/invites/${code}`)).group;
   } catch (e) {
-    return h("main", { class: "page gate" }, intro(), h("div", { class: "card" }, h("h2", null, "This invite link does not work"), h("p", { class: "muted" }, "Ask your friend for a new one."), h("a", { class: "btn", href: "/" }, "Open Loan some")));
+    return h("main", { class: "page gate" }, intro(), h("div", { class: "card" }, h("h2", null, "This invite link does not work"), h("p", { class: "muted" }, "Ask your friend for a new one."), h("a", { class: "btn", href: "/app" }, "Open Loan some")));
   }
   const signedIn = !!localStorage.getItem("loaner_token");
   const error = h("p", { class: "error-text", role: "alert" });

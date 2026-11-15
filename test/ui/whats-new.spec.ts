@@ -3,7 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import test from "node:test";
 import type { Page } from "playwright-core";
-import { useLoaner } from "./harness.js";
+import { signUp as signUpVia, useLoaner } from "./harness.js";
 import { ENTRIES, LATEST_WHATS_NEW, SEEN_STORAGE_KEY } from "./whats-new-seen.js";
 
 const SHOTS = path.resolve("test/ui/screenshots/whatsnew");
@@ -18,9 +18,7 @@ const sheetOf = (page: Page) => page.getByRole("dialog", { name: "What's new" })
 
 /** Signs up through the UI, the way a new person does. Lands on the screen with no groups yet. */
 async function signUp(page: Page, name: string) {
-  await page.goto(loaner.baseUrl);
-  await page.locator("#name").fill(name);
-  await page.getByRole("button", { name: "Get started" }).click();
+  await signUpVia(page, loaner.baseUrl, name);
   await page.getByRole("heading", { name: "No groups yet" }).waitFor();
 }
 

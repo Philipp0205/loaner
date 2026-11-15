@@ -7,6 +7,15 @@ import { normalizeEntries } from "./whats-new.js";
  */
 const RAW = [
   {
+    id: "2026-11-15-landing",
+    date: "2026-11-15",
+    title: "A short home page for new visitors",
+    bullets: [
+      "People who are not signed in now see a short home page that explains Loan some.",
+      "Once you sign in, or open the installed app, it works as before.",
+    ],
+  },
+  {
     id: "2026-11-15-app-kit-v030",
     date: "2026-11-15",
     title: "Easier to read, and a fix for iPhone Chrome",

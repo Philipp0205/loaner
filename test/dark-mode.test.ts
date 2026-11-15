@@ -321,7 +321,8 @@ test("the dark mode and app kit entries are in What's new", async () => {
   assert.equal(dark.title, "Dark mode");
   const kit = CHANGELOG.find((item) => item.id === "2026-11-15-app-kit");
   assert.ok(kit, "the app kit entry is kept");
-  assert.equal(CHANGELOG[0].id, "2026-11-15-app-kit-v030", "the newest entry is the app kit v0.3.0 one");
+  assert.equal(CHANGELOG[0].id, "2026-11-15-landing", "the newest entry is the home page one");
+  assert.ok(CHANGELOG.some((item) => item.id === "2026-11-15-app-kit-v030"), "the app kit v0.3.0 entry is kept");
   assert.ok(CHANGELOG.some((item) => item.id === "2026-11-15-notification-tap"), "the notification tap entry is kept");
   assert.ok(CHANGELOG[0].title.length <= 60);
   assert.ok(!/\u2014/.test([CHANGELOG[0].title, ...CHANGELOG[0].bullets].join(" ")), "no em dashes");

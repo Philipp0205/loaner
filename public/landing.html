@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+  <title>Loan some: lend things to your friends</title>
+  <meta name="description" content="Loan some is a small app for lending things to friends. Invite-only groups, no passwords, no payments, no ads.">
+  <link rel="canonical" href="https://www.loanso.me/">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Loan some">
+  <meta property="og:title" content="Loan some: lend things to your friends">
+  <meta property="og:description" content="Lend things to your friends. Borrow what you need. Invite-only groups, no passwords.">
+  <meta property="og:url" content="https://www.loanso.me/">
+  <meta property="og:image" content="https://www.loanso.me/og.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Loan some, with the teal circular arrow mark">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Loan some: lend things to your friends">
+  <meta name="twitter:description" content="Lend things to your friends. Borrow what you need. Invite-only groups, no passwords.">
+  <meta name="twitter:image" content="https://www.loanso.me/og.png">
+  <meta name="twitter:image:alt" content="Loan some, with the teal circular arrow mark">
+  <link rel="manifest" href="/manifest.webmanifest?v=1">
+  <link rel="icon" type="image/svg+xml" href="/icons/mark.svg">
+  <link rel="icon" href="/icons/icon-192.png">
+  <link rel="apple-touch-icon" href="/icons/icon-192.png">
+  <link rel="stylesheet" href="/app-kit/ak-tokens.css">
+  <link rel="stylesheet" href="/css/tokens.css">
+  <link rel="stylesheet" href="/css/landing.css">
+  <!-- Blocking on purpose: a signed-in or installed visitor is sent to the app before this page paints. -->
+  <script src="/landing.js"></script>
+</head>
+<body>
+  <header class="top">
+    <div class="wrap">
+      <img class="logo" src="/logo.svg" width="162" height="27" alt="Loan some">
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="wrap hero-grid">
+        <div class="hero-copy">
+          <h1>Lend things to your friends. Borrow what you need.</h1>
+          <p class="lead">Loan some is a small app for sharing what you own with people you know. You join private groups with an invite link. Nobody else sees your things.</p>
+          <div class="cta">
+            <a class="btn primary" href="/app">Get started</a>
+            <a class="link" href="/app#/recover">I have a recovery code</a>
+          </div>
+          <form class="invite" id="invite" novalidate>
+            <label for="invite-code">Got an invite code?</label>
+            <div class="invite-row">
+              <input type="text" id="invite-code" name="code" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="Code from your invite link">
+              <button type="submit" class="btn">Join</button>
+            </div>
+            <p class="error" id="invite-error" role="alert"></p>
+          </form>
+        </div>
+        <div class="hero-phone">
+          <div class="phone">
+            <picture>
+              <source media="(prefers-color-scheme: dark)" srcset="/landing/phone-dark.png">
+              <img src="/landing/phone-light.png" width="780" height="1688" alt="The Loan some app on a phone: a cordless drill that is available, with a request from a friend waiting for an answer.">
+            </picture>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="band" id="how">
+      <div class="wrap">
+        <h2>How it works</h2>
+        <ol class="steps">
+          <li>
+            <h3>List it</h3>
+            <p>Take a photo of something you would lend. The app suggests a name and a category on your phone, so the photo is not sent anywhere for that. You can change both.</p>
+          </li>
+          <li>
+            <h3>Friends ask</h3>
+            <p>Someone in your group picks the dates and asks to borrow it. You get an alert and say yes or no. Each item has its own messages.</p>
+          </li>
+          <li>
+            <h3>Hand it over</h3>
+            <p>When it changes hands, tap Handed over. The item shows as lent, with a due date.</p>
+          </li>
+          <li>
+            <h3>Get it back</h3>
+            <p>When it comes back, tap Returned. It is available again. You both get a reminder the day before it is due.</p>
+          </li>
+        </ol>
+      </div>
+    </section>
+
+    <section class="wrap why" id="why">
+      <div>
+        <h2>Friends only</h2>
+        <p>You make a group or join one from a friend's invite link. Being in the group is the trust: anyone in it can borrow what is listed there. You choose which of your groups can see each item, and you can be in several.</p>
+        <p>There are no passwords. Your phone keeps a device token, and you get a recovery code in case you switch phones.</p>
+      </div>
+      <div>
+        <h2>What it does not do</h2>
+        <ul class="plain">
+          <li>No payments or deposits. For something valuable you can suggest a donation. The app only shows the amount, and money never moves in it.</li>
+          <li>No public listings, and no maps.</li>
+          <li>No ads and no analytics.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="wrap install" id="install">
+      <div class="panel">
+        <h2>Put it on your home screen</h2>
+        <p>Loan some works in your browser, and you can install it like an app. Look for Add to Home Screen or Install in your browser's menu. It follows your phone's light or dark setting.</p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="foot">
+    <div class="wrap foot-row">
+      <img class="mark" src="/icons/mark.svg" width="28" height="28" alt="">
+      <p>Loan some. Lend things to your friends.</p>
+    </div>
+    <!-- privacy link: add when /privacy ships -->
+  </footer>
+</body>
+</html>

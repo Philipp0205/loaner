@@ -3,7 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import test from "node:test";
 import type { Page } from "playwright-core";
-import { useLoaner } from "./harness.js";
+import { signUp as signUpVia, useLoaner } from "./harness.js";
 import { solidPng } from "./png.js";
 import { LATEST_WHATS_NEW } from "./whats-new-seen.js";
 
@@ -24,9 +24,7 @@ const adminList = async (): Promise<any[]> => {
 
 /** Signs up through the UI, so the What's new sheet does not cover the screen. */
 async function signUp(page: Page, name: string) {
-  await page.goto(loaner.baseUrl);
-  await page.locator("#name").fill(name);
-  await page.getByRole("button", { name: "Get started" }).click();
+  await signUpVia(page, loaner.baseUrl, name);
   await page.getByRole("heading", { name: "No groups yet" }).waitFor();
 }
 

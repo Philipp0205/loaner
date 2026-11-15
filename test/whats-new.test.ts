@@ -106,18 +106,26 @@ test("the shipped changelog is newest first, well formed, and free of em dashes"
   assert.equal(CHANGELOG[0].date, "2026-11-15");
 });
 
-test("the service worker uses the v18 cache and caches every kit and app file that index.html loads", () => {
+test("the service worker uses the v19 cache and caches every kit and app file that index.html and landing.html load", () => {
   const sw = fs.readFileSync(new URL("../public/sw.js", import.meta.url), "utf8");
-  assert.equal(/const CACHE = "([^"]+)"/.exec(sw)?.[1], "loaner-v18");
+  assert.equal(/const CACHE = "([^"]+)"/.exec(sw)?.[1], "loaner-v19");
   const paths = [...(/const SHELL = \[([^\]]*)\]/.exec(sw)?.[1] ?? "").matchAll(/"([^"]+)"/g)].map((m) => m[1]);
   for (const file of ["/whats-new.js", "/changelog.js", "/whats-new-ui.js", "/overlay.js", "/feedback-ui.js", "/css/sheet.css", "/logo.svg", "/messages.js", "/css/messages.css"]) assert.ok(paths.includes(file), file);
+  for (const file of ["/", "/app", "/landing.js", "/css/landing.css", "/landing/phone-light.png", "/landing/phone-dark.png", "/icons/mark.svg"]) assert.ok(paths.includes(file), file);
+  const loadedBy = (name: string) => {
+    const html = fs.readFileSync(new URL(`../public/${name}`, import.meta.url), "utf8");
+    return [
+      ...[...html.matchAll(/<link rel="(?:stylesheet|manifest)" href="([^"]+)"/g)].map((m) => m[1]),
+      ...[...html.matchAll(/<script [^>]*src="([^"]+)"/g)].map((m) => m[1]),
+    ];
+  };
   const html = fs.readFileSync(new URL("../public/index.html", import.meta.url), "utf8");
-  const loaded = [
-    ...[...html.matchAll(/<link rel="(?:stylesheet|manifest)" href="([^"]+)"/g)].map((m) => m[1]),
-    ...[...html.matchAll(/<script [^>]*src="([^"]+)"/g)].map((m) => m[1]),
-  ];
+  const loaded = loadedBy("index.html");
   assert.ok(loaded.length >= 20, `found ${loaded.length} loaded files`);
   for (const file of loaded) assert.ok(paths.includes(file), `${file} is loaded by index.html but not cached`);
+  const landing = loadedBy("landing.html");
+  assert.ok(landing.includes("/css/landing.css") && landing.includes("/landing.js"), "landing.html loads its css and script");
+  for (const file of landing) assert.ok(paths.includes(file), `${file} is loaded by landing.html but not cached`);
   for (const kit of ["ak-tokens.css", "app-kit.css", "ak-components.css", "install-prompt.css", "theme-color.js", "install-prompt.js", "ak-dom.js", "ak-nav.js", "ak-sheet.js", "ak-tabbar.js", "ak-toast.js"]) {
     assert.ok(paths.includes(`/app-kit/${kit}`), `/app-kit/${kit}`);
   }

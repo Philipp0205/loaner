@@ -118,7 +118,7 @@ for (const size of SIZES) {
 }
 
 test("theme-color: the kit swaps the static metas for one that follows the painted page background, and the manifest is the dark page colour", { timeout: 60_000 }, async () => {
-  const html = await (await fetch(`${loaner.baseUrl}/`)).text();
+  const html = await (await fetch(`${loaner.baseUrl}/app`)).text();
   const metas = [...html.matchAll(/<meta name="theme-color"[^>]*>/g)].map((m) => m[0]);
   assert.equal(metas.length, 4, "four media-bound metas in the source, for the first paint");
   assert.ok(metas.every((m) => /media=/.test(m)));
@@ -131,14 +131,14 @@ test("theme-color: the kit swaps the static metas for one that follows the paint
 
   const lightCtx = await loaner.phone({ colorScheme: "light" });
   const light = await lightCtx.newPage();
-  await light.goto(`${loaner.baseUrl}/`);
+  await light.goto(`${loaner.baseUrl}/app`);
   await light.waitForFunction(() => document.querySelectorAll('meta[name="theme-color"]').length === 1);
   assert.equal(await meta(light), "#ffffff", "light mode matches the light page background");
   assert.equal(await light.evaluate(() => getComputedStyle(document.documentElement).backgroundColor), "rgb(255, 255, 255)");
 
   const darkCtx = await loaner.phone({ colorScheme: "dark" });
   const dark = await darkCtx.newPage();
-  await dark.goto(`${loaner.baseUrl}/`);
+  await dark.goto(`${loaner.baseUrl}/app`);
   await dark.waitForFunction(() => document.querySelectorAll('meta[name="theme-color"]').length === 1);
   assert.equal(await meta(dark), "#000000", "dark mode matches the dark page background");
   assert.equal(await count(dark), 1, "exactly one meta at runtime");

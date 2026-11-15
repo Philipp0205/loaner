@@ -3,7 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import test from "node:test";
 import type { Page } from "playwright-core";
-import { useLoaner } from "./harness.js";
+import { openWelcome, useLoaner } from "./harness.js";
 import { cacheModelFiles } from "./model-cache.js";
 
 // The real path: no __loanerSuggestFromPhoto stub, the app's real CSP, a real photo, and the real model
@@ -14,7 +14,7 @@ const BOUND_MS = 25_000; // the app gives up at 15 s; the rest is headroom for t
 const loaner = useLoaner({}, ["--use-fake-device-for-media-stream", "--use-fake-ui-for-media-stream"]);
 
 async function startOnMyItems(page: Page) {
-  await page.goto(loaner.baseUrl);
+  await openWelcome(page, loaner.baseUrl);
   await page.locator("#name").fill("Real");
   await page.getByRole("button", { name: "Get started" }).click();
   await page.getByRole("heading", { name: "No groups yet" }).waitFor();
