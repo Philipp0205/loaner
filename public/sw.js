@@ -1,4 +1,4 @@
-const CACHE = "loaner-v16";
+const CACHE = "loaner-v17";
 const SHELL = [
   "/",
   "/app-kit/ak-tokens.css", "/app-kit/app-kit.css", "/app-kit/ak-components.css", "/app-kit/install-prompt.css",
@@ -61,12 +61,15 @@ self.addEventListener("push", (event) => {
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
   const target = new URL(event.notification.data?.url || "/", self.location.origin).href;
+  const sameOrigin = (url) => new URL(url).origin === self.location.origin;
   event.waitUntil(
     self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clients) => {
-      for (const client of clients) {
-        if (client.url.startsWith(self.location.origin) && "focus" in client) return client.focus();
+      const client = clients.find((item) => sameOrigin(item.url) && "focus" in item);
+      if (!client) return self.clients.openWindow(target);
+      if (sameOrigin(target) && client.url !== target && "navigate" in client) {
+        return client.navigate(target).then((moved) => (moved || client).focus(), () => client.focus());
       }
-      return self.clients.openWindow(target);
+      return client.focus();
     }),
   );
 });

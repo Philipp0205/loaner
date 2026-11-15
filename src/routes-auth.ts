@@ -1,3 +1,4 @@
+import { clientKey } from "./client-key.js";
 import { newId, newToken, normalizeRecoveryCode, recoveryCode, sha256 } from "./code.js";
 import { get, run, tx } from "./db.js";
 import { unreadCount } from "./notify.js";
@@ -13,10 +14,6 @@ function addDevice(ctx: Ctx, userId: string): string {
   return token;
 }
 
-function ip(req: { raw: { socket: { remoteAddress?: string } } }): string {
-  return req.raw.socket.remoteAddress ?? "unknown";
-}
-
 export function authRoutes(): Route[] {
   const startLimit = createRateLimiter({ limit: 60, windowMs: 60 * 60 * 1000 });
   const recoverLimit = createRateLimiter({ limit: 10, windowMs: 10 * 60 * 1000 });
@@ -27,7 +24,7 @@ export function authRoutes(): Route[] {
       path: "/api/auth/start",
       open: true,
       handler(req) {
-        if (!startLimit.hit(ip(req), req.ctx.now())) throw new HttpError(429, "too many new accounts from here, try again later");
+        if (!startLimit.hit(clientKey(req.raw), req.ctx.now())) throw new HttpError(429, "too many new accounts from here, try again later");
         const body = jsonBody(req);
         const name = text(body.name, "name", 1, 24);
         const invite = str(body, "inviteCode");
@@ -49,7 +46,7 @@ export function authRoutes(): Route[] {
       path: "/api/auth/recover",
       open: true,
       handler(req) {
-        if (!recoverLimit.hit(ip(req), req.ctx.now())) throw new HttpError(429, "too many attempts, wait a few minutes");
+        if (!recoverLimit.hit(clientKey(req.raw), req.ctx.now())) throw new HttpError(429, "too many attempts, wait a few minutes");
         const code = normalizeRecoveryCode(str(jsonBody(req), "code"));
         const user = code ? get<{ id: string; name: string }>(req.ctx.db, "SELECT id, name FROM users WHERE recovery_hash = ?", sha256(code)) : undefined;
         if (!user) throw new HttpError(401, "that recovery code did not work");

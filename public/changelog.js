@@ -7,6 +7,15 @@ import { normalizeEntries } from "./whats-new.js";
  */
 const RAW = [
   {
+    id: "2026-11-15-notification-tap",
+    date: "2026-11-15",
+    title: "Notifications open the right screen",
+    bullets: [
+      "Tapping a notification now takes you to the right screen, even if the app is already open.",
+      "Sign-up and recovery limits are now counted per person, and notification setup is more reliable.",
+    ],
+  },
+  {
     id: "2026-11-15-app-kit",
     date: "2026-11-15",
     title: "A shared look",

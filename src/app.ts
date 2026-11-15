@@ -77,6 +77,15 @@ export function createApp(deps: AppDeps): http.RequestListener {
     ...feedbackRoutes(),
     {
       method: "GET",
+      path: "/api/health",
+      open: true,
+      handler: () => {
+        get(ctx.db, "SELECT 1 AS ok");
+        return { ok: true };
+      },
+    },
+    {
+      method: "GET",
       path: "/api/config",
       open: true,
       handler: () => ({ pushPublicKey: deps.config.vapid?.publicKey ?? null }),

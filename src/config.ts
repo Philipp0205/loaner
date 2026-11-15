@@ -20,6 +20,7 @@ export type Config = {
 };
 
 export const ADMIN_TOKEN_MIN = 32;
+export const DEFAULT_VAPID_SUBJECT = "https://www.loanso.me";
 
 export function loadConfig(env: NodeJS.ProcessEnv = process.env, cwd = process.cwd()): Config {
   const rawDb = env.DB_PATH?.trim() ?? "";
@@ -47,11 +48,18 @@ function readPort(value: string | undefined): number {
 function readVapid(env: NodeJS.ProcessEnv): VapidConfig | null {
   const publicKey = env.VAPID_PUBLIC_KEY?.trim() ?? "";
   const privateKey = env.VAPID_PRIVATE_KEY?.trim() ?? "";
-  const subject = env.VAPID_SUBJECT?.trim() || "mailto:admin@localhost";
+  const subject = env.VAPID_SUBJECT?.trim() || DEFAULT_VAPID_SUBJECT;
   if (!publicKey && !privateKey) return null;
   if (!publicKey || !privateKey) throw new Error("Set both VAPID_PUBLIC_KEY and VAPID_PRIVATE_KEY, or neither");
   if (!subject.startsWith("mailto:") && !subject.startsWith("https:")) {
     throw new Error("VAPID_SUBJECT must be a mailto: or https: URL");
   }
+  if (isProduction(env) && subject.toLowerCase().includes("localhost")) {
+    throw new Error("VAPID_SUBJECT must not point at localhost in production, use a real mailto: or https: URL");
+  }
   return { publicKey, privateKey, subject };
+}
+
+function isProduction(env: NodeJS.ProcessEnv): boolean {
+  return env.NODE_ENV === "production" || env.RAILWAY_ENVIRONMENT === "production";
 }

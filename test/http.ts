@@ -58,10 +58,10 @@ export async function withApp(fn: (app: AppCtx) => Promise<void>, options: WithA
   }
 }
 
-export type ApiOptions = { token?: string; body?: unknown; raw?: Buffer; contentType?: string };
+export type ApiOptions = { token?: string; body?: unknown; raw?: Buffer; contentType?: string; headers?: Record<string, string> };
 
 export async function api(app: { port: number }, method: string, pathname: string, options: ApiOptions = {}): Promise<{ status: number; json: any; bytes: Buffer; type: string }> {
-  const headers: Record<string, string> = {};
+  const headers: Record<string, string> = { ...options.headers };
   if (options.token) headers.authorization = `Bearer ${options.token}`;
   let body: string | Blob | undefined;
   if (options.raw) {

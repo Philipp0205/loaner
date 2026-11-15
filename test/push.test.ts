@@ -109,3 +109,26 @@ test("config: VAPID keys come in pairs, defaults are sane", () => {
   assert.throws(() => loadConfig({ PORT: "0" }), /PORT/);
   void createNoopPushSender;
 });
+
+test("config: VAPID subject defaults to the site and is checked in production", () => {
+  const keys = { VAPID_PUBLIC_KEY: "pub-key-for-tests", VAPID_PRIVATE_KEY: "priv-key-for-tests" };
+  assert.equal(loadConfig({ VAPID_SUBJECT: "mailto:a@b.co" }).vapid, null);
+  assert.equal(loadConfig(keys).vapid?.subject, "https://www.loanso.me");
+  assert.equal(loadConfig({ ...keys, VAPID_SUBJECT: "  " }).vapid?.subject, "https://www.loanso.me");
+
+  for (const env of [{}, { NODE_ENV: "production" }, { RAILWAY_ENVIRONMENT: "production" }]) {
+    assert.throws(() => loadConfig({ ...keys, ...env, VAPID_SUBJECT: "http://example.com" }), /mailto: or https:/);
+    assert.throws(() => loadConfig({ ...keys, ...env, VAPID_SUBJECT: "admin@example.com" }), /mailto: or https:/);
+  }
+
+  for (const env of [{ NODE_ENV: "production" }, { RAILWAY_ENVIRONMENT: "production" }, { NODE_ENV: "production", RAILWAY_ENVIRONMENT: "production" }]) {
+    assert.throws(() => loadConfig({ ...keys, ...env, VAPID_SUBJECT: "mailto:admin@localhost" }), /localhost/);
+    assert.throws(() => loadConfig({ ...keys, ...env, VAPID_SUBJECT: "https://LocalHost:3000" }), /localhost/);
+    assert.equal(loadConfig({ ...keys, ...env }).vapid?.subject, "https://www.loanso.me");
+    assert.equal(loadConfig({ ...keys, ...env, VAPID_SUBJECT: "https://example.com" }).vapid?.subject, "https://example.com");
+    assert.equal(loadConfig({ ...keys, ...env, VAPID_SUBJECT: "mailto:team@example.com" }).vapid?.subject, "mailto:team@example.com");
+  }
+
+  assert.equal(loadConfig({ ...keys, NODE_ENV: "development", RAILWAY_ENVIRONMENT: "staging", VAPID_SUBJECT: "mailto:admin@localhost" }).vapid?.subject, "mailto:admin@localhost");
+  assert.equal(loadConfig({ ...keys, VAPID_SUBJECT: "mailto:admin@localhost" }).vapid?.subject, "mailto:admin@localhost");
+});
