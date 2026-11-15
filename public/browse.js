@@ -1,6 +1,7 @@
 import { api } from "./api.js";
 import { createGroupForm } from "./groups.js";
 import { photoEl } from "./photo.js";
+import { viewable } from "./photo-viewer.js";
 import { messageButton } from "./messages.js";
 import { requestCard } from "./requests.js";
 import { go, currentGroup, redraw, setGroup, state } from "./state.js";
@@ -54,7 +55,7 @@ export async function renderItem(id) {
   const { item, history, myRequestIds, unreadMessages } = await api("GET", `/api/items/${id}`);
   const parts = [
     h("div", { class: "hero" },
-      photoEl(item, "big"),
+      item.hasPhoto ? viewable(photoEl(item, "big"), item) : photoEl(item, "big"),
       h("button", { class: "fab", type: "button", "aria-label": "Back", onclick: () => history_back(item) }, icon("back")),
     ),
     h("h1", null, item.name),
