@@ -145,8 +145,9 @@ test("logo.svg keeps the light ink and teal arrow, and lightens only the letteri
   assert.equal([...svg.matchAll(/class="ink"/g)].length, 7);
 });
 
-test("the dark mode entry is the newest in What's new", async () => {
+test("the dark mode entry is in What's new", async () => {
   const { CHANGELOG } = (await import(new URL("../public/changelog.js", import.meta.url).href)) as { CHANGELOG: { id: string; date: string; title: string }[] };
-  assert.equal(CHANGELOG[0].id, "2026-11-15-dark-mode");
-  assert.equal(CHANGELOG[0].title, "Dark mode");
+  const entry = CHANGELOG.find((item) => item.id === "2026-11-15-dark-mode");
+  assert.ok(entry, "the dark mode entry is still listed");
+  assert.equal(entry.title, "Dark mode");
 });

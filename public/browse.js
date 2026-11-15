@@ -1,6 +1,7 @@
 import { api } from "./api.js";
 import { createGroupForm } from "./groups.js";
 import { photoEl } from "./photo.js";
+import { messageButton } from "./messages.js";
 import { requestCard } from "./requests.js";
 import { go, currentGroup, redraw, setGroup, state } from "./state.js";
 import { busy, emptyState, fmtAmount, fmtDate, fmtMoment, fmtRange, h, statusPill, toast, wordmarkHeading } from "./util.js";
@@ -50,7 +51,7 @@ function tile(item) {
 
 export async function renderItem(id) {
   const rerender = () => redraw(`#/item/${id}`);
-  const { item, history, myRequestIds } = await api("GET", `/api/items/${id}`);
+  const { item, history, myRequestIds, unreadMessages } = await api("GET", `/api/items/${id}`);
   const parts = [
     h("div", { class: "hero" },
       photoEl(item, "big"),
@@ -62,6 +63,7 @@ export async function renderItem(id) {
     h("div", { class: "host" },
       h("span", { class: "avatar", "aria-hidden": "true" }, (item.owner.name || "?").slice(0, 1).toUpperCase()),
       h("div", null, h("b", null, item.mine ? "Lent by you" : `Owned by ${item.owner.name}`), h("span", { class: "sub" }, item.mine ? "Shared with your groups" : "Member of the group")),
+      item.mine ? null : messageButton(item.id, null, unreadMessages),
     ),
     item.note ? [h("hr", { class: "rule" }), h("p", { class: "note" }, item.note)] : null,
     item.donation !== null ? [h("hr", { class: "rule" }), donationNote(item)] : null,

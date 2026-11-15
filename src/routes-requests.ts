@@ -4,6 +4,7 @@ import { all, get, run, tx } from "./db.js";
 import { addNote, flush, type PendingPush } from "./notify.js";
 import { addDays, isoDate, shortDate } from "./time.js";
 import { HttpError, Reply, jsonBody, me, type Ctx, type Route, type User } from "./types.js";
+import { threadUnread } from "./routes-messages.js";
 import { date, longText } from "./validate.js";
 
 export type RequestRow = {
@@ -40,7 +41,7 @@ const REQUEST_SELECT = `
 
 const MAX_DAYS = 365;
 
-function requestView(row: RequestRow) {
+function requestView(ctx: Ctx, row: RequestRow, viewerId: string) {
   return {
     id: row.id,
     item: { id: row.item_id, name: row.item_name, hasPhoto: !!row.item_has_photo, photoVersion: row.item_updated_at },
@@ -56,6 +57,8 @@ function requestView(row: RequestRow) {
     decidedAt: row.decided_at,
     handedOverAt: row.handed_over_at,
     returnedAt: row.returned_at,
+    // The (item, borrower) thread has something the viewer has not opened yet.
+    unreadMessages: threadUnread(ctx, row.item_id, row.borrower_id, viewerId),
   };
 }
 
@@ -133,7 +136,7 @@ export function requestRoutes(): Route[] {
           );
         });
         await flush(req.ctx, pending);
-        return new Reply(201, { request: requestView(requireRequest(req.ctx, user, id)) });
+        return new Reply(201, { request: requestView(req.ctx, requireRequest(req.ctx, user, id), user.id) });
       },
     },
     {
@@ -149,7 +152,7 @@ export function requestRoutes(): Route[] {
            ORDER BY CASE r.status WHEN 'pending' THEN 0 WHEN 'approved' THEN 1 WHEN 'lent' THEN 2 ELSE 3 END, r.from_date, r.created_at DESC, r.id`,
           user.id,
         );
-        return { requests: rows.map(requestView) };
+        return { requests: rows.map((row) => requestView(req.ctx, row, user.id)) };
       },
     },
     {
@@ -157,7 +160,7 @@ export function requestRoutes(): Route[] {
       path: "/api/requests/:id",
       handler(req) {
         const user = me(req);
-        return { request: requestView(requireRequest(req.ctx, user, req.params.id)) };
+        return { request: requestView(req.ctx, requireRequest(req.ctx, user, req.params.id), user.id) };
       },
     },
     {
@@ -200,7 +203,7 @@ export function requestRoutes(): Route[] {
           }
         });
         await flush(req.ctx, pending);
-        return { request: requestView(requireRequest(req.ctx, user, row.id)) };
+        return { request: requestView(req.ctx, requireRequest(req.ctx, user, row.id), user.id) };
       },
     },
     {
@@ -221,7 +224,7 @@ export function requestRoutes(): Route[] {
           }),
         ];
         await flush(req.ctx, pending);
-        return { request: requestView(requireRequest(req.ctx, user, row.id)) };
+        return { request: requestView(req.ctx, requireRequest(req.ctx, user, row.id), user.id) };
       },
     },
     {
@@ -242,7 +245,7 @@ export function requestRoutes(): Route[] {
           }),
         ];
         await flush(req.ctx, pending);
-        return { request: requestView(requireRequest(req.ctx, user, row.id)) };
+        return { request: requestView(req.ctx, requireRequest(req.ctx, user, row.id), user.id) };
       },
     },
     {
@@ -264,7 +267,7 @@ export function requestRoutes(): Route[] {
           }),
         ];
         await flush(req.ctx, pending);
-        return { request: requestView(requireRequest(req.ctx, user, row.id)) };
+        return { request: requestView(req.ctx, requireRequest(req.ctx, user, row.id), user.id) };
       },
     },
     {
@@ -284,7 +287,7 @@ export function requestRoutes(): Route[] {
           }),
         ];
         await flush(req.ctx, pending);
-        return { request: requestView(requireRequest(req.ctx, user, row.id)) };
+        return { request: requestView(req.ctx, requireRequest(req.ctx, user, row.id), user.id) };
       },
     },
   ];

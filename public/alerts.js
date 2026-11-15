@@ -1,4 +1,5 @@
 import { api } from "./api.js";
+import { threadHash } from "./messages.js";
 import { go, redraw, state } from "./state.js";
 import { emptyState, fmtMoment, h } from "./util.js";
 
@@ -27,7 +28,10 @@ export async function renderAlerts() {
 }
 
 async function open(n) {
-  if (n.type === "request_new" || n.type === "request_cancelled" || n.type === "late") {
+  if (n.type === "message" && n.itemId) {
+    // The borrower's own thread has no borrower id in the route. The owner's names the borrower.
+    go(threadHash(n.itemId, n.borrowerId && n.borrowerId !== state.user.id ? n.borrowerId : null));
+  } else if (n.type === "request_new" || n.type === "request_cancelled" || n.type === "late") {
     go("#/requests");
   } else if (n.type === "item_removed") {
     go("#/requests");
