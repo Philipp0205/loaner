@@ -119,16 +119,15 @@ test("the camera stays dark and is not reassigned in the dark block", () => {
   assert.ok(luminance(light["cam-bg"]) < 0.02);
 });
 
-test("index.html declares both colour schemes and a theme-color for each", () => {
+test("index.html declares both colour schemes and one theme-color that follows the page", () => {
   const html = read("index.html");
   assert.match(html, /<meta name="color-scheme" content="light dark">/);
   const metas = [...html.matchAll(/<meta name="theme-color"[^>]*>/g)].map((m) => m[0]);
-  assert.equal(metas.length, 2);
-  const lightMeta = metas.find((m) => m.includes("prefers-color-scheme: light"));
-  const darkMeta = metas.find((m) => m.includes("prefers-color-scheme: dark"));
-  assert.match(lightMeta ?? "", /content="#00857A"/);
-  assert.match(darkMeta ?? "", /content="#0F1C1F"/i);
-  assert.equal(/content="([^"]+)"/.exec(darkMeta ?? "")?.[1].toLowerCase(), dark.bg.toLowerCase(), "dark theme-color matches the dark --bg");
+  assert.equal(metas.length, 1, "exactly one theme-color meta");
+  assert.doesNotMatch(metas[0], /media=/, "the theme-color meta has no media attribute");
+  assert.equal(/content="([^"]+)"/.exec(metas[0])?.[1].toLowerCase(), dark.bg.toLowerCase(), "the fallback theme-color is the dark --bg");
+  assert.match(html, /<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">/);
+  assert.match(read("css/base.css"), /html\s*\{[^}]*background:\s*var\(--bg\)/, "html paints --bg behind the status bar inset");
 });
 
 test("logo.svg keeps the light ink and teal arrow, and lightens only the lettering in dark", () => {
@@ -145,8 +144,9 @@ test("logo.svg keeps the light ink and teal arrow, and lightens only the letteri
   assert.equal([...svg.matchAll(/class="ink"/g)].length, 7);
 });
 
-test("the dark mode entry is the newest in What's new", async () => {
+test("the dark mode entry is in What's new", async () => {
   const { CHANGELOG } = (await import(new URL("../public/changelog.js", import.meta.url).href)) as { CHANGELOG: { id: string; date: string; title: string }[] };
-  assert.equal(CHANGELOG[0].id, "2026-11-15-dark-mode");
-  assert.equal(CHANGELOG[0].title, "Dark mode");
+  const entry = CHANGELOG.find((item) => item.id === "2026-11-15-dark-mode");
+  assert.ok(entry, "the dark mode entry is kept");
+  assert.equal(entry.title, "Dark mode");
 });

@@ -11,6 +11,9 @@ import { h, toast } from "./util.js";
 import { icon } from "./icons.js";
 import { considerWhatsNew } from "./whats-new-ui.js";
 import { considerInstallPrompt } from "./install-prompt.js";
+import { watchThemeColor } from "./theme-color.js";
+
+watchThemeColor();
 
 const root = document.getElementById("root");
 
