@@ -117,10 +117,16 @@ for (const size of SIZES) {
   });
 }
 
-test("theme-color meta equals the manifest theme_color", { timeout: 30_000 }, async () => {
+test("theme-color: the light meta equals the manifest theme_color and a dark one exists", { timeout: 30_000 }, async () => {
   const html = await (await fetch(`${loaner.baseUrl}/`)).text();
-  const meta = /<meta name="theme-color" content="([^"]+)"/.exec(html)?.[1];
+  const metas = [...html.matchAll(/<meta name="theme-color"[^>]*>/g)].map((m) => m[0]);
+  const content = (tag: string) => /content="([^"]+)"/.exec(tag)?.[1];
+  const light = metas.find((tag) => tag.includes("prefers-color-scheme: light"));
+  const dark = metas.find((tag) => tag.includes("prefers-color-scheme: dark"));
   const manifest = await (await fetch(`${loaner.baseUrl}/manifest.webmanifest`)).json();
-  assert.equal(meta?.toLowerCase(), String(manifest.theme_color).toLowerCase());
+  assert.equal(content(metas[0])?.toLowerCase(), String(manifest.theme_color).toLowerCase(), "the first theme-color is the manifest one");
+  assert.equal(content(light ?? "")?.toLowerCase(), String(manifest.theme_color).toLowerCase());
+  assert.ok(dark, "a dark scheme theme-color meta exists");
+  assert.notEqual(content(dark ?? "")?.toLowerCase(), String(manifest.theme_color).toLowerCase());
   assert.equal(String(manifest.background_color).toLowerCase(), "#ffffff");
 });

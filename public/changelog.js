@@ -7,6 +7,15 @@ import { normalizeEntries } from "./whats-new.js";
  */
 const RAW = [
   {
+    id: "2026-11-15-dark-mode",
+    date: "2026-11-15",
+    title: "Dark mode",
+    bullets: [
+      "Loan some follows your phone's light or dark setting.",
+      "The logo stays readable on a dark background.",
+    ],
+  },
+  {
     id: "2026-11-14-rename-group",
     date: "2026-11-14",
     title: "Rename a group",
