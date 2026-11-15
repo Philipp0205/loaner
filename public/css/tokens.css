@@ -14,7 +14,7 @@
 /*
  * Colour, dark. Dark is the kit default. The dark block comes before the light media block, and the
  * forced-scheme selectors are more specific than :root, so a phone setting and data-ak-scheme both work.
- * Kit gaps fixed here: the kit's light muted grey (#8e8e93) and light danger (#ff3b30) fail AA on white.
+ * The kit's muted and danger text colours reach AA in both schemes, so they are not overridden here.
  */
 :root,
 html[data-ak-scheme="dark"] {
@@ -23,7 +23,6 @@ html[data-ak-scheme="dark"] {
   --ak-accent-2: #2bb3a3;
   --ak-accent-strong: #2bb3a3;
   --ak-accent-ink: #000000;
-  --ak-danger: #ff9a91;
 
   --line-strong: var(--ak-faint);
   --teal-ink: var(--ak-accent);
@@ -39,8 +38,6 @@ html[data-ak-scheme="dark"] {
     --ak-accent-2: #00857a;
     --ak-accent-strong: #00857a;
     --ak-accent-ink: #ffffff;
-    --ak-muted: #636366;
-    --ak-danger: #b3261e;
 
     --line-strong: #8e8e93;
     --teal-ink: #006b62;
@@ -56,8 +53,6 @@ html[data-ak-scheme="light"] {
   --ak-accent-2: #00857a;
   --ak-accent-strong: #00857a;
   --ak-accent-ink: #ffffff;
-  --ak-muted: #636366;
-  --ak-danger: #b3261e;
 
   --line-strong: #8e8e93;
   --teal-ink: #006b62;

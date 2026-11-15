@@ -1,7 +1,7 @@
 import { requireAdmin } from "./admin-auth.js";
+import { createRateLimiter } from "./app-kit/index.ts";
 import { newId } from "./code.js";
 import { all, get, run } from "./db.js";
-import { createRateLimiter } from "./rate-limit.js";
 import { MAX_PHOTO_BYTES, sniff } from "./routes-items.js";
 import { HttpError, Reply, jsonBody, me, type Route } from "./types.js";
 

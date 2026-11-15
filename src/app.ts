@@ -1,7 +1,15 @@
-import fs from "node:fs";
 import http from "node:http";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import {
+  SECURITY_HEADERS,
+  buildCsp,
+  healthHandler,
+  isHealthRequest,
+  readBody,
+  sendJson,
+  serveStatic,
+} from "./app-kit/index.ts";
 import { sha256 } from "./code.js";
 import type { Config } from "./config.js";
 import { get } from "./db.js";
@@ -25,32 +33,29 @@ export type AppDeps = {
 
 const PUBLIC_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "public");
 
-const MIME: Record<string, string> = {
-  ".html": "text/html; charset=utf-8",
-  ".js": "text/javascript; charset=utf-8",
-  ".css": "text/css; charset=utf-8",
-  ".webmanifest": "application/manifest+json",
-  ".png": "image/png",
-  ".svg": "image/svg+xml",
-  ".ico": "image/x-icon",
-  ".woff2": "font/woff2",
-  ".json": "application/json; charset=utf-8",
-};
-
 // The on-device photo suggester loads a pinned Transformers.js build from jsDelivr and its CLIP weights
 // from Hugging Face, so those hosts are allowed for scripts and fetches. Nothing else is.
 // Hugging Face answers a weight download with a 302 to its CDN (for example us.aws.cdn.hf.co), and the
 // CDN host has several labels, so it is listed explicitly instead of relying on a single *.hf.co match.
 const CDN = "https://cdn.jsdelivr.net";
-const HF = "https://huggingface.co https://*.huggingface.co https://*.hf.co https://*.cdn.hf.co https://*.xethub.hf.co";
+const HF = ["https://huggingface.co", "https://*.huggingface.co", "https://*.hf.co", "https://*.cdn.hf.co", "https://*.xethub.hf.co"];
 
-const SECURITY_HEADERS = {
-  "x-content-type-options": "nosniff",
-  "referrer-policy": "no-referrer",
-  "x-frame-options": "DENY",
-  "content-security-policy":
-    `default-src 'self'; img-src 'self' blob: data:; media-src 'self' blob:; style-src 'self'; style-src-attr 'unsafe-inline'; script-src 'self' 'wasm-unsafe-eval' ${CDN}; worker-src 'self' blob:; connect-src 'self' ${CDN} ${HF}; object-src 'none'; base-uri 'none'; frame-ancestors 'none'`,
-};
+export const CONTENT_SECURITY_POLICY = buildCsp({
+  "default-src": ["'self'"],
+  "img-src": ["'self'", "blob:", "data:"],
+  "media-src": ["'self'", "blob:"],
+  "style-src": ["'self'"],
+  "style-src-attr": ["'unsafe-inline'"],
+  "script-src": ["'self'", "'wasm-unsafe-eval'", CDN],
+  "worker-src": ["'self'", "blob:"],
+  "connect-src": ["'self'", CDN, ...HF],
+  "object-src": ["'none'"],
+  "base-uri": ["'none'"],
+  "frame-ancestors": ["'none'"],
+});
+
+/** The kit serves the SPA shell for extensionless paths. Static files stay no-cache (the kit default). */
+const staticFiles = serveStatic(PUBLIC_DIR);
 
 type Compiled = { route: Route; pattern: RegExp; keys: string[] };
 
@@ -77,15 +82,6 @@ export function createApp(deps: AppDeps): http.RequestListener {
     ...feedbackRoutes(),
     {
       method: "GET",
-      path: "/api/health",
-      open: true,
-      handler: () => {
-        get(ctx.db, "SELECT 1 AS ok");
-        return { ok: true };
-      },
-    },
-    {
-      method: "GET",
       path: "/api/config",
       open: true,
       handler: () => ({ pushPublicKey: deps.config.vapid?.publicKey ?? null }),
@@ -93,6 +89,8 @@ export function createApp(deps: AppDeps): http.RequestListener {
   ]);
 
   return (req, res) => {
+    // writeHead merges what is set here, so every response (JSON, static, health, errors) carries the CSP.
+    res.setHeader("content-security-policy", CONTENT_SECURITY_POLICY);
     handle(req, res).catch((error: unknown) => {
       if (res.headersSent) {
         res.destroy();
@@ -109,9 +107,15 @@ export function createApp(deps: AppDeps): http.RequestListener {
   async function handle(req: http.IncomingMessage, res: http.ServerResponse): Promise<void> {
     const url = new URL(req.url ?? "/", "http://localhost");
     const method = req.method ?? "GET";
+    if (isHealthRequest(req)) {
+      // The kit handler does not touch the database. If this throws, the request fails with a 500.
+      get(ctx.db, "SELECT 1 AS ok");
+      healthHandler(req, res);
+      return;
+    }
     if (!url.pathname.startsWith("/api/")) {
-      if (method !== "GET" && method !== "HEAD") throw new HttpError(405, "method not allowed");
-      await serveStatic(req, res, url.pathname);
+      // The kit answers GET and HEAD and says no to anything else, which is a 405 here.
+      if (!(await staticFiles(req, res, url.pathname))) throw new HttpError(405, "method not allowed");
       return;
     }
     let pathMatched = false;
@@ -129,13 +133,13 @@ export function createApp(deps: AppDeps): http.RequestListener {
         }
       });
       const user = entry.route.open ? optionalUser(req) : requiredUser(req);
-      const body = await readBody(req, entry.route.maxBody ?? 16 * 1024);
+      const body = await readCapped(req, entry.route.maxBody ?? 16 * 1024);
       const result = await entry.route.handler({ ctx, user, params, query: url.searchParams, raw: req, body });
       if (result instanceof Reply) {
         if (result.bytes) sendBytes(res, result.status, result.bytes, result.headers);
-        else sendJson(res, result.status, result.body, result.headers);
+        else sendJson(res, result.status, result.body ?? null, result.headers);
       } else {
-        sendJson(res, 200, result);
+        sendJson(res, 200, result ?? null);
       }
       return;
     }
@@ -171,68 +175,18 @@ export function createApp(deps: AppDeps): http.RequestListener {
   }
 }
 
-/** Reads the whole body up to `limit` bytes. Over the limit it drains the rest and answers 413. */
-function readBody(req: http.IncomingMessage, limit: number): Promise<Buffer> {
-  return new Promise((resolve, reject) => {
-    const chunks: Buffer[] = [];
-    let size = 0;
-    let tooBig = false;
-    req.on("data", (chunk: Buffer) => {
-      size += chunk.length;
-      if (size > limit) {
-        tooBig = true;
-        chunks.length = 0;
-        return;
-      }
-      if (!tooBig) chunks.push(chunk);
-    });
-    req.on("end", () => (tooBig ? reject(new HttpError(413, "that upload is too large")) : resolve(Buffer.concat(chunks))));
-    req.on("error", reject);
-  });
+/** The kit's capped reader, with Loan some's own words for the 413. */
+async function readCapped(req: http.IncomingMessage, limit: number): Promise<Buffer> {
+  try {
+    return await readBody(req, limit);
+  } catch (error) {
+    if (error instanceof HttpError && error.status === 413) throw new HttpError(413, "that upload is too large");
+    throw error;
+  }
 }
 
-function sendJson(res: http.ServerResponse, status: number, body: unknown, headers: Record<string, string> = {}): void {
-  const json = JSON.stringify(body ?? null);
-  res.writeHead(status, {
-    "content-type": "application/json; charset=utf-8",
-    "content-length": Buffer.byteLength(json),
-    "cache-control": "no-store",
-    ...SECURITY_HEADERS,
-    ...headers,
-  });
-  res.end(json);
-}
-
+/** Binary replies (photos) are private and revalidated, unlike JSON (no-store) and static files (no-cache). */
 function sendBytes(res: http.ServerResponse, status: number, bytes: Buffer, headers: Record<string, string>): void {
-  res.writeHead(status, { "content-length": bytes.length, "cache-control": "private, no-cache", ...SECURITY_HEADERS, ...headers });
+  res.writeHead(status, { "content-length": bytes.length, ...SECURITY_HEADERS, "cache-control": "private, no-cache", ...headers });
   res.end(bytes);
-}
-
-async function serveStatic(req: http.IncomingMessage, res: http.ServerResponse, pathname: string): Promise<void> {
-  let decoded: string;
-  try {
-    decoded = decodeURIComponent(pathname);
-  } catch {
-    throw new HttpError(400, "bad path");
-  }
-  if (decoded.includes("\0")) throw new HttpError(400, "bad path");
-  const filePath = path.resolve(PUBLIC_DIR, decoded.replace(/^\/+/, ""));
-  const relative = path.relative(PUBLIC_DIR, filePath);
-  if (relative.startsWith("..") || path.isAbsolute(relative)) throw new HttpError(404, "not found");
-  const ext = path.extname(relative);
-  // A path with no extension is an app route such as /join/ABC: serve the app shell.
-  const file = ext ? filePath : path.join(PUBLIC_DIR, "index.html");
-  let data: Buffer;
-  try {
-    data = await fs.promises.readFile(file);
-  } catch {
-    throw new HttpError(404, "not found");
-  }
-  res.writeHead(200, {
-    "content-type": MIME[path.extname(file)] ?? "application/octet-stream",
-    "content-length": data.length,
-    "cache-control": "no-cache",
-    ...SECURITY_HEADERS,
-  });
-  res.end(req.method === "HEAD" ? undefined : data);
 }

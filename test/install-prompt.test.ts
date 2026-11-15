@@ -14,6 +14,7 @@ const OPTIONS = {
   title: "Install Loan some",
   text: "Add it to your home screen so it is easy to open.",
   closeLabel: "Not now",
+  iosNonSafari: "share-steps",
 };
 
 /** A fresh browser with the kit's install prompt loaded and started the way app.js starts it. */
@@ -65,11 +66,22 @@ test("iOS: share steps on iPhone Safari and on an iPad that calls itself a Mac, 
   assert.equal(variant(mac), "generic", "a real Mac has no touch points");
 });
 
-test("iOS in another browser gets a hint to open Safari instead of the share steps (kit difference)", () => {
+test("iOS in another browser (Chrome) gets the share steps too, not a hint to open Safari", () => {
   const env = visit({ userAgent: IPHONE_CHROME });
   assert.equal(variant(env), "ios");
-  assert.equal(byClass(banner(env), "ak-ip-steps"), null);
-  assert.equal(byClass(banner(env), "ak-ip-hint")?.textContent, "Open this page in Safari to install Loan some.");
+  const steps = byClass(banner(env), "ak-ip-steps");
+  assert.ok(steps, "share steps");
+  assert.match(steps.textContent, /Tap Share/);
+  assert.match(steps.textContent, /Add to Home Screen/);
+  assert.equal(byClass(banner(env), "ak-ip-install"), null, "no Install button on iOS");
+  assert.doesNotMatch(banner(env)?.textContent ?? "", /Open this page in Safari/);
+});
+
+test("app.js starts the install prompt with iosNonSafari share-steps", async () => {
+  const fs = await import("node:fs");
+  const app = fs.readFileSync(new URL("../public/app.js", import.meta.url), "utf8");
+  assert.match(app, /iosNonSafari:\s*"share-steps"/);
+  assert.equal(OPTIONS.iosNonSafari, "share-steps");
 });
 
 test("variants: Install button once beforeinstallprompt is captured, otherwise a browser menu hint", () => {
