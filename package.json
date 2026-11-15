@@ -16,7 +16,8 @@
     "test:ui": "tsx --test --test-concurrency=1 test/ui/*.spec.ts",
     "vapid": "tsx src/vapid.ts",
     "icons": "node scripts/generate-icons.mjs",
-    "og": "node scripts/generate-og.mjs"
+    "og": "node scripts/generate-og.mjs",
+    "landing-shots": "node --import tsx scripts/generate-landing-shots.mjs"
   },
   "dependencies": {
     "tsx": "^4.23.15",

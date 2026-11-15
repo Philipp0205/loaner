@@ -53,6 +53,41 @@ test("the recovery link on the landing reaches the recovery form", { timeout: 60
   await ctx.close();
 });
 
+test("/welcome shows the landing for a signed-out visitor, with both app screenshots loaded", { timeout: 60_000 }, async () => {
+  const errors: string[] = [];
+  const ctx = await loaner.phone();
+  const page = await ctx.newPage();
+  page.on("pageerror", (error) => errors.push(String(error)));
+
+  await page.goto(`${loaner.baseUrl}/welcome`);
+  await page.getByRole("heading", { level: 1, name: HERO }).waitFor();
+  assert.equal(new URL(page.url()).pathname, "/welcome");
+  assert.equal(await page.locator("#name").count(), 0, "no welcome field on the landing");
+
+  const shots = page.locator(".hero-phone .phone img");
+  assert.equal(await shots.count(), 2, "the hero drill screenshot and the shelf screenshot are in the document");
+  await page.waitForFunction(() => [...document.querySelectorAll(".hero-phone img")].every((img) => (img as HTMLImageElement).complete));
+  const sizes = await shots.evaluateAll((images) => images.map((img) => ({ src: (img as HTMLImageElement).currentSrc, width: (img as HTMLImageElement).naturalWidth })));
+  for (const shot of sizes) assert.ok(shot.width > 0, `${shot.src} loaded`);
+  assert.ok(sizes.some((shot) => shot.src.includes("/landing/shelf-")), "the shelf screenshot is shown");
+  assert.deepEqual(errors, []);
+  await ctx.close();
+});
+
+test("/welcome still shows the landing for a signed-in user, with no redirect to /app", { timeout: 60_000 }, async () => {
+  const ctx = await loaner.phone();
+  const page = await ctx.newPage();
+  await signUp(page, loaner.baseUrl, "Wen");
+  assert.ok(await page.evaluate(() => localStorage.getItem("loaner_token")), "signed in");
+  for (const path of ["/welcome", "/welcome/"]) {
+    await page.goto(`${loaner.baseUrl}${path}`);
+    await page.getByRole("heading", { level: 1, name: HERO }).waitFor();
+    assert.equal(new URL(page.url()).pathname, path);
+    assert.equal(await page.locator("nav.ak-tabbar").count(), 0, "not the app");
+  }
+  await ctx.close();
+});
+
 test("a signed-in user who opens / lands in the app, not the landing", { timeout: 60_000 }, async () => {
   const ctx = await loaner.phone();
   const page = await ctx.newPage();

@@ -119,6 +119,14 @@ test("static: the app shell for app routes, the right types, GET and HEAD, nothi
     assert.equal(shell.status, 200);
     assert.equal(shell.body, join.body, "an extensionless app route serves index.html");
     assert.equal((await raw(app, "GET", "/landing.html")).body, home.body);
+    for (const file of ["/welcome", "/welcome/"]) {
+      const welcome = await raw(app, "GET", file);
+      assert.equal(welcome.status, 200, file);
+      assert.match(String(welcome.headers["content-type"]), /^text\/html/, file);
+      assert.equal(welcome.body, home.body, `${file} serves the home page, not the app shell`);
+      assert.notEqual(welcome.body, shell.body, file);
+    }
+    assert.match(home.body, /<link rel="canonical" href="https:\/\/www\.loanso\.me\/">/, "the canonical stays the root");
 
     const types: Record<string, RegExp> = {
       "/app.js": /^text\/javascript/,

@@ -16,13 +16,15 @@
    * Which screen a visit gets.
    *  - input: { pathname, hash, signedIn, standalone }
    *  - result: { view: "landing" } or { view: "app", redirectTo: string | null }
-   * The home page only shows at "/" (or "/landing.html") for a visitor who is signed out and not in the
-   * installed app. Any other path is the app shell already (the welcome screen at /app, /join/<code>
-   * including a bad code), so it needs no redirect.
+   * At "/" (or "/landing.html") the home page only shows for a visitor who is signed out and not in the
+   * installed app. At "/welcome" it always shows, signed in or not, installed or not, with no redirect.
+   * Any other path is the app shell already (the welcome screen at /app, /join/<code> including a bad
+   * code), so it needs no redirect.
    */
   function decideEntry(input) {
     var pathname = String((input && input.pathname) || "/");
     var hash = String((input && input.hash) || "");
+    if (pathname === "/welcome" || pathname === "/welcome/") return { view: "landing" };
     var onLandingDoc = pathname === "/" || pathname === "/landing.html";
     if (!onLandingDoc) return { view: "app", redirectTo: null };
     if ((input && input.signedIn) || (input && input.standalone)) return { view: "app", redirectTo: APP_PATH + hash };

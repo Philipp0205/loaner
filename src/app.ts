@@ -114,9 +114,10 @@ export function createApp(deps: AppDeps): http.RequestListener {
       return;
     }
     if (!url.pathname.startsWith("/api/")) {
-      // The public home page is a real document at exactly "/". The app shell answers /app, /join/<code> and
-      // every other extensionless path (the kit's SPA fallback).
-      const pathname = url.pathname === "/" ? "/landing.html" : url.pathname;
+      // The public home page is a real document at "/" and at /welcome (which never redirects, see landing.js).
+      // The app shell answers /app, /join/<code> and every other extensionless path (the kit's SPA fallback).
+      const isHome = url.pathname === "/" || url.pathname === "/welcome" || url.pathname === "/welcome/";
+      const pathname = isHome ? "/landing.html" : url.pathname;
       // The kit answers GET and HEAD and says no to anything else, which is a 405 here.
       if (!(await staticFiles(req, res, pathname))) throw new HttpError(405, "method not allowed");
       return;
