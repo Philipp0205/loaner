@@ -16,6 +16,15 @@ const RAW = [
     ],
   },
   {
+    id: "2026-11-15-install-prompt",
+    date: "2026-11-15",
+    title: "Install the app",
+    bullets: [
+      "You can install Loan some on your phone from a prompt in the app.",
+      "On iPhone, use Share, then Add to Home Screen.",
+    ],
+  },
+  {
     id: "2026-11-14-rename-group",
     date: "2026-11-14",
     title: "Rename a group",
