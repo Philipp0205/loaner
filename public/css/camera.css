@@ -1,13 +1,13 @@
 /* Full-screen camera for adding an item. Sits above the tab bar (z-index 10) and the What's new sheet (30). */
 .camera {
-  position: fixed; inset: 0; z-index: 40; background: #0b0f0f; color: #fff;
+  position: fixed; inset: 0; z-index: 40; background: var(--cam-bg); color: var(--cam-ink);
   display: flex; flex-direction: column; overflow: hidden;
 }
-.camera video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; background: #0b0f0f; }
+.camera video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; background: var(--cam-bg); }
 .cam-close {
   position: absolute; z-index: 1; top: calc(12px + env(safe-area-inset-top)); left: calc(12px + env(safe-area-inset-left));
   width: 48px; height: 48px; min-height: 48px; padding: 0; border: 0; border-radius: var(--r-pill);
-  background: rgb(0 0 0 / 0.5); color: #fff; font-size: 1.75rem; line-height: 1;
+  background: rgb(0 0 0 / 0.5); color: var(--cam-ink); font-size: 1.75rem; line-height: 1;
 }
 .cam-fallback {
   position: relative; margin: auto var(--s5); padding: var(--s4); text-align: center; font-size: var(--fs-lg);
@@ -22,14 +22,14 @@
 .cam-controls { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: var(--s3); }
 .cam-btn {
   font: 600 var(--fs-md)/1.2 var(--font); min-height: 48px; padding: 0 var(--s3); border-radius: var(--r-btn);
-  border: 1px solid rgb(255 255 255 / 0.6); background: rgb(0 0 0 / 0.35); color: #fff;
+  border: 1px solid rgb(255 255 255 / 0.6); background: rgb(0 0 0 / 0.35); color: var(--cam-ink);
   display: inline-flex; align-items: center; justify-content: center; text-align: center; cursor: pointer;
 }
 .cam-btn:has(:focus-visible), .cam-close:focus-visible, .cam-shutter:focus-visible { box-shadow: 0 0 0 3px var(--teal); }
 .cam-btn.disabled { opacity: 0.5; cursor: default; }
 .cam-shutter {
   width: 76px; height: 76px; min-height: 76px; padding: 0; border-radius: var(--r-pill);
-  background: #fff; border: 5px solid rgb(255 255 255 / 0.45); background-clip: padding-box;
+  background: var(--cam-ink); border: 5px solid rgb(255 255 255 / 0.45); background-clip: padding-box;
 }
 .cam-shutter:active:not(:disabled) { background: var(--teal); }
 .cam-controls > :first-child { justify-self: stretch; }

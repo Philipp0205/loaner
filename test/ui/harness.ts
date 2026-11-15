@@ -60,7 +60,7 @@ export function useLoaner(env: NodeJS.ProcessEnv = {}, chromeArgs: string[] = []
   return {
     get baseUrl() { return live(server).baseUrl; },
     get db() { return live(server).db; },
-    /** A fresh phone-sized browser context: its own storage, so its own person. `options` overrides the defaults, e.g. the user agent. */
+    /** A fresh phone-sized browser context: its own storage, so its own person. `options` override the phone defaults, e.g. `{ colorScheme: "dark" }`. */
     async phone(options: BrowserContextOptions = {}): Promise<BrowserContext> {
       const context = await live(browser).newContext({
         viewport: PHONE,

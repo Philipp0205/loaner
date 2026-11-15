@@ -11,7 +11,7 @@
   background: var(--ink); color: var(--ink-inverse); padding: 12px 16px; border-radius: var(--r-btn);
   font-size: var(--fs-md); font-weight: 500; max-width: 460px; box-shadow: 0 4px 16px rgb(0 0 0 / 0.25);
 }
-.toast.error { background: var(--red); color: #fff; }
+.toast.error { background: var(--red); color: var(--ink-inverse); }
 
 .spinner { text-align: center; color: var(--muted); font-size: var(--fs-sm); padding: 48px 0; }
 .spinner::before {

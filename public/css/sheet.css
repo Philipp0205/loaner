@@ -3,7 +3,7 @@ html.sheet-open { overflow: hidden; }
 
 .scrim {
   position: fixed; inset: 0; z-index: 30; width: 100%; min-height: 0; padding: 0; border: 0; border-radius: 0;
-  background: rgba(34, 34, 34, 0.45);
+  background: var(--scrim);
   animation: scrim-in 0.2s ease-out;
 }
 .sheet {
