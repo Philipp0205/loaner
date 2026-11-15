@@ -13,8 +13,8 @@ test("recovery code: copy it on one phone, sign back in on another, wrong code i
   await old.goto(loaner.baseUrl);
   await old.locator("#name").fill("Dana");
   await old.getByRole("button", { name: "Get started" }).click();
-  await old.locator("nav.tabbar").waitFor();
-  await old.locator(".tabbar").getByRole("button", { name: "You" }).click();
+  await old.locator("nav.ak-tabbar").waitFor();
+  await old.locator(".ak-tabbar").getByRole("button", { name: "You" }).click();
   await old.getByRole("heading", { level: 1, name: "You" }).waitFor();
   const code = (await old.locator("#recovery-code").textContent()) ?? "";
   assert.match(code, /^[A-Z2-9]{4}-[A-Z2-9]{4}-[A-Z2-9]{4}$/);
@@ -34,13 +34,13 @@ test("recovery code: copy it on one phone, sign back in on another, wrong code i
   await fresh.getByText("that recovery code did not work").waitFor();
   await fresh.locator("#recover-code").fill(code.toLowerCase());
   await fresh.getByRole("button", { name: "Sign back in" }).click();
-  await fresh.locator("nav.tabbar").waitFor();
+  await fresh.locator("nav.ak-tabbar").waitFor();
   // Signing back in is not a new sign-up, so the new phone still gets the What's new sheet.
   const sheet = fresh.getByRole("dialog", { name: "What's new" });
   await sheet.waitFor();
   await sheet.getByRole("button", { name: "Got it" }).click();
   await sheet.waitFor({ state: "detached" });
-  await fresh.locator(".tabbar").getByRole("button", { name: "You" }).click();
+  await fresh.locator(".ak-tabbar").getByRole("button", { name: "You" }).click();
   assert.equal(await fresh.locator("#profile-name").inputValue(), "Dana");
   await fresh.screenshot({ path: path.join(SHOTS, "recovery-signed-back-in.png") });
 

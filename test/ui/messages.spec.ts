@@ -5,14 +5,14 @@ import { useLoaner } from "./harness.js";
 
 const loaner = useLoaner();
 
-// Expected values come from public/css/tokens.css (dark block).
-const DARK_BG = "rgb(15, 28, 31)";
-const DARK_CARD = "rgb(23, 42, 47)";
-const DARK_INK = "rgb(232, 240, 240)";
-const DARK_SOFT = "rgb(31, 53, 59)";
-const DARK_INK_INVERSE = "rgb(15, 28, 31)";
+// Expected values come from the kit's dark tokens (public/app-kit/ak-tokens.css).
+const DARK_BG = "rgb(0, 0, 0)";
+const DARK_CARD = "rgb(28, 28, 30)";
+const DARK_INK = "rgb(255, 255, 255)";
+const DARK_SOFT = "rgb(20, 20, 22)";
+const DARK_INK_INVERSE = "rgb(0, 0, 0)";
 
-const tab = (page: Page, name: string) => page.locator(".tabbar").getByRole("button", { name, exact: false }).click();
+const tab = (page: Page, name: string) => page.locator(".ak-tabbar").getByRole("button", { name, exact: false }).click();
 const computed = (page: Page, selector: string, prop: string) =>
   page.evaluate(([sel, p]) => getComputedStyle(document.querySelector(sel)!).getPropertyValue(p), [selector, prop] as const);
 const messageCount = () => (loaner.db.prepare("SELECT COUNT(*) AS n FROM messages").get() as { n: number }).n;
@@ -55,7 +55,7 @@ test("Bo messages Tess about her drill, Tess replies from her request card", { t
   await bo.getByRole("heading", { name: "Join Flat 3B?" }).waitFor();
   await bo.locator("#name").fill("Bo");
   await bo.getByRole("button", { name: "Join Flat 3B" }).click();
-  await bo.locator("nav.tabbar").waitFor();
+  await bo.locator("nav.ak-tabbar").waitFor();
 
   // Bo opens the drill and taps Message. An empty send is rejected and posts nothing.
   await bo.locator("button.tile", { hasText: "Cordless drill" }).click();
@@ -94,8 +94,8 @@ test("Bo messages Tess about her drill, Tess replies from her request card", { t
 
   // Tess sees the alert badge and the unread dot on the request card. Neither shows the text.
   await tess.evaluate(() => document.dispatchEvent(new Event("visibilitychange")));
-  await tess.locator(".tabbar .badge").waitFor();
-  assert.equal(await tess.locator(".tabbar .badge").textContent(), "2", "the new message and the new request");
+  await tess.locator(".ak-tabbar .ak-badge").waitFor();
+  assert.equal(await tess.locator(".ak-tabbar .ak-badge").textContent(), "2", "the new message and the new request");
   await tab(tess, "Alerts");
   const note = tess.locator("article.card.unread", { hasText: "New message" });
   await note.getByText("Bo sent you a message about Cordless drill.").waitFor();
@@ -119,7 +119,7 @@ test("Bo messages Tess about her drill, Tess replies from her request card", { t
   await tess.locator("article.card", { hasText: "Bo wants Cordless drill" }).getByRole("button", { name: "Message" }).waitFor();
   assert.equal(await tess.locator("button.msg-btn [data-unread]").count(), 0, "unread cleared after opening");
   await tess.evaluate(() => document.dispatchEvent(new Event("visibilitychange")));
-  await tess.waitForFunction(() => document.querySelector(".tabbar .badge")?.textContent === "1");
+  await tess.waitForFunction(() => document.querySelector(".ak-tabbar .ak-badge")?.textContent === "1");
 
   // Bo, still in the thread, sees the reply without reloading (the thread polls).
   await bo.locator(".msg.theirs .bubble", { hasText: "Sure, come at 10." }).waitFor({ timeout: 15_000 });
@@ -173,7 +173,7 @@ test("Bo messages Tess about her drill, Tess replies from her request card", { t
   assert.equal(await computed(darkPage, ".thread-composer", "background-color"), DARK_BG);
   assert.equal(await computed(darkPage, "#msg-body", "background-color"), DARK_CARD);
   assert.equal(await computed(darkPage, "#msg-body", "color"), DARK_INK);
-  assert.equal(await computed(darkPage, ".msg.mine .bubble", "background-color"), DARK_INK, "my bubble is the light ink");
+  assert.equal(await computed(darkPage, ".msg.mine .bubble", "background-color"), DARK_INK, "my bubble is the kit's button fill");
   assert.equal(await computed(darkPage, ".msg.mine .bubble", "color"), DARK_INK_INVERSE);
   assert.equal(await computed(darkPage, ".msg.theirs .bubble", "background-color"), DARK_SOFT, "their bubble is a dark surface");
   assert.equal(await computed(darkPage, ".msg.theirs .bubble", "color"), DARK_INK);

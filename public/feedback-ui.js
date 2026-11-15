@@ -1,7 +1,7 @@
 import { api } from "./api.js";
 import { CHANGELOG } from "./changelog.js";
 import { downscale } from "./photo.js";
-import { showSheet } from "./sheet.js";
+import { showSheet } from "./overlay.js";
 import { h } from "./util.js";
 import { latestId } from "./whats-new.js";
 
@@ -15,7 +15,7 @@ export function openFeedback() {
 
   const title = h("h2", { id: "fb-title" }, "Send feedback");
   const help = h("p", { class: "muted small" }, "Ideas, bugs, anything. Your name is sent with it.");
-  const head = h("div", { class: "sheet-head" }, h("div", { class: "grabber" }), title, help);
+  const head = h("div", { class: "ak-sheet-head" }, h("div", { class: "ak-grabber" }), title, help);
 
   const box = h("textarea", { id: "feedback-text", rows: "6", maxlength: String(FEEDBACK_MAX), placeholder: "What should we change?", "aria-describedby": "feedback-count" });
   const count = h("span", { class: "fb-count", id: "feedback-count" }, `0/${FEEDBACK_MAX}`);
@@ -47,14 +47,14 @@ export function openFeedback() {
     }
   });
 
-  const form = h("form", { class: "sheet", role: "dialog", "aria-modal": "true", "aria-labelledby": "fb-title", novalidate: true },
+  const form = h("form", { class: "ak-sheet", role: "dialog", "aria-modal": "true", "aria-labelledby": "fb-title", novalidate: true },
     head,
-    h("div", { class: "sheet-scroll" },
+    h("div", { class: "ak-sheet-scroll" },
       h("label", { class: "field" }, h("span", null, "Your feedback"), box),
       h("div", { class: "fb-meta" }, error, count),
       h("div", { class: "field" }, h("span", null, "Photo or screenshot (optional)"), file, preview),
     ),
-    h("div", { class: "sheet-dock" }, send),
+    h("div", { class: "ak-sheet-dock" }, send),
   );
 
   form.addEventListener("submit", async (event) => {
@@ -92,11 +92,11 @@ export function openFeedback() {
     title.textContent = "Thanks!";
     help.textContent = photoFailed ? "Your message was sent, but the photo did not upload." : "We read every message.";
     form.classList.add("fb-done");
-    form.querySelector(".sheet-scroll").remove();
+    form.querySelector(".ak-sheet-scroll").remove();
     const done = h("button", { type: "button", class: "primary block", id: "feedback-done", onclick: () => control?.close() }, "Done");
-    form.querySelector(".sheet-dock").replaceChildren(done);
+    form.querySelector(".ak-sheet-dock").replaceChildren(done);
     done.focus({ preventScroll: true });
   }
 
-  control = showSheet(form, head, { focus: box });
+  control = showSheet(form, { head, focus: box });
 }

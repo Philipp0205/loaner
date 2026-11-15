@@ -84,10 +84,10 @@ for (const size of SIZES) {
     const free = await page.locator(".tile .free").innerText();
     assert.equal(free, "Free to borrow");
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth), 0);
-    const tabs = await page.locator(".tabbar button").evaluateAll((els) => els.map((el) => el.getBoundingClientRect().height));
+    const tabs = await page.locator(".ak-tabbar button").evaluateAll((els) => els.map((el) => el.getBoundingClientRect().height));
     assert.equal(tabs.length, 5);
     assert.ok(tabs.every((h) => h >= 44), "tab bar targets are at least 44px");
-    assert.ok(await page.locator(".tabbar svg").count() === 5, "tab icons are inline svg");
+    assert.ok(await page.locator(".ak-tabbar svg").count() === 5, "tab icons are inline svg");
   });
 
   test(`shelf detail at ${size.width}px: sticky bar sits above the tab bar, clear of the dates, and sends the request`, { timeout: 60_000 }, async () => {
@@ -99,7 +99,7 @@ for (const size of SIZES) {
 
     const box = await page.evaluate(() => {
       const bar = document.querySelector(".bar")!;
-      const sel = [".bar", ".tabbar", ".dates", "#req-message", ".bar button"];
+      const sel = [".bar", ".ak-tabbar", ".dates", "#req-message", ".bar button"];
       const [b, tabs, dates, msg, cta] = sel.map((s) => document.querySelector(s)!.getBoundingClientRect());
       return { pos: getComputedStyle(bar).position, bar: b, tabs, dates, msg, cta, text: bar.textContent };
     });
@@ -108,7 +108,7 @@ for (const size of SIZES) {
     assert.ok(box.dates.bottom <= box.bar.top && box.msg.bottom <= box.bar.top, "From/Until and message are not covered by the bar");
     assert.ok(box.cta.height >= 44, "Request button is at least 44px tall");
     assert.match(box.text ?? "", /€5.*suggested donation.*Request/);
-    assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector(".bar button")!).backgroundColor), "rgb(34, 34, 34)");
+    assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector(".bar button")!).backgroundColor), "rgb(0, 0, 0)", "the kit's light button fill");
 
     await page.locator("#req-message").fill("Shelves");
     await page.locator(".bar").getByRole("button", { name: "Send request" }).click();
@@ -117,37 +117,40 @@ for (const size of SIZES) {
   });
 }
 
-test("theme-color: one meta follows the painted page background, and the manifest is the dark page colour", { timeout: 60_000 }, async () => {
+test("theme-color: the kit swaps the static metas for one that follows the painted page background, and the manifest is the dark page colour", { timeout: 60_000 }, async () => {
   const html = await (await fetch(`${loaner.baseUrl}/`)).text();
   const metas = [...html.matchAll(/<meta name="theme-color"[^>]*>/g)].map((m) => m[0]);
-  assert.equal(metas.length, 1, "exactly one theme-color meta");
-  assert.doesNotMatch(metas[0], /media=/, "no media attribute");
+  assert.equal(metas.length, 4, "four media-bound metas in the source, for the first paint");
+  assert.ok(metas.every((m) => /media=/.test(m)));
   const manifest = await (await fetch(`${loaner.baseUrl}/manifest.webmanifest`)).json();
-  assert.equal(String(manifest.theme_color).toLowerCase(), "#0f1c1f");
-  assert.equal(String(manifest.background_color).toLowerCase(), "#0f1c1f");
+  assert.equal(String(manifest.theme_color).toLowerCase(), "#000000");
+  assert.equal(String(manifest.background_color).toLowerCase(), "#000000");
 
   const meta = (page: Page) => page.evaluate(() => document.querySelector('meta[name="theme-color"]')?.getAttribute("content")?.toLowerCase());
+  const count = (page: Page) => page.evaluate(() => document.querySelectorAll('meta[name="theme-color"]').length);
 
   const lightCtx = await loaner.phone({ colorScheme: "light" });
   const light = await lightCtx.newPage();
   await light.goto(`${loaner.baseUrl}/`);
-  await light.waitForFunction(() => document.querySelector('meta[name="theme-color"]')?.getAttribute("content") === "#ffffff");
+  await light.waitForFunction(() => document.querySelectorAll('meta[name="theme-color"]').length === 1);
   assert.equal(await meta(light), "#ffffff", "light mode matches the light page background");
   assert.equal(await light.evaluate(() => getComputedStyle(document.documentElement).backgroundColor), "rgb(255, 255, 255)");
 
   const darkCtx = await loaner.phone({ colorScheme: "dark" });
   const dark = await darkCtx.newPage();
   await dark.goto(`${loaner.baseUrl}/`);
-  await dark.waitForFunction(() => document.querySelector('meta[name="theme-color"]')?.getAttribute("content") === "#0f1c1f");
-  assert.equal(await meta(dark), "#0f1c1f", "dark mode matches the dark page background");
-  assert.equal(await dark.evaluate(() => getComputedStyle(document.documentElement).backgroundColor), "rgb(15, 28, 31)");
+  await dark.waitForFunction(() => document.querySelectorAll('meta[name="theme-color"]').length === 1);
+  assert.equal(await meta(dark), "#000000", "dark mode matches the dark page background");
+  assert.equal(await count(dark), 1, "exactly one meta at runtime");
+  assert.equal(await dark.evaluate(() => getComputedStyle(document.documentElement).backgroundColor), "rgb(0, 0, 0)");
 
   await dark.emulateMedia({ colorScheme: "light" });
   await dark.waitForFunction(() => document.querySelector('meta[name="theme-color"]')?.getAttribute("content") === "#ffffff");
   assert.equal(await meta(dark), "#ffffff", "switching the scheme updates the meta");
   await dark.emulateMedia({ colorScheme: "dark" });
-  await dark.waitForFunction(() => document.querySelector('meta[name="theme-color"]')?.getAttribute("content") === "#0f1c1f");
-  assert.equal(await meta(dark), "#0f1c1f");
+  await dark.waitForFunction(() => document.querySelector('meta[name="theme-color"]')?.getAttribute("content") === "#000000");
+  assert.equal(await meta(dark), "#000000");
+  assert.equal(await count(dark), 1, "still one meta after switching");
 });
 
 test("standalone: the top safe area paints the page background and content keeps its padding", { timeout: 60_000 }, async () => {
@@ -176,13 +179,15 @@ test("standalone: the top safe area paints the page background and content keeps
       pagePadTop: top,
       themeColor: document.querySelector('meta[name="theme-color"]')?.getAttribute("content")?.toLowerCase(),
       statusBarStyle: document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]')?.getAttribute("content"),
+      stripClass: document.documentElement.classList.contains("ak-status-strip"),
     };
   });
   assert.equal(info.standalone, true);
-  assert.equal(info.htmlBg, "rgb(15, 28, 31)", "html paints the dark page background behind the top inset");
-  assert.equal(info.bodyBg, "rgb(15, 28, 31)");
-  assert.equal(info.themeColor, "#0f1c1f");
+  assert.equal(info.htmlBg, "rgb(0, 0, 0)", "html paints the dark page background behind the top inset");
+  assert.equal(info.bodyBg, "rgb(0, 0, 0)");
+  assert.equal(info.themeColor, "#000000");
   assert.equal(info.statusBarStyle, "black-translucent");
+  assert.equal(info.stripClass, true, "the html element carries the kit's ak-status-strip class");
   assert.ok(parseFloat(info.pagePadTop) >= 16, "the page keeps its top padding, so content is not under the status bar");
 });
 

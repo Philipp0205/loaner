@@ -1,0 +1,600 @@
+{
+  "light-welcome": {
+    "tokens": {
+      "bg": "#ffffff",
+      "accent": "#00857a",
+      "accentInk": "#ffffff",
+      "ink": "#000000",
+      "themeColor": "#ffffff",
+      "pageBg": "rgb(255, 255, 255)",
+      "bodyBg": "rgb(255, 255, 255)"
+    },
+    "accent": [],
+    "all": [
+      {
+        "text": "Get started",
+        "className": "primary block",
+        "bg": [
+          0,
+          0,
+          0
+        ],
+        "fg": [
+          255,
+          255,
+          255
+        ],
+        "tag": "button",
+        "ratio": 21,
+        "aa": true,
+        "aaLarge": true
+      }
+    ]
+  },
+  "light-you": {
+    "tokens": {
+      "bg": "#ffffff",
+      "accent": "#00857a",
+      "accentInk": "#ffffff",
+      "ink": "#000000",
+      "themeColor": "#ffffff",
+      "pageBg": "rgb(255, 255, 255)",
+      "bodyBg": "rgb(255, 255, 255)"
+    },
+    "accent": [
+      {
+        "text": "1",
+        "className": "ak-badge",
+        "bg": [
+          0,
+          133,
+          122
+        ],
+        "fg": [
+          255,
+          255,
+          255
+        ],
+        "tag": "span",
+        "ratio": 4.53,
+        "aa": true,
+        "aaLarge": true
+      }
+    ],
+    "all": [
+      {
+        "text": "Save name",
+        "className": "",
+        "bg": [
+          255,
+          255,
+          255
+        ],
+        "fg": [
+          0,
+          0,
+          0
+        ],
+        "tag": "button",
+        "ratio": 21,
+        "aa": true,
+        "aaLarge": true
+      },
+      {
+        "text": "Show a recovery code",
+        "className": "",
+        "bg": [
+          255,
+          255,
+          255
+        ],
+        "fg": [
+          0,
+          0,
+          0
+        ],
+        "tag": "button",
+        "ratio": 21,
+        "aa": true,
+        "aaLarge": true
+      },
+      {
+        "text": "Rename",
+        "className": "group-rename-open",
+        "bg": [
+          255,
+          255,
+          255
+        ],
+        "fg": [
+          0,
+          0,
+          0
+        ],
+        "tag": "button",
+        "ratio": 21,
+        "aa": true,
+        "aaLarge": true
+      },
+      {
+        "text": "Copy invite link",
+        "className": "primary",
+        "bg": [
+          0,
+          0,
+          0
+        ],
+        "fg": [
+          255,
+          255,
+          255
+        ],
+        "tag": "button",
+        "ratio": 21,
+        "aa": true,
+        "aaLarge": true
+      },
+      {
+        "text": "Leave group",
+        "className": "danger",
+        "bg": [
+          255,
+          255,
+          255
+        ],
+        "fg": [
+          179,
+          38,
+          30
+        ],
+        "tag": "button",
+        "ratio": 6.54,
+        "aa": true,
+        "aaLarge": true
+      },
+      {
+        "text": "Create group",
+        "className": "primary",
+        "bg": [
+          0,
+          0,
+          0
+        ],
+        "fg": [
+          255,
+          255,
+          255
+        ],
+        "tag": "button",
+        "ratio": 21,
+        "aa": true,
+        "aaLarge": true
+      },
+      {
+        "text": "Turn on notifications",
+        "className": "",
+        "bg": [
+          255,
+          255,
+          255
+        ],
+        "fg": [
+          0,
+          0,
+          0
+        ],
+        "tag": "button",
+        "ratio": 21,
+        "aa": true,
+        "aaLarge": true
+      },
+      {
+        "text": "What's new",
+        "className": "block",
+        "bg": [
+          255,
+          255,
+          255
+        ],
+        "fg": [
+          0,
+          0,
+          0
+        ],
+        "tag": "button",
+        "ratio": 21,
+        "aa": true,
+        "aaLarge": true
+      },
+      {
+        "text": "Send feedback",
+        "className": "block",
+        "bg": [
+          255,
+          255,
+          255
+        ],
+        "fg": [
+          0,
+          0,
+          0
+        ],
+        "tag": "button",
+        "ratio": 21,
+        "aa": true,
+        "aaLarge": true
+      },
+      {
+        "text": "Sign out of this phone",
+        "className": "block",
+        "bg": [
+          255,
+          255,
+          255
+        ],
+        "fg": [
+          0,
+          0,
+          0
+        ],
+        "tag": "button",
+        "ratio": 21,
+        "aa": true,
+        "aaLarge": true
+      },
+      {
+        "text": "1",
+        "className": "ak-badge",
+        "bg": [
+          0,
+          133,
+          122
+        ],
+        "fg": [
+          255,
+          255,
+          255
+        ],
+        "tag": "span",
+        "ratio": 4.53,
+        "aa": true,
+        "aaLarge": true
+      },
+      {
+        "text": "",
+        "className": "ak-scrim",
+        "bg": [
+          0,
+          0,
+          0
+        ],
+        "fg": [
+          0,
+          0,
+          0
+        ],
+        "tag": "button",
+        "ratio": 1,
+        "aa": false,
+        "aaLarge": false
+      },
+      {
+        "text": "Done",
+        "className": "primary block",
+        "bg": [
+          0,
+          0,
+          0
+        ],
+        "fg": [
+          255,
+          255,
+          255
+        ],
+        "tag": "button",
+        "ratio": 21,
+        "aa": true,
+        "aaLarge": true
+      }
+    ]
+  },
+  "dark-welcome": {
+    "tokens": {
+      "bg": "#000000",
+      "accent": "#2bb3a3",
+      "accentInk": "#000000",
+      "ink": "#ffffff",
+      "themeColor": "#000000",
+      "pageBg": "rgb(0, 0, 0)",
+      "bodyBg": "rgb(0, 0, 0)"
+    },
+    "accent": [],
+    "all": [
+      {
+        "text": "Get started",
+        "className": "primary block",
+        "bg": [
+          255,
+          255,
+          255
+        ],
+        "fg": [
+          0,
+          0,
+          0
+        ],
+        "tag": "button",
+        "ratio": 21,
+        "aa": true,
+        "aaLarge": true
+      }
+    ]
+  },
+  "dark-you": {
+    "tokens": {
+      "bg": "#000000",
+      "accent": "#2bb3a3",
+      "accentInk": "#000000",
+      "ink": "#ffffff",
+      "themeColor": "#000000",
+      "pageBg": "rgb(0, 0, 0)",
+      "bodyBg": "rgb(0, 0, 0)"
+    },
+    "accent": [
+      {
+        "text": "1",
+        "className": "ak-badge",
+        "bg": [
+          43,
+          179,
+          163
+        ],
+        "fg": [
+          0,
+          0,
+          0
+        ],
+        "tag": "span",
+        "ratio": 8.08,
+        "aa": true,
+        "aaLarge": true
+      }
+    ],
+    "all": [
+      {
+        "text": "Save name",
+        "className": "",
+        "bg": [
+          28,
+          28,
+          30
+        ],
+        "fg": [
+          255,
+          255,
+          255
+        ],
+        "tag": "button",
+        "ratio": 17.01,
+        "aa": true,
+        "aaLarge": true
+      },
+      {
+        "text": "Show a recovery code",
+        "className": "",
+        "bg": [
+          28,
+          28,
+          30
+        ],
+        "fg": [
+          255,
+          255,
+          255
+        ],
+        "tag": "button",
+        "ratio": 17.01,
+        "aa": true,
+        "aaLarge": true
+      },
+      {
+        "text": "Rename",
+        "className": "group-rename-open",
+        "bg": [
+          28,
+          28,
+          30
+        ],
+        "fg": [
+          255,
+          255,
+          255
+        ],
+        "tag": "button",
+        "ratio": 17.01,
+        "aa": true,
+        "aaLarge": true
+      },
+      {
+        "text": "Copy invite link",
+        "className": "primary",
+        "bg": [
+          255,
+          255,
+          255
+        ],
+        "fg": [
+          0,
+          0,
+          0
+        ],
+        "tag": "button",
+        "ratio": 21,
+        "aa": true,
+        "aaLarge": true
+      },
+      {
+        "text": "Leave group",
+        "className": "danger",
+        "bg": [
+          28,
+          28,
+          30
+        ],
+        "fg": [
+          255,
+          154,
+          145
+        ],
+        "tag": "button",
+        "ratio": 8.33,
+        "aa": true,
+        "aaLarge": true
+      },
+      {
+        "text": "Create group",
+        "className": "primary",
+        "bg": [
+          255,
+          255,
+          255
+        ],
+        "fg": [
+          0,
+          0,
+          0
+        ],
+        "tag": "button",
+        "ratio": 21,
+        "aa": true,
+        "aaLarge": true
+      },
+      {
+        "text": "Turn on notifications",
+        "className": "",
+        "bg": [
+          28,
+          28,
+          30
+        ],
+        "fg": [
+          255,
+          255,
+          255
+        ],
+        "tag": "button",
+        "ratio": 17.01,
+        "aa": true,
+        "aaLarge": true
+      },
+      {
+        "text": "What's new",
+        "className": "block",
+        "bg": [
+          28,
+          28,
+          30
+        ],
+        "fg": [
+          255,
+          255,
+          255
+        ],
+        "tag": "button",
+        "ratio": 17.01,
+        "aa": true,
+        "aaLarge": true
+      },
+      {
+        "text": "Send feedback",
+        "className": "block",
+        "bg": [
+          28,
+          28,
+          30
+        ],
+        "fg": [
+          255,
+          255,
+          255
+        ],
+        "tag": "button",
+        "ratio": 17.01,
+        "aa": true,
+        "aaLarge": true
+      },
+      {
+        "text": "Sign out of this phone",
+        "className": "block",
+        "bg": [
+          28,
+          28,
+          30
+        ],
+        "fg": [
+          255,
+          255,
+          255
+        ],
+        "tag": "button",
+        "ratio": 17.01,
+        "aa": true,
+        "aaLarge": true
+      },
+      {
+        "text": "1",
+        "className": "ak-badge",
+        "bg": [
+          43,
+          179,
+          163
+        ],
+        "fg": [
+          0,
+          0,
+          0
+        ],
+        "tag": "span",
+        "ratio": 8.08,
+        "aa": true,
+        "aaLarge": true
+      },
+      {
+        "text": "",
+        "className": "ak-scrim",
+        "bg": [
+          0,
+          0,
+          0
+        ],
+        "fg": [
+          255,
+          255,
+          255
+        ],
+        "tag": "button",
+        "ratio": 21,
+        "aa": true,
+        "aaLarge": true
+      },
+      {
+        "text": "Done",
+        "className": "primary block",
+        "bg": [
+          255,
+          255,
+          255
+        ],
+        "fg": [
+          0,
+          0,
+          0
+        ],
+        "tag": "button",
+        "ratio": 21,
+        "aa": true,
+        "aaLarge": true
+      }
+    ]
+  }
+}

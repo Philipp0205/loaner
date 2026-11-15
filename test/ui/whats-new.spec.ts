@@ -53,11 +53,11 @@ test("a new sign-up starts with everything seen, then older seen ids get the new
 
   // It slides up from the bottom of a 390x844 phone, over a scrim, with room for the safe area.
   const slide = await page.evaluate(() => {
-    const el = document.querySelector(".sheet")!;
+    const el = document.querySelector(".ak-sheet")!;
     const box = el.getBoundingClientRect();
-    return { animation: getComputedStyle(el).animationName, bottom: box.bottom, top: box.top, width: box.width, inner: window.innerHeight, scrim: !!document.querySelector(".scrim") };
+    return { animation: getComputedStyle(el).animationName, bottom: box.bottom, top: box.top, width: box.width, inner: window.innerHeight, scrim: !!document.querySelector(".ak-scrim") };
   });
-  assert.equal(slide.animation, "sheet-up");
+  assert.equal(slide.animation, "ak-sheet-in");
   assert.ok(slide.scrim);
   assert.equal(slide.width, 390);
   assert.ok(slide.top > 40, "the sheet leaves room above it");
@@ -98,7 +98,7 @@ test("tapping the scrim or swiping down dismisses it, and an unknown seen id sho
   await page.reload();
   await sheet.waitFor();
   await page.waitForTimeout(500);
-  const grab = (await page.locator(".grabber").boundingBox())!;
+  const grab = (await page.locator(".ak-grabber").boundingBox())!;
   const x = grab.x + grab.width / 2;
   const y = grab.y + grab.height / 2;
   await page.mouse.move(x, y);
@@ -107,7 +107,7 @@ test("tapping the scrim or swiping down dismisses it, and an unknown seen id sho
   await page.mouse.up();
   await page.waitForTimeout(300);
   assert.equal(await sheet.count(), 1, "a short drag does not dismiss");
-  assert.equal(await page.evaluate(() => document.querySelector<HTMLElement>(".sheet")!.style.transform), "", "it springs back");
+  assert.equal(await page.evaluate(() => document.querySelector<HTMLElement>(".ak-sheet")!.style.transform), "", "it springs back");
   await page.mouse.move(x, y);
   await page.mouse.down();
   await page.mouse.move(x, y + 160, { steps: 8 });
@@ -139,7 +139,7 @@ test("an existing session with no seen key sees everything, and You reopens the 
   await sheet.waitFor({ state: "detached" });
   assert.equal(await seen(page), LATEST_WHATS_NEW);
 
-  await page.locator(".tabbar").getByRole("button", { name: "You" }).click();
+  await page.locator(".ak-tabbar").getByRole("button", { name: "You" }).click();
   await page.getByRole("heading", { level: 1, name: "You" }).waitFor();
   await page.locator("#open-whats-new").click();
   await sheet.waitFor();

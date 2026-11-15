@@ -21,7 +21,7 @@
 /* Sticky bottom bar: amount left, black Request right, above the tab bar */
 .bar {
   position: fixed; left: 0; right: 0; z-index: 9;
-  bottom: calc(var(--tab-h) + env(safe-area-inset-bottom));
+  bottom: var(--tab-h);
   height: var(--bar-h); display: flex; align-items: center; justify-content: space-between; gap: var(--s3);
   padding: 0 calc(20px + env(safe-area-inset-right)) 0 calc(20px + env(safe-area-inset-left));
   background: var(--card); box-shadow: 0 -1px 0 var(--line);
@@ -30,7 +30,6 @@
 .bar .amt { font-size: var(--fs-lg); font-weight: 600; line-height: 1.2; }
 .bar .sub { font-size: var(--fs-xs); color: var(--muted); }
 .bar button { min-height: 48px; padding: 0 28px; font-size: var(--fs-lg); flex: none; }
-body:has(.bar) #toasts { bottom: calc(var(--tab-h) + var(--bar-h) + 12px + env(safe-area-inset-bottom)); }
 
 /* New and edit item form */
 .item-form fieldset { border: 0; padding: 0; margin: var(--s4) 0 0; }

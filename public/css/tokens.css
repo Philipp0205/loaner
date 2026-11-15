@@ -1,4 +1,8 @@
-/* Shelf design tokens. Every other stylesheet reads these variables. */
+/*
+ * Loan some design tokens. The kit tokens (/app-kit/ak-tokens.css) load first, this file comes after
+ * them, so the teal accent, the Inter font and the few colour fixes below win. Every other stylesheet
+ * reads the short names (--bg, --ink, --teal ...), which are aliases onto the kit's --ak-* variables.
+ */
 @font-face {
   font-family: "Inter";
   src: url("/fonts/inter-latin-var.woff2") format("woff2");
@@ -7,90 +11,111 @@
   font-display: swap;
 }
 
-:root {
-  --font: Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  --mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+/*
+ * Colour, dark. Dark is the kit default. The dark block comes before the light media block, and the
+ * forced-scheme selectors are more specific than :root, so a phone setting and data-ak-scheme both work.
+ * Kit gaps fixed here: the kit's light muted grey (#8e8e93) and light danger (#ff3b30) fail AA on white.
+ */
+:root,
+html[data-ak-scheme="dark"] {
+  --ak-font: Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --ak-accent: #2bb3a3;
+  --ak-accent-2: #2bb3a3;
+  --ak-accent-strong: #2bb3a3;
+  --ak-accent-ink: #000000;
+  --ak-danger: #ff9a91;
 
-  /* colour */
-  --bg: #ffffff;
-  --card: #ffffff;
-  --ink: #222222;
-  --ink-inverse: #ffffff;
-  --muted: #717171;
-  --line: #ebebeb;
-  --line-strong: #b0b0b0;
-  --soft: #f4f4f4;
-  --teal: #00857a;
+  --line-strong: var(--ak-faint);
+  --teal-ink: var(--ak-accent);
+  --teal-soft: #0b2d2a;
+  --amber-ink: #f2c46d;
+  --amber-soft: #3a2c10;
+  --red-soft: #40201e;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    --ak-accent: #00857a;
+    --ak-accent-2: #00857a;
+    --ak-accent-strong: #00857a;
+    --ak-accent-ink: #ffffff;
+    --ak-muted: #636366;
+    --ak-danger: #b3261e;
+
+    --line-strong: #8e8e93;
+    --teal-ink: #006b62;
+    --teal-soft: #e3f3f1;
+    --amber-ink: #7a4e00;
+    --amber-soft: #fdf0d5;
+    --red-soft: #fbe7e5;
+  }
+}
+
+html[data-ak-scheme="light"] {
+  --ak-accent: #00857a;
+  --ak-accent-2: #00857a;
+  --ak-accent-strong: #00857a;
+  --ak-accent-ink: #ffffff;
+  --ak-muted: #636366;
+  --ak-danger: #b3261e;
+
+  --line-strong: #8e8e93;
   --teal-ink: #006b62;
   --teal-soft: #e3f3f1;
   --amber-ink: #7a4e00;
   --amber-soft: #fdf0d5;
-  --red: #b3261e;
   --red-soft: #fbe7e5;
-  --grey-ink: #5f5f5f;
-  --grey-soft: #f0f0f0;
-  --chip-line: #dddddd;
-  --scrim: rgba(34, 34, 34, 0.45);
+}
+
+:root {
+  --font: var(--ak-font);
+  --mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* colour aliases */
+  --bg: var(--ak-bg);
+  --card: var(--ak-surface);
+  --ink: var(--ak-text);
+  --muted: var(--ak-muted);
+  --line: var(--ak-hairline);
+  --soft: var(--ak-panel);
+  --fill: var(--ak-btn-fill);
+  --fill-ink: var(--ak-btn-ink);
+  --teal: var(--ak-accent);
+  --red: var(--ak-danger);
+  --grey-ink: var(--ak-muted);
+  --grey-soft: var(--ak-panel);
+  --chip-line: var(--ak-surface-3);
+  --scrim: var(--ak-scrim);
 
   /* camera: always a dark viewfinder with white type, in both schemes. Not reassigned for dark mode. */
   --cam-bg: #0b0f0f;
   --cam-ink: #ffffff;
 
   /* shape */
-  --r-photo: 12px;
-  --r-input: 12px;
-  --r-card: 16px;
-  --r-btn: 10px;
-  --r-pill: 999px;
+  --r-photo: var(--ak-radius-md);
+  --r-input: var(--ak-radius-md);
+  --r-card: var(--ak-radius-lg);
+  --r-btn: var(--ak-radius-sm);
+  --r-pill: var(--ak-radius-pill);
 
   /* space */
-  --s1: 4px;
-  --s2: 8px;
-  --s3: 12px;
-  --s4: 16px;
-  --s5: 24px;
-  --gutter: 16px;
+  --s1: var(--ak-s1);
+  --s2: var(--ak-s2);
+  --s3: var(--ak-s3);
+  --s4: var(--ak-s4);
+  --s5: var(--ak-s5);
+  --gutter: var(--ak-gutter);
 
   /* type */
   --fs-xs: 0.75rem;
-  --fs-sm: 0.8125rem;
+  --fs-sm: var(--ak-fs-sm);
   --fs-md: 0.9375rem;
-  --fs-lg: 1rem;
+  --fs-lg: var(--ak-fs-lg);
   --fs-h2: 1.125rem;
   --fs-h1: 1.75rem;
 
-  /* chrome */
-  --tab-h: 64px;
+  /* chrome. --ak-tab already includes the bottom safe-area inset. */
+  --tab-h: var(--ak-tab);
   --bar-h: 72px;
   --ring: 0 0 0 2px var(--bg), 0 0 0 4px var(--ink);
-
-  color-scheme: light dark;
-}
-
-/* Follows the phone's setting. Only colours change here, never space or type. */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #0f1c1f;
-    --card: #172a2f;
-    --ink: #e8f0f0;
-    --ink-inverse: #0f1c1f;
-    --muted: #9fb3b7;
-    --line: #294147;
-    --line-strong: #5d7a80;
-    --soft: #1f353b;
-    /* --teal is also used for text, so it takes the lighter brand teal here */
-    --teal: #2bb3a3;
-    --teal-ink: #4fcfc0;
-    --teal-soft: #12403e;
-    --amber-ink: #f2c46d;
-    --amber-soft: #3a2c10;
-    --red: #ff9a91;
-    --red-soft: #40201e;
-    --grey-ink: #b5c2c4;
-    --grey-soft: #243a40;
-    --chip-line: #3b565c;
-    --scrim: rgba(0, 0, 0, 0.62);
-
-    color-scheme: light dark;
-  }
 }

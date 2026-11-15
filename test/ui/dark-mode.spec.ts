@@ -5,18 +5,18 @@ import { useLoaner } from "./harness.js";
 
 const loaner = useLoaner();
 
-// Expected values come from public/css/tokens.css.
-const DARK_BG = "rgb(15, 28, 31)";
-const DARK_CARD = "rgb(23, 42, 47)";
-const DARK_INK = "rgb(232, 240, 240)";
+// Expected values come from public/app-kit/ak-tokens.css and the overrides in public/css/tokens.css.
+const DARK_BG = "rgb(0, 0, 0)";
+const DARK_CARD = "rgb(28, 28, 30)";
+const DARK_INK = "rgb(255, 255, 255)";
 const LIGHT_BG = "rgb(255, 255, 255)";
-const LIGHT_INK_FILL = "rgb(34, 34, 34)";
+const LIGHT_INK = "rgb(0, 0, 0)";
 const CAMERA_BG = "rgb(11, 15, 15)";
 
 // These run in the page. They are strings so the test runner's transform cannot add helper calls to them.
-/** Elements (outside the camera) whose own background is exactly white. */
+/** Elements (outside the camera) whose own background is exactly white. In dark the kit's button fill is white, so the elements that use it are skipped. */
 const WHITE_CHROME = `(() => [...document.querySelectorAll("body *")]
-  .filter((el) => !el.closest(".camera") && getComputedStyle(el).backgroundColor === "rgb(255, 255, 255)")
+  .filter((el) => !el.closest(".camera") && !el.matches("button.primary, .pill.lent, .bubble, .lent-badge, .avatar, .chip, .ak-ip-install") && getComputedStyle(el).backgroundColor === "rgb(255, 255, 255)")
   .map((el) => el.tagName.toLowerCase() + (el.className && typeof el.className === "string" ? "." + el.className.split(" ").join(".") : "")))()`;
 
 /** Visible text and form controls whose colour against the surface behind them is under AA. */
@@ -30,7 +30,7 @@ const LOW_CONTRAST = `(() => {
   };
   const bad = [];
   for (const el of document.querySelectorAll("body *")) {
-    if (el.closest(".camera, .scrim, .sr-only, svg") || el.disabled || el.getClientRects().length === 0) continue;
+    if (el.closest(".camera, .ak-scrim, .sr-only, svg") || el.disabled || el.getClientRects().length === 0) continue;
     const own = [...el.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim());
     if (!own && !/^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName)) continue;
     const s = getComputedStyle(el);
@@ -80,7 +80,7 @@ async function assertDark(page: Page, label: string) {
   assert.deepEqual(await page.evaluate<string[]>(LOW_CONTRAST), [], `${label}: low contrast text`);
 }
 
-const tab = (page: Page, name: string) => page.locator(".tabbar").getByRole("button", { name }).click();
+const tab = (page: Page, name: string) => page.locator(".ak-tabbar").getByRole("button", { name }).click();
 
 async function darkPhone(): Promise<{ ctx: BrowserContext; page: Page; errors: string[] }> {
   const ctx = await loaner.phone({ colorScheme: "dark" });
@@ -90,14 +90,15 @@ async function darkPhone(): Promise<{ ctx: BrowserContext; page: Page; errors: s
   return { ctx, page, errors };
 }
 
-test("light mode is unchanged: white page, ink buttons, dark lettering", { timeout: 60_000 }, async () => {
+test("light mode: white page, black buttons, dark lettering", { timeout: 60_000 }, async () => {
   const ctx = await loaner.phone({ colorScheme: "light" });
   const page = await ctx.newPage();
   await page.goto(loaner.baseUrl);
   await page.locator("#name").waitFor();
   assert.equal(await computed(page, "body", "background-color"), LIGHT_BG);
-  assert.equal(await computed(page, "body", "color"), LIGHT_INK_FILL);
-  assert.equal(await computed(page, "button.primary", "background-color"), LIGHT_INK_FILL);
+  assert.equal(await computed(page, "body", "color"), LIGHT_INK);
+  assert.equal(await computed(page, "button.primary", "background-color"), LIGHT_INK);
+  assert.equal(await computed(page, "button.primary", "color"), LIGHT_BG);
   assert.equal(await page.evaluate(() => matchMedia("(prefers-color-scheme: light)").matches), true);
   const pixels = await page.evaluate<Pixels>(WORDMARK_PIXELS);
   assert.ok(luminanceOf(pixels.stem) < 90, `the lettering is dark in light mode: ${pixels.stem}`);
@@ -134,8 +135,8 @@ test("dark mode: the main screens stay dark with readable text and no white chro
   await page.goto(loaner.baseUrl);
   await page.locator("#name").waitFor();
   await assertDark(page, "welcome");
-  assert.equal(await computed(page, "button.primary", "background-color"), DARK_INK, "the primary button is the light ink fill");
-  assert.equal(await computed(page, "button.primary", "color"), DARK_BG, "the primary button text is the dark inverse");
+  assert.equal(await computed(page, "button.primary", "background-color"), DARK_INK, "the primary button is the kit's white fill");
+  assert.equal(await computed(page, "button.primary", "color"), DARK_BG, "the primary button text is black");
   await page.getByRole("button", { name: "I have a recovery code" }).click();
   await page.locator("#recover-code").waitFor();
   await assertDark(page, "recover");
@@ -226,9 +227,9 @@ test("dark mode: the What's new and feedback sheets use the dark card, not white
   const whatsNew = page.getByRole("dialog", { name: "What's new" });
   await whatsNew.waitFor();
   await page.waitForTimeout(500);
-  assert.equal(await computed(page, ".sheet", "background-color"), DARK_CARD, "What's new sheet surface");
-  assert.equal(await computed(page, ".sheet", "color"), DARK_INK, "What's new sheet text");
-  assert.equal(await computed(page, ".scrim", "background-color"), "rgba(0, 0, 0, 0.62)", "the scrim is the dark scrim");
+  assert.equal(await computed(page, ".ak-sheet", "background-color"), DARK_CARD, "What's new sheet surface");
+  assert.equal(await computed(page, ".ak-sheet", "color"), DARK_INK, "What's new sheet text");
+  assert.equal(await computed(page, ".ak-scrim", "background-color"), "rgba(0, 0, 0, 0.72)", "the scrim is the kit's dark scrim");
   assert.equal(await computed(page, ".wn-entry h3", "color"), DARK_INK);
   assert.equal(await whatsNew.locator(".wn-date").first().textContent(), "15 Nov 2026");
   assert.equal(await whatsNew.getByRole("heading", { name: "Dark mode", exact: true }).count(), 1, "the dark mode entry is listed");
@@ -242,9 +243,9 @@ test("dark mode: the What's new and feedback sheets use the dark card, not white
   const feedback = page.getByRole("dialog", { name: "Send feedback" });
   await feedback.waitFor();
   await page.waitForTimeout(500);
-  assert.equal(await computed(page, ".sheet", "background-color"), DARK_CARD, "feedback sheet surface");
-  assert.equal(await computed(page, ".sheet textarea", "background-color"), DARK_CARD, "feedback text box");
-  assert.equal(await computed(page, ".sheet textarea", "color"), DARK_INK, "feedback text colour");
+  assert.equal(await computed(page, ".ak-sheet", "background-color"), DARK_CARD, "feedback sheet surface");
+  assert.equal(await computed(page, ".ak-sheet textarea", "background-color"), DARK_CARD, "feedback text box");
+  assert.equal(await computed(page, ".ak-sheet textarea", "color"), DARK_INK, "feedback text colour");
   await feedback.getByRole("button", { name: "Send" }).click();
   await feedback.getByRole("alert").getByText("Write something first.").waitFor();
   await assertDark(page, "feedback sheet with an error");
@@ -263,7 +264,7 @@ test("light mode: the sheets are still white", { timeout: 60_000 }, async () => 
   await page.getByRole("heading", { level: 1, name: "You" }).waitFor();
   await page.locator("#open-whats-new").click();
   await page.getByRole("dialog", { name: "What's new" }).waitFor();
-  assert.equal(await computed(page, ".sheet", "background-color"), LIGHT_BG);
-  assert.equal(await computed(page, ".scrim", "background-color"), "rgba(34, 34, 34, 0.45)");
+  assert.equal(await computed(page, ".ak-sheet", "background-color"), LIGHT_BG);
+  assert.equal(await computed(page, ".ak-scrim", "background-color"), "rgba(0, 0, 0, 0.45)");
   await ctx.close();
 });

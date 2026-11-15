@@ -23,7 +23,7 @@ async function startOnMyItems(page: Page) {
   await page.getByRole("heading", { name: "No groups yet" }).waitFor();
   await page.locator("#group-name").fill("Flat 3B");
   await page.getByRole("button", { name: "Create group" }).click();
-  await page.locator(".tabbar").getByRole("button", { name: "My items" }).click();
+  await page.locator(".ak-tabbar").getByRole("button", { name: "My items" }).click();
   await page.getByRole("heading", { level: 1, name: "My items" }).waitFor();
 }
 
@@ -60,7 +60,7 @@ test("Add an item opens the camera, Type it in gives an empty form, a gallery ph
   const layout = await page.evaluate(() => {
     const cam = document.querySelector("#camera-add")!.getBoundingClientRect();
     const camZ = Number(getComputedStyle(document.querySelector("#camera-add")!).zIndex);
-    const tabZ = Number(getComputedStyle(document.querySelector(".tabbar")!).zIndex);
+    const tabZ = Number(getComputedStyle(document.querySelector(".ak-tabbar")!).zIndex);
     const top = document.elementFromPoint(195, 800)?.closest("#camera-add") !== null;
     const heights = ["#camera-shutter", "#camera-gallery", "#camera-type"].map((sel) => document.querySelector(sel)!.getBoundingClientRect().height);
     return { w: cam.width, h: cam.height, camZ, tabZ, top, shutter: heights[0], gallery: heights[1], type: heights[2] };
@@ -115,7 +115,7 @@ test("Add an item opens the camera, Type it in gives an empty form, a gallery ph
   await page.waitForFunction(() => (document.querySelector("img.photo.big") as HTMLImageElement | null)?.naturalWidth === 800);
 
   // The owner's card shows the category quietly. Then a new camera view has no leftover draft.
-  await page.locator(".tabbar").getByRole("button", { name: "My items" }).click();
+  await page.locator(".ak-tabbar").getByRole("button", { name: "My items" }).click();
   await page.locator("article.card", { hasText: "Drill driver" }).locator("[data-category]", { hasText: "Household" }).waitFor();
   await page.getByRole("button", { name: "Add an item" }).click();
   await page.locator("#camera-type").click();
