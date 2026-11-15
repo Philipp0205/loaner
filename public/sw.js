@@ -1,12 +1,12 @@
-const CACHE = "loaner-v20";
+const CACHE = "loaner-v21";
 const SHELL = [
   "/", "/app", "/welcome",
   "/landing.js", "/css/landing.css", "/landing/phone-light.png", "/landing/phone-dark.png", "/landing/shelf-light.png", "/landing/shelf-dark.png", "/icons/mark.svg",
   "/app-kit/ak-tokens.css", "/app-kit/app-kit.css", "/app-kit/ak-components.css", "/app-kit/install-prompt.css",
-  "/css/tokens.css", "/css/base.css", "/css/layout.css", "/css/items.css", "/css/forms.css", "/css/requests.css", "/css/messages.css", "/css/feedback.css", "/css/sheet.css", "/css/camera.css",
+  "/css/tokens.css", "/css/base.css", "/css/layout.css", "/css/items.css", "/css/forms.css", "/css/requests.css", "/css/messages.css", "/css/feedback.css", "/css/sheet.css", "/css/camera.css", "/css/photo-viewer.css",
   "/fonts/inter-latin-var.woff2",
   "/app-kit/theme-color.js", "/app-kit/install-prompt.js", "/app-kit/ak-dom.js", "/app-kit/ak-nav.js", "/app-kit/ak-sheet.js", "/app-kit/ak-tabbar.js", "/app-kit/ak-toast.js",
-  "/app.js", "/util.js", "/api.js", "/state.js", "/photo.js", "/icons.js", "/overlay.js",
+  "/app.js", "/util.js", "/api.js", "/state.js", "/photo.js", "/icons.js", "/overlay.js", "/photo-viewer.js",
   "/gate.js", "/groups.js", "/browse.js", "/requests.js", "/messages.js", "/mine.js", "/alerts.js", "/you.js",
   "/whats-new.js", "/changelog.js", "/whats-new-ui.js", "/feedback-ui.js",
   "/camera.js", "/draft.js", "/categories.js", "/suggest-photo.js", "/suggest-labels.js",

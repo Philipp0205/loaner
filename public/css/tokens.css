@@ -86,6 +86,10 @@ html[data-ak-scheme="light"] {
   --cam-bg: #0b0f0f;
   --cam-ink: #ffffff;
 
+  /* photo viewer: a dark backdrop with white controls, in both schemes. Not reassigned for dark mode. */
+  --pv-bg: #000000;
+  --pv-ink: #ffffff;
+
   /* shape */
   --r-photo: var(--ak-radius-md);
   --r-input: var(--ak-radius-md);

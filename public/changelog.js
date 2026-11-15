@@ -7,6 +7,15 @@ import { normalizeEntries } from "./whats-new.js";
  */
 const RAW = [
   {
+    id: "2026-11-15-photo-fullscreen",
+    date: "2026-11-15",
+    title: "Tap an item photo to see it full screen",
+    bullets: [
+      "On an item page, tap the photo to see all of it on a dark background.",
+      "Close it with the X, a tap outside the photo, or the Back button.",
+    ],
+  },
+  {
     id: "2026-11-15-welcome",
     date: "2026-11-15",
     title: "A home page you can always open",
