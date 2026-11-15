@@ -3,7 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import test from "node:test";
 import type { Page } from "playwright-core";
-import { useLoaner } from "./harness.js";
+import { openWelcome, useLoaner } from "./harness.js";
 import { solidPng } from "./png.js";
 
 const SHOTS = path.resolve("test/ui/screenshots/flow");
@@ -32,7 +32,7 @@ test("Alice lends a drill to Bob, from invite to return", { timeout: 120_000 }, 
   watch(bob, "bob");
 
   // Alice creates her account.
-  await alice.goto(loaner.baseUrl);
+  await openWelcome(alice, loaner.baseUrl);
   await alice.getByRole("heading", { level: 1, name: "Loan some" }).waitFor();
   await shot(alice, "alice-welcome");
   await alice.locator("#name").fill("Alice");

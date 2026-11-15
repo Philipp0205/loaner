@@ -84,7 +84,7 @@ test("headers: JSON is no-store, static files are no-cache, photos are private n
     const error = await raw(app, "GET", "/api/nope");
     assert.equal(error.status, 404);
     assert.equal(error.headers["cache-control"], "no-store");
-    for (const file of ["/", "/join/ABC", "/app.js", "/css/tokens.css", "/sw.js"]) {
+    for (const file of ["/", "/app", "/join/ABC", "/app.js", "/css/tokens.css", "/sw.js", "/og.png"]) {
       const res = await raw(app, "GET", file);
       assert.equal(res.status, 200, file);
       assert.equal(res.headers["cache-control"], "no-cache", file);
@@ -103,12 +103,22 @@ test("headers: JSON is no-store, static files are no-cache, photos are private n
 
 test("static: the app shell for app routes, the right types, GET and HEAD, nothing outside public", async () => {
   await withApp(async (app) => {
-    const shell = await raw(app, "GET", "/");
+    const home = await raw(app, "GET", "/");
+    assert.equal(home.status, 200);
+    assert.match(String(home.headers["content-type"]), /^text\/html/);
+    assert.equal(home.headers["cache-control"], "no-cache");
+    assert.match(home.body, /<title>Loan some: lend things to your friends<\/title>/);
+    assert.match(home.body, /<script src="\/landing\.js"><\/script>/);
+
     const join = await raw(app, "GET", "/join/ABC");
     assert.equal(join.status, 200);
-    assert.equal(join.body, shell.body, "an extensionless app route serves index.html");
-    assert.match(shell.body, /<title>Loan some<\/title>/);
-    assert.match(String(shell.headers["content-type"]), /^text\/html/);
+    assert.match(String(join.headers["content-type"]), /^text\/html/);
+    assert.match(join.body, /<title>Loan some<\/title>/);
+    assert.notEqual(join.body, home.body, "the home page and the app shell are different documents");
+    const shell = await raw(app, "GET", "/app");
+    assert.equal(shell.status, 200);
+    assert.equal(shell.body, join.body, "an extensionless app route serves index.html");
+    assert.equal((await raw(app, "GET", "/landing.html")).body, home.body);
 
     const types: Record<string, RegExp> = {
       "/app.js": /^text\/javascript/,

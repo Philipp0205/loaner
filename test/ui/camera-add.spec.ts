@@ -3,7 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import test from "node:test";
 import type { Page } from "playwright-core";
-import { useLoaner } from "./harness.js";
+import { openWelcome, useLoaner } from "./harness.js";
 import { solidPng } from "./png.js";
 
 const SHOTS = path.resolve("test/ui/screenshots/camera-add");
@@ -17,7 +17,7 @@ const shot = async (page: Page, name: string) => {
 
 /** Signs up through the UI (which also marks What's new as seen), creates a group, and opens My items. */
 async function startOnMyItems(page: Page) {
-  await page.goto(loaner.baseUrl);
+  await openWelcome(page, loaner.baseUrl);
   await page.locator("#name").fill("Cam");
   await page.getByRole("button", { name: "Get started" }).click();
   await page.getByRole("heading", { name: "No groups yet" }).waitFor();

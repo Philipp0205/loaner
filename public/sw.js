@@ -1,6 +1,7 @@
-const CACHE = "loaner-v18";
+const CACHE = "loaner-v19";
 const SHELL = [
-  "/",
+  "/", "/app",
+  "/landing.js", "/css/landing.css", "/landing/phone-light.png", "/landing/phone-dark.png", "/icons/mark.svg",
   "/app-kit/ak-tokens.css", "/app-kit/app-kit.css", "/app-kit/ak-components.css", "/app-kit/install-prompt.css",
   "/css/tokens.css", "/css/base.css", "/css/layout.css", "/css/items.css", "/css/forms.css", "/css/requests.css", "/css/messages.css", "/css/feedback.css", "/css/sheet.css", "/css/camera.css",
   "/fonts/inter-latin-var.woff2",

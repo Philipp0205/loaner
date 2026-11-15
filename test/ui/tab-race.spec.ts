@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
 import test from "node:test";
-import { useLoaner } from "./harness.js";
+import { openWelcome, useLoaner } from "./harness.js";
 
 const SHOTS = path.resolve("test/ui/screenshots/tab-race");
 const loaner = useLoaner();
@@ -19,7 +19,7 @@ test("creating a group does not pull you back to Browse after you tapped another
     await route.continue();
   });
 
-  await page.goto(loaner.baseUrl);
+  await openWelcome(page, loaner.baseUrl);
   await page.locator("#name").fill("Tess");
   await page.getByRole("button", { name: "Get started" }).click();
   await page.getByRole("heading", { name: "No groups yet" }).waitFor();
@@ -49,7 +49,7 @@ test("creating a group does not pull you back to Browse after you tapped another
 test("creating a group while staying put still lands on Browse", { timeout: 60_000 }, async () => {
   const ctx = await loaner.phone();
   const page = await ctx.newPage();
-  await page.goto(loaner.baseUrl);
+  await openWelcome(page, loaner.baseUrl);
   await page.locator("#name").fill("Sam");
   await page.getByRole("button", { name: "Get started" }).click();
   await page.getByRole("heading", { name: "No groups yet" }).waitFor();

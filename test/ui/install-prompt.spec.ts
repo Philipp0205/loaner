@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { BrowserContext, Page } from "playwright-core";
-import { useLoaner } from "./harness.js";
+import { openWelcome, signUp as signUpVia, useLoaner } from "./harness.js";
 
 const IPHONE_UA = "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1";
 const loaner = useLoaner();
@@ -10,9 +10,7 @@ const bannerOf = (page: Page) => page.getByRole("region", { name: "Install Loan 
 
 /** Signs up through the UI and lands on the screen with no groups yet, a tabbed screen. */
 async function signUp(page: Page, name: string) {
-  await page.goto(loaner.baseUrl);
-  await page.locator("#name").fill(name);
-  await page.getByRole("button", { name: "Get started" }).click();
+  await signUpVia(page, loaner.baseUrl, name);
   await page.getByRole("heading", { name: "No groups yet" }).waitFor();
 }
 
@@ -183,11 +181,20 @@ test("the banner stays clear of the tab bar and leaves the buttons reachable", {
 
 test("the signed-out welcome screen shows it without covering Get started", { timeout: 60_000 }, async () => {
   const { ctx, page } = await open();
-  await page.goto(loaner.baseUrl);
+  await openWelcome(page, loaner.baseUrl);
   await bannerOf(page).waitFor();
   const start = page.getByRole("button", { name: "Get started" });
   const box = (await start.boundingBox())!;
   const hit = await page.evaluate(({ x, y }) => document.elementFromPoint(x, y)?.textContent, { x: box.x + box.width / 2, y: box.y + box.height / 2 });
   assert.equal(hit, "Get started");
+  await ctx.close();
+});
+
+test("the home page does not open the install prompt", { timeout: 60_000 }, async () => {
+  const { ctx, page } = await open();
+  await page.goto(loaner.baseUrl);
+  await page.getByRole("heading", { level: 1 }).waitFor();
+  await page.waitForTimeout(600);
+  assert.equal(await page.locator("#ak-install-prompt").count(), 0);
   await ctx.close();
 });

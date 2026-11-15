@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { Page } from "playwright-core";
-import { useLoaner } from "./harness.js";
+import { openWelcome, useLoaner } from "./harness.js";
 
 const loaner = useLoaner();
 
@@ -40,7 +40,7 @@ test("the You tab lists the members and who has notifications on", { timeout: 90
   }
 
   // Tess signs up and creates a group.
-  await tess.goto(loaner.baseUrl);
+  await openWelcome(tess, loaner.baseUrl);
   await tess.locator("#name").fill("Tess");
   await tess.getByRole("button", { name: "Get started" }).click();
   await tess.getByRole("heading", { name: "No groups yet" }).waitFor();

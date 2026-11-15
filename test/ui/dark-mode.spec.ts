@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { BrowserContext, Page } from "playwright-core";
-import { useLoaner } from "./harness.js";
+import { openWelcome, signUp as signUpVia, useLoaner } from "./harness.js";
 
 const loaner = useLoaner();
 
@@ -60,9 +60,7 @@ const computed = (page: Page, selector: string, prop: string) => page.evaluate((
 const luminanceOf = ([r, g, b]: number[]) => 0.2126 * r + 0.7152 * g + 0.0722 * b;
 
 async function signUp(page: Page, name: string) {
-  await page.goto(loaner.baseUrl);
-  await page.locator("#name").fill(name);
-  await page.getByRole("button", { name: "Get started" }).click();
+  await signUpVia(page, loaner.baseUrl, name);
   await page.getByRole("heading", { name: "No groups yet" }).waitFor();
 }
 
@@ -93,8 +91,7 @@ async function darkPhone(): Promise<{ ctx: BrowserContext; page: Page; errors: s
 test("light mode: white page, black buttons, dark lettering", { timeout: 60_000 }, async () => {
   const ctx = await loaner.phone({ colorScheme: "light" });
   const page = await ctx.newPage();
-  await page.goto(loaner.baseUrl);
-  await page.locator("#name").waitFor();
+  await openWelcome(page, loaner.baseUrl);
   assert.equal(await computed(page, "body", "background-color"), LIGHT_BG);
   assert.equal(await computed(page, "body", "color"), LIGHT_INK);
   assert.equal(await computed(page, "button.primary", "background-color"), LIGHT_INK);
@@ -109,7 +106,7 @@ test("the wordmark letters go light in dark mode and the teal arrow does not cha
   const sample = async (colorScheme: "light" | "dark") => {
     const ctx = await loaner.phone({ colorScheme });
     const page = await ctx.newPage();
-    await page.goto(loaner.baseUrl);
+    await page.goto(`${loaner.baseUrl}/app`);
     await page.locator("img.wordmark").waitFor();
     const pixels = await page.evaluate<Pixels>(WORDMARK_PIXELS);
     await ctx.close();
@@ -132,8 +129,7 @@ test("dark mode: the main screens stay dark with readable text and no white chro
   const { ctx, page, errors } = await darkPhone();
 
   // Signed out: welcome and the recovery screen.
-  await page.goto(loaner.baseUrl);
-  await page.locator("#name").waitFor();
+  await openWelcome(page, loaner.baseUrl);
   await assertDark(page, "welcome");
   assert.equal(await computed(page, "button.primary", "background-color"), DARK_INK, "the primary button is the kit's white fill");
   assert.equal(await computed(page, "button.primary", "color"), DARK_BG, "the primary button text is black");

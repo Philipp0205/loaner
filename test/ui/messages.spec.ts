@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { Page } from "playwright-core";
-import { useLoaner } from "./harness.js";
+import { openWelcome, useLoaner } from "./harness.js";
 
 const loaner = useLoaner();
 
@@ -31,7 +31,7 @@ test("Bo messages Tess about her drill, Tess replies from her request card", { t
   watch(bo, "bo");
 
   // Tess signs up, creates a group and shares a drill.
-  await tess.goto(loaner.baseUrl);
+  await openWelcome(tess, loaner.baseUrl);
   await tess.locator("#name").fill("Tess");
   await tess.getByRole("button", { name: "Get started" }).click();
   await tess.getByRole("heading", { name: "No groups yet" }).waitFor();

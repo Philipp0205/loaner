@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { useLoaner } from "./harness.js";
+import { openWelcome, useLoaner } from "./harness.js";
 
 const loaner = useLoaner();
 
@@ -10,7 +10,7 @@ test("a group can be renamed from the You tab, and an empty name is rejected", {
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(String(error)));
 
-  await page.goto(loaner.baseUrl);
+  await openWelcome(page, loaner.baseUrl);
   await page.locator("#name").fill("Tess");
   await page.getByRole("button", { name: "Get started" }).click();
   await page.getByRole("heading", { name: "No groups yet" }).waitFor();

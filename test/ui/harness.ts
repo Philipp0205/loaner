@@ -2,7 +2,7 @@ import http from "node:http";
 import type { AddressInfo } from "node:net";
 import type { DatabaseSync } from "node:sqlite";
 import test from "node:test";
-import { chromium, type Browser, type BrowserContext, type BrowserContextOptions } from "playwright-core";
+import { chromium, type Browser, type BrowserContext, type BrowserContextOptions, type Page } from "playwright-core";
 import { createApp } from "../../src/app.js";
 import { loadConfig } from "../../src/config.js";
 import { openDb } from "../../src/db.js";
@@ -39,6 +39,20 @@ export async function startServer(env: NodeJS.ProcessEnv = {}): Promise<Server> 
       db.close();
     },
   };
+}
+
+/** Opens the signed-out welcome screen. Signed-out `/` is the home page now, so the welcome form lives at `/app`. */
+export async function openWelcome(page: Page, baseUrl: string): Promise<void> {
+  await page.goto(`${baseUrl}/app`);
+  await page.locator("#name").waitFor();
+}
+
+/** Creates an account through the welcome form and waits for the signed-in app (the tab bar). The caller checks what comes next. */
+export async function signUp(page: Page, baseUrl: string, name: string): Promise<void> {
+  await openWelcome(page, baseUrl);
+  await page.locator("#name").fill(name);
+  await page.getByRole("button", { name: "Get started" }).click();
+  await page.locator("nav.ak-tabbar").waitFor();
 }
 
 /** Registers test.before and test.after. Read baseUrl and browser inside tests. `env` is passed to the server's config, `chromeArgs` to Chrome. */

@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
 import test from "node:test";
-import { useLoaner } from "./harness.js";
+import { openWelcome, useLoaner } from "./harness.js";
 
 const SHOTS = path.resolve("test/ui/screenshots/flow");
 const loaner = useLoaner();
@@ -10,7 +10,7 @@ const loaner = useLoaner();
 test("recovery code: copy it on one phone, sign back in on another, wrong code is refused", { timeout: 90_000 }, async () => {
   const first = await loaner.phone();
   const old = await first.newPage();
-  await old.goto(loaner.baseUrl);
+  await openWelcome(old, loaner.baseUrl);
   await old.locator("#name").fill("Dana");
   await old.getByRole("button", { name: "Get started" }).click();
   await old.locator("nav.ak-tabbar").waitFor();
@@ -27,7 +27,7 @@ test("recovery code: copy it on one phone, sign back in on another, wrong code i
   // A new phone: no storage at all.
   const second = await loaner.phone();
   const fresh = await second.newPage();
-  await fresh.goto(loaner.baseUrl);
+  await openWelcome(fresh, loaner.baseUrl);
   await fresh.getByRole("button", { name: "I have a recovery code" }).click();
   await fresh.locator("#recover-code").fill("AAAA-BBBB-CCCC");
   await fresh.getByRole("button", { name: "Sign back in" }).click();
