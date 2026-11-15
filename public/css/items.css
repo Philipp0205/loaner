@@ -40,6 +40,13 @@
   width: 40px; height: 40px; border-radius: 20px; flex: none; background: var(--ink); color: var(--ink-inverse);
   display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: var(--fs-md);
 }
+/* Group member list on the You tab */
+.members { margin: var(--s2) 0 var(--s3); }
+.members h4 { margin: 0 0 var(--s1); font-size: var(--fs-sm); font-weight: 600; color: var(--muted); }
+.member { display: flex; align-items: center; gap: var(--s3); }
+.member-text { min-width: 0; }
+.member-text b { display: block; font-size: var(--fs-md); font-weight: 600; color: var(--ink); overflow-wrap: anywhere; }
+.member-text .sub { font-size: var(--fs-sm); color: var(--muted); }
 .note { font-size: var(--fs-md); line-height: 1.5; margin: 0; }
 .donation-note { margin: 0 0 var(--s3); font-size: var(--fs-sm); color: var(--muted); line-height: 1.4; }
 .donation-note strong { color: var(--teal); font-size: var(--fs-md); display: block; font-weight: 600; }
