@@ -40,6 +40,30 @@ test("the installed app goes to /app even when signed out (standalone, fullscree
   assert.deepEqual(decideEntry({ pathname: "/", hash: "", signedIn: true, standalone: true }), { view: "app", redirectTo: "/app" });
 });
 
+test("/welcome and /welcome/ always show the landing: no redirect, no hash, whatever the state", () => {
+  for (const pathname of ["/welcome", "/welcome/"]) {
+    for (const signedIn of [false, true]) {
+      for (const standalone of [false, true]) {
+        for (const hash of ["", "#/alerts", "#/recover"]) {
+          assert.deepEqual(decideEntry({ pathname, hash, signedIn, standalone }), LANDING, `${pathname}${hash} signedIn=${signedIn} standalone=${standalone}`);
+        }
+      }
+    }
+  }
+  assert.deepEqual(decideEntry({ pathname: "/welcome" }), LANDING);
+});
+
+test("/ and /landing.html still redirect when signed in or installed, and still show the landing when signed out in a tab", () => {
+  for (const pathname of ["/", "/landing.html"]) {
+    assert.deepEqual(decideEntry({ pathname, hash: "", signedIn: false, standalone: false }), LANDING, pathname);
+    assert.deepEqual(decideEntry({ pathname, hash: "", signedIn: true, standalone: false }), { view: "app", redirectTo: "/app" }, pathname);
+    assert.deepEqual(decideEntry({ pathname, hash: "", signedIn: false, standalone: true }), { view: "app", redirectTo: "/app" }, pathname);
+    assert.deepEqual(decideEntry({ pathname, hash: "#/you", signedIn: true, standalone: true }), { view: "app", redirectTo: "/app#/you" }, pathname);
+  }
+  // Only the exact paths are the landing: lookalikes are the app shell.
+  for (const pathname of ["/welcomes", "/welcome/x", "/Welcome"]) assert.deepEqual(decideEntry({ pathname, signedIn: true }), APP, pathname);
+});
+
 test("/join/CODE is already the app shell: no landing, no redirect, good code or bad", () => {
   for (const pathname of ["/join/ABC123", "/join/ABC123/", "/join/NOPE", "/join/not-a-code!"]) {
     for (const signedIn of [false, true]) {

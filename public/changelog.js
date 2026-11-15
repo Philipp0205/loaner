@@ -7,6 +7,15 @@ import { normalizeEntries } from "./whats-new.js";
  */
 const RAW = [
   {
+    id: "2026-11-15-welcome",
+    date: "2026-11-15",
+    title: "A home page you can always open",
+    bullets: [
+      "The /welcome link always opens the home page, even when you are signed in.",
+      "The home page now shows the app with real item photos, and a second screenshot of a shelf.",
+    ],
+  },
+  {
     id: "2026-11-15-landing",
     date: "2026-11-15",
     title: "A short home page for new visitors",
