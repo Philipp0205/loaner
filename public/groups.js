@@ -1,5 +1,5 @@
 import { api } from "./api.js";
-import { inviteLink, loadGroups, setGroup, stayedPut } from "./state.js";
+import { inviteLink, loadGroups, setGroup, state, stayedPut } from "./state.js";
 import { busy, copyText, h, toast } from "./util.js";
 
 /**
@@ -48,12 +48,27 @@ export function groupCard(group, rerender) {
   });
   return h("section", { class: "card", "data-group": group.id },
     title,
-    h("p", { class: "muted small" }, `${group.members.length} ${group.members.length === 1 ? "member" : "members"}: ${group.members.map((m) => m.name).join(", ")}`),
+    membersList(group),
     h("p", { class: "small" }, "Anyone with this link can join:"),
     h("code", { class: "invite-link" }, link),
     h("div", { class: "row" }, copy, leave),
   );
 }
+
+/** Members: initial circle, name, a You marker for the current person, and whether notifications are on. */
+function membersList(group) {
+  const rows = group.members.map((member) => {
+    const mine = !!state.user && member.id === state.user.id;
+    const reach = member.notificationsOn ? "Notifications on" : "Notifications off";
+    return h("li", { class: "member" },
+      h("span", { class: "avatar", "aria-hidden": "true" }, (member.name || "?").slice(0, 1).toUpperCase()),
+      h("span", { class: "member-text" },
+        h("b", null, member.name),
+        h("span", { class: "sub" }, mine ? `You \u00b7 ${reach}` : reach)));
+  });
+  return h("div", { class: "members" }, h("h4", null, "Members"), h("ul", { class: "list members-list" }, rows));
+}
+
 
 /** Short form with the current name filled in. Any member can rename. Errors show in the form. */
 function renameForm(group, rerender, cancel) {

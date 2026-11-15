@@ -16,12 +16,18 @@ export function joinGroup(ctx: Ctx, userId: string, groupId: string): void {
   run(ctx.db, "INSERT OR IGNORE INTO memberships (group_id, user_id, joined_at) VALUES (?, ?, ?)", groupId, userId, ctx.now());
 }
 
-export function members(ctx: Ctx, groupId: string): { id: string; name: string }[] {
-  return all(
+export type Member = { id: string; name: string; notificationsOn: boolean };
+
+/** Notifications are on when the person has at least one push subscription. Only that boolean leaves the server. */
+export function members(ctx: Ctx, groupId: string): Member[] {
+  const rows = all<{ id: string; name: string; notifications_on: number }>(
     ctx.db,
-    "SELECT u.id, u.name FROM memberships m JOIN users u ON u.id = m.user_id WHERE m.group_id = ? ORDER BY m.rowid",
+    `SELECT u.id, u.name,
+            EXISTS (SELECT 1 FROM push_subscriptions p WHERE p.user_id = u.id) AS notifications_on
+     FROM memberships m JOIN users u ON u.id = m.user_id WHERE m.group_id = ? ORDER BY m.rowid`,
     groupId,
   );
+  return rows.map((row) => ({ id: row.id, name: row.name, notificationsOn: row.notifications_on === 1 }));
 }
 
 function groupView(ctx: Ctx, group: GroupRow) {
