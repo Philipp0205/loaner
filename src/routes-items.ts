@@ -97,7 +97,7 @@ export function itemRoutes(): Route[] {
     {
       method: "POST",
       path: "/api/items",
-      handler(req) {
+      async handler(req) {
         const user = me(req);
         const body = jsonBody(req);
         const name = text(body.name, "name", 1, 60);
@@ -107,6 +107,7 @@ export function itemRoutes(): Route[] {
         const groupIds = ownerGroups(req.ctx, user.id, body.groupIds);
         const id = newId();
         const now = req.ctx.now();
+        const pending: PendingPush[] = [];
         tx(req.ctx.db, () => {
           run(
             req.ctx.db,
@@ -114,7 +115,19 @@ export function itemRoutes(): Route[] {
             id, user.id, name, note, category, cents, now, now,
           );
           setGroups(req.ctx, id, groupIds);
+          // Everyone else in any of the item's groups hears about it once, however many groups they share.
+          const marks = groupIds.map(() => "?").join(", ");
+          const others = all<{ user_id: string }>(
+            req.ctx.db,
+            `SELECT DISTINCT user_id FROM memberships WHERE group_id IN (${marks}) AND user_id <> ? ORDER BY user_id`,
+            ...groupIds,
+            user.id,
+          );
+          for (const other of others) {
+            pending.push(addNote(req.ctx, { userId: other.user_id, type: "item_new", title: `${user.name} added ${name}`, body: "It's now on the shelf.", itemId: id }));
+          }
         });
+        await flush(req.ctx, pending);
         return new Reply(201, { item: itemView(req.ctx, requireVisibleItem(req.ctx, user.id, id), user.id) });
       },
     },

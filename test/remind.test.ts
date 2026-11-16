@@ -116,6 +116,7 @@ test("reminders: only lent requests count, not approved or returned ones", async
     await ok(app, "POST", `/api/requests/${r.id}/approve`, { token: alice.token });
     app.advance(DAY * 3);
     assert.deepEqual(await runReminders(app.ctx), { reminded: 0, nudged: 0 });
-    assert.equal((await api(app, "GET", "/api/notifications", { token: bob.token })).json.notifications.length, 1, "only the approval");
+    const bobNotes = (await api(app, "GET", "/api/notifications", { token: bob.token })).json.notifications as { type: string }[];
+    assert.deepEqual(bobNotes.map((n) => n.type).sort(), ["approved", "item_new"], "only the new item and the approval, no reminder");
   });
 });

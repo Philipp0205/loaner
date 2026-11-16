@@ -103,12 +103,12 @@ test("the shipped changelog is newest first, well formed, and free of em dashes"
   const text = CHANGELOG.map((item) => [item.title, ...item.bullets].join(" ")).join(" ");
   assert.match(text, /€5/);
   assert.match(text, /You tab/);
-  assert.equal(CHANGELOG[0].date, "2026-11-15");
+  assert.equal(CHANGELOG[0].date, "2026-11-16");
 });
 
-test("the service worker uses the v21 cache and caches every kit and app file that index.html and landing.html load", () => {
+test("the service worker uses the v22 cache and caches every kit and app file that index.html and landing.html load", () => {
   const sw = fs.readFileSync(new URL("../public/sw.js", import.meta.url), "utf8");
-  assert.equal(/const CACHE = "([^"]+)"/.exec(sw)?.[1], "loaner-v21");
+  assert.equal(/const CACHE = "([^"]+)"/.exec(sw)?.[1], "loaner-v22");
   const paths = [...(/const SHELL = \[([^\]]*)\]/.exec(sw)?.[1] ?? "").matchAll(/"([^"]+)"/g)].map((m) => m[1]);
   for (const file of ["/whats-new.js", "/changelog.js", "/whats-new-ui.js", "/overlay.js", "/feedback-ui.js", "/css/sheet.css", "/logo.svg", "/messages.js", "/css/messages.css", "/photo-viewer.js", "/css/photo-viewer.css"]) assert.ok(paths.includes(file), file);
   for (const file of ["/", "/app", "/welcome", "/landing.js", "/css/landing.css", "/landing/phone-light.png", "/landing/phone-dark.png", "/landing/shelf-light.png", "/landing/shelf-dark.png", "/icons/mark.svg"]) assert.ok(paths.includes(file), file);
