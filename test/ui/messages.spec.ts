@@ -33,6 +33,7 @@ test("Bo messages Tess about her drill, Tess replies from her request card", { t
   // Tess signs up, creates a group and shares a drill.
   await openWelcome(tess, loaner.baseUrl);
   await tess.locator("#name").fill("Tess");
+  await tess.locator("#email").fill("tess@example.com");
   await tess.getByRole("button", { name: "Get started" }).click();
   await tess.getByRole("heading", { name: "No groups yet" }).waitFor();
   await tess.locator("#group-name").fill("Flat 3B");
@@ -54,6 +55,7 @@ test("Bo messages Tess about her drill, Tess replies from her request card", { t
   await bo.goto(invite.trim());
   await bo.getByRole("heading", { name: "Join Flat 3B?" }).waitFor();
   await bo.locator("#name").fill("Bo");
+  await bo.locator("#email").fill("bo@example.com");
   await bo.getByRole("button", { name: "Join Flat 3B" }).click();
   await bo.locator("nav.ak-tabbar").waitFor();
 
@@ -65,16 +67,16 @@ test("Bo messages Tess about her drill, Tess replies from her request card", { t
   await bo.locator("#msg-form").waitFor();
   await bo.getByText("With Tess").waitFor();
   await bo.getByText("No messages yet. Say hello to Tess.").waitFor();
-  await bo.getByRole("button", { name: "Send" }).click();
+  await bo.getByRole("button", { name: "Send", exact: true }).click();
   await bo.getByRole("alert").filter({ hasText: "Write a message first." }).waitFor();
   await bo.locator("#msg-body").fill("   \n  ");
-  await bo.getByRole("button", { name: "Send" }).click();
+  await bo.getByRole("button", { name: "Send", exact: true }).click();
   await bo.getByRole("alert").filter({ hasText: "Write a message first." }).waitFor();
   assert.equal(messageCount(), 0, "nothing was posted");
 
   // A real message, with a line break and some HTML that must stay text.
   await bo.locator("#msg-body").fill("Can I borrow it Saturday?\n<b>thanks</b>");
-  await bo.getByRole("button", { name: "Send" }).click();
+  await bo.getByRole("button", { name: "Send", exact: true }).click();
   const mine = bo.locator(".msg.mine .bubble");
   await mine.waitFor();
   assert.equal(await mine.textContent(), "Can I borrow it Saturday?\n<b>thanks</b>");
@@ -111,7 +113,7 @@ test("Bo messages Tess about her drill, Tess replies from her request card", { t
   await tess.locator(".msg.theirs .bubble", { hasText: "Can I borrow it Saturday?" }).waitFor();
   assert.equal(await tess.locator(".msg.mine").count(), 0);
   await tess.locator("#msg-body").fill("Sure, come at 10.");
-  await tess.getByRole("button", { name: "Send" }).click();
+  await tess.getByRole("button", { name: "Send", exact: true }).click();
   await tess.locator(".msg.mine .bubble", { hasText: "Sure, come at 10." }).waitFor();
 
   // Opening the thread cleared the dot and its alert. Only the unread "New request" alert is left.
@@ -130,7 +132,7 @@ test("Bo messages Tess about her drill, Tess replies from her request card", { t
   assert.equal(await bo.locator("button.msg-btn [data-unread]").count(), 0, "Bo has read everything");
   await tess.locator("article.card", { hasText: "Bo wants Cordless drill" }).getByRole("button", { name: "Message" }).click();
   await tess.locator("#msg-body").fill("Bring a bit of tape.");
-  await tess.getByRole("button", { name: "Send" }).click();
+  await tess.getByRole("button", { name: "Send", exact: true }).click();
   await tess.locator(".msg.mine .bubble", { hasText: "Bring a bit of tape." }).waitFor();
   await bo.reload();
   await bo.locator(".host button.msg-btn [data-unread]").waitFor();

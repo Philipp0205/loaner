@@ -18,10 +18,10 @@ test("auth: start returns a token and recovery code, only hashes are stored", as
 test("auth: name must be 1 to 24 characters", async () => {
   await withApp(async (app) => {
     for (const name of ["", "   ", "x".repeat(25), 5, null]) {
-      const res = await api(app, "POST", "/api/auth/start", { body: { name } });
+      const res = await api(app, "POST", "/api/auth/start", { body: { name, email: "pat@example.com" } });
       assert.equal(res.status, 400, `name ${JSON.stringify(name)}`);
     }
-    assert.equal((await api(app, "POST", "/api/auth/start", { body: { name: "x".repeat(24) } })).status, 200);
+    assert.equal((await api(app, "POST", "/api/auth/start", { body: { name: "x".repeat(24), email: "pat@example.com" } })).status, 200);
   });
 });
 
@@ -94,7 +94,7 @@ test("groups: a bad invite code is a 404 and creates nothing", async () => {
     assert.equal((await api(app, "GET", "/api/invites/%25")).status, 404);
     assert.equal((await api(app, "POST", "/api/invites/NOPENOPE12/join", { token: bob.token })).status, 404);
     const before = (app.db.prepare("SELECT COUNT(*) AS n FROM users").get() as any).n;
-    const res = await api(app, "POST", "/api/auth/start", { body: { name: "Carol", inviteCode: "NOPENOPE12" } });
+    const res = await api(app, "POST", "/api/auth/start", { body: { name: "Carol", email: "carol@example.com", inviteCode: "NOPENOPE12" } });
     assert.equal(res.status, 404);
     assert.equal((app.db.prepare("SELECT COUNT(*) AS n FROM users").get() as any).n, before, "no half-made account");
   });

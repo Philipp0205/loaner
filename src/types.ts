@@ -13,7 +13,7 @@ export type Ctx = {
   push: PushSender;
 };
 
-export type User = { id: string; name: string };
+export type User = { id: string; name: string; email: string | null; emailVerifiedAt: number | null };
 
 export type Req = {
   ctx: Ctx;
@@ -41,10 +41,18 @@ export type Route = {
   path: string;
   /** Open routes run without a bearer token. */
   open?: boolean;
+  /** Signed-in routes refuse a user with no email (403) unless this is set. Only the routes that add one set it. */
+  allowNoEmail?: boolean;
   /** Largest accepted body in bytes. Default 16 KB. */
   maxBody?: number;
   handler: (req: Req) => unknown | Promise<unknown>;
 };
+
+/** The bearer token of a request, or "" when there is none. */
+export function bearerToken(req: Pick<http.IncomingMessage, "headers">): string {
+  const match = /^Bearer\s+(\S+)$/i.exec(req.headers.authorization ?? "");
+  return match ? match[1] : "";
+}
 
 /** For routes that need a signed-in user. */
 export function me(req: Req): User {

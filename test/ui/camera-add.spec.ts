@@ -19,6 +19,7 @@ const shot = async (page: Page, name: string) => {
 async function startOnMyItems(page: Page) {
   await openWelcome(page, loaner.baseUrl);
   await page.locator("#name").fill("Cam");
+  await page.locator("#email").fill("cam@example.com");
   await page.getByRole("button", { name: "Get started" }).click();
   await page.getByRole("heading", { name: "No groups yet" }).waitFor();
   await page.locator("#group-name").fill("Flat 3B");

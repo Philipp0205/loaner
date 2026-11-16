@@ -21,6 +21,7 @@ test("creating a group does not pull you back to Browse after you tapped another
 
   await openWelcome(page, loaner.baseUrl);
   await page.locator("#name").fill("Tess");
+  await page.locator("#email").fill("tess@example.com");
   await page.getByRole("button", { name: "Get started" }).click();
   await page.getByRole("heading", { name: "No groups yet" }).waitFor();
 
@@ -51,6 +52,7 @@ test("creating a group while staying put still lands on Browse", { timeout: 60_0
   const page = await ctx.newPage();
   await openWelcome(page, loaner.baseUrl);
   await page.locator("#name").fill("Sam");
+  await page.locator("#email").fill("sam@example.com");
   await page.getByRole("button", { name: "Get started" }).click();
   await page.getByRole("heading", { name: "No groups yet" }).waitFor();
   await page.locator("#group-name").fill("Climbing club");

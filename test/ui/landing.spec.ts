@@ -115,6 +115,7 @@ test("invite links still work for a signed-out person, a bad one says so, and th
   await guest.getByRole("heading", { name: "Join Flat 3B?" }).waitFor();
   assert.equal(await guest.getByRole("heading", { level: 1, name: HERO }).count(), 0, "not the landing");
   await guest.locator("#name").fill("Gus");
+  await guest.locator("#email").fill("gus@example.com");
   await guest.getByRole("button", { name: "Join Flat 3B" }).click();
   await guest.locator("nav.ak-tabbar").waitFor();
 

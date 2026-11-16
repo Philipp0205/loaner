@@ -25,6 +25,7 @@ test("a friend adds an item and the other member gets an alert that opens it", {
   // Alice makes a group and Bob joins it.
   await openWelcome(alice, loaner.baseUrl);
   await alice.locator("#name").fill("Alice");
+  await alice.locator("#email").fill("alice@example.com");
   await alice.getByRole("button", { name: "Get started" }).click();
   await alice.getByRole("heading", { name: "No groups yet" }).waitFor();
   await alice.locator("#group-name").fill("Flat 3B");
@@ -35,6 +36,7 @@ test("a friend adds an item and the other member gets an alert that opens it", {
   const invite = await alice.evaluate(() => navigator.clipboard.readText());
   await bob.goto(invite);
   await bob.locator("#name").fill("Bob");
+  await bob.locator("#email").fill("bob@example.com");
   await bob.getByRole("button", { name: "Join Flat 3B" }).click();
   await bob.locator("nav.ak-tabbar").waitFor();
   await bob.getByText("Nothing here yet").waitFor();

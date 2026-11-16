@@ -12,6 +12,7 @@ test("recovery code: copy it on one phone, sign back in on another, wrong code i
   const old = await first.newPage();
   await openWelcome(old, loaner.baseUrl);
   await old.locator("#name").fill("Dana");
+  await old.locator("#email").fill("dana@example.com");
   await old.getByRole("button", { name: "Get started" }).click();
   await old.locator("nav.ak-tabbar").waitFor();
   await old.locator(".ak-tabbar").getByRole("button", { name: "You" }).click();

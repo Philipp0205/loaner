@@ -30,7 +30,7 @@ test("health: HEAD answers 200 with no body", async () => {
   });
 });
 
-test("health: it still checks the database, so a broken one is a 500 and never {ok:true}", async () => {
+test("health: it still checks the database, so a broken one is a 503 and never {ok:true}", async () => {
   const broken = {
     prepare() {
       throw new Error("database is gone");
@@ -39,15 +39,13 @@ test("health: it still checks the database, so a broken one is a 500 and never {
   const config = loadConfig({ PORT: "3000", DB_PATH: ":memory:", APP_TZ: "UTC" });
   const server = http.createServer(createApp({ db: broken, config, now: () => Date.now(), push: createNoopPushSender() }));
   await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", () => resolve()));
-  const originalError = console.error;
-  console.error = () => {};
   try {
     const { port } = server.address() as AddressInfo;
     const res = await api({ port }, "GET", "/api/health");
-    assert.equal(res.status, 500);
-    assert.notDeepEqual(res.json, { ok: true });
+    assert.equal(res.status, 503);
+    assert.deepEqual(res.json, { ok: false });
+    assert.equal((await api({ port }, "HEAD", "/api/health")).status, 503);
   } finally {
-    console.error = originalError;
     server.closeAllConnections();
     await new Promise<void>((resolve) => server.close(() => resolve()));
   }

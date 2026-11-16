@@ -1,5 +1,6 @@
 import { api, getToken } from "./api.js";
 import { renderGate } from "./gate.js";
+import { confirmBanner, linkKindFromPath, renderAddEmail, renderLinkPage } from "./email.js";
 import { renderBrowse, renderItem } from "./browse.js";
 import { renderMine, renderItemForm } from "./mine.js";
 import { renderCamera, stopCamera } from "./camera.js";
@@ -76,6 +77,13 @@ let serial = 0;
 
 async function show() {
   const mine = ++serial;
+  // The pages behind the links in our emails. They work with or without a session on this phone.
+  const linkKind = linkKindFromPath();
+  if (linkKind) {
+    bar.el.remove();
+    root.replaceChildren(renderLinkPage(linkKind));
+    return;
+  }
   if (!getToken() || /^\/join\//.test(location.pathname)) {
     bar.el.remove();
     root.replaceChildren(await renderGate());
@@ -84,10 +92,16 @@ async function show() {
   try {
     if (!state.user) {
       await loadMe();
-      await loadGroups();
+      if (!state.user.needsEmail) await loadGroups();
     }
   } catch (error) {
     if (error.status !== 401) root.replaceChildren(h("main", { class: "page" }, h("p", { class: "error-text" }, error.message), h("button", { onclick: () => location.reload() }, "Try again")));
+    return;
+  }
+  // An account from before email was required adds one first. Nothing else loads until it has.
+  if (state.user.needsEmail) {
+    bar.el.remove();
+    root.replaceChildren(renderAddEmail(show));
     return;
   }
   const hash = location.hash || "#/browse";
@@ -107,7 +121,7 @@ async function show() {
     screen = h("div", null, h("p", { class: "error-text", role: "alert" }, error.message || "Something went wrong"), h("button", { onclick: show }, "Try again"));
   }
   if (mine !== serial) return;
-  root.replaceChildren(h("main", { class: "page" }, screen));
+  root.replaceChildren(h("main", { class: "page" }, confirmBanner(), screen));
   updateBar(tab);
   window.scrollTo(0, 0);
   considerWhatsNew();

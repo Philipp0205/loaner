@@ -66,7 +66,7 @@ test("rate limits: requests without a forwarded header share the socket address 
 
 test("rate limits: start buckets are per forwarded client", async () => {
   await withApp(async (app) => {
-    const start = async (headers?: Record<string, string>) => (await api(app, "POST", "/api/auth/start", { body: { name: "Pat" }, headers })).status;
+    const start = async (headers?: Record<string, string>) => (await api(app, "POST", "/api/auth/start", { body: { name: "Pat", email: "pat@example.com" }, headers })).status;
     for (let i = 0; i < 60; i += 1) assert.equal(await start(via("203.0.113.1")), 200);
     assert.equal(await start(via("203.0.113.1")), 429);
     assert.equal(await start(via("203.0.113.2")), 200);

@@ -42,6 +42,7 @@ test("the You tab lists the members and who has notifications on", { timeout: 90
   // Tess signs up and creates a group.
   await openWelcome(tess, loaner.baseUrl);
   await tess.locator("#name").fill("Tess");
+  await tess.locator("#email").fill("tess@example.com");
   await tess.getByRole("button", { name: "Get started" }).click();
   await tess.getByRole("heading", { name: "No groups yet" }).waitFor();
   await tess.locator("#group-name").fill("Flat 3B");
@@ -57,6 +58,7 @@ test("the You tab lists the members and who has notifications on", { timeout: 90
   await bo.goto(invite);
   await bo.getByRole("heading", { name: "Join Flat 3B?" }).waitFor();
   await bo.locator("#name").fill("Bo");
+  await bo.locator("#email").fill("bo@example.com");
   await bo.getByRole("button", { name: "Join Flat 3B" }).click();
   await bo.locator("nav.ak-tabbar").waitFor();
 

@@ -22,9 +22,9 @@ async function call(method: string, url: string, token: string | null, body?: un
 
 /** Lena lists a drill (EUR 5, photo) and a tent that is lent to Sophie. Max is the borrower. */
 async function seed() {
-  const lena = await call("POST", "/api/auth/start", null, { name: "Lena" });
-  const sophie = await call("POST", "/api/auth/start", null, { name: "Sophie" });
-  const max = await call("POST", "/api/auth/start", null, { name: "Max" });
+  const lena = await call("POST", "/api/auth/start", null, { name: "Lena", email: "lena@example.com" });
+  const sophie = await call("POST", "/api/auth/start", null, { name: "Sophie", email: "sophie@example.com" });
+  const max = await call("POST", "/api/auth/start", null, { name: "Max", email: "max@example.com" });
   const { group } = await call("POST", "/api/groups", lena.token, { name: "WG Lissabon" });
   for (const p of [sophie, max]) await call("POST", `/api/invites/${group.inviteCode}/join`, p.token);
   const drill = (await call("POST", "/api/items", lena.token, { name: "Cordless drill", note: "Akku haelt ca. 30 Min.", donation: 5, groupIds: [group.id] })).item;

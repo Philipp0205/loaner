@@ -1,6 +1,7 @@
 import http from "node:http";
 import type { AddressInfo } from "node:net";
 import type { DatabaseSync } from "node:sqlite";
+import { hashSecret, stubMailer, type Mailer, type MailMessage } from "../src/app-kit/index.ts";
 import { createApp } from "../src/app.js";
 import { loadConfig } from "../src/config.js";
 import { openDb } from "../src/db.js";
@@ -22,6 +23,8 @@ export type AppCtx = {
   sent: SentPush[];
   /** The same context the app uses, for calling runReminders directly. */
   ctx: Ctx;
+  /** The mail stub: every message the app tried to send, in order. */
+  mail: Mailer & { sent: MailMessage[] };
   advance: (ms: number) => void;
   at: (ms: number) => void;
 };
@@ -29,6 +32,8 @@ export type AppCtx = {
 export type WithAppOptions = {
   env?: NodeJS.ProcessEnv;
   push?: PushSender;
+  /** Replaces the mail stub, for example one that always throws. `app.mail` is still the stub. */
+  mailer?: Mailer;
 };
 
 export async function withApp(fn: (app: AppCtx) => Promise<void>, options: WithAppOptions = {}): Promise<void> {
@@ -41,13 +46,16 @@ export async function withApp(fn: (app: AppCtx) => Promise<void>, options: WithA
     },
   };
   const config = loadConfig({ PORT: "3000", DB_PATH: ":memory:", APP_TZ: "UTC", ...options.env });
+  const mail = stubMailer();
   const ctx: Ctx = { db, config, push, now: () => now };
-  const server = http.createServer(createApp(ctx));
+  const server = http.createServer(createApp({ ...ctx, mailer: options.mailer ?? mail }));
   await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", () => resolve()));
   const port = (server.address() as AddressInfo).port;
+  // Links in mail point at this server, so a test can open them.
+  config.appOrigin = `http://127.0.0.1:${port}`;
   try {
     await fn({
-      port, db, sent, ctx,
+      port, db, sent, ctx, mail,
       advance(ms) { now += ms; },
       at(ms) { now = ms; },
     });
@@ -87,11 +95,38 @@ export async function ok(app: { port: number }, method: string, pathname: string
   return res.json;
 }
 
-export type Person = { token: string; id: string; name: string; code: string };
+export type Person = { token: string; id: string; name: string; email: string; code: string };
 
-export async function signUp(app: { port: number }, name: string, inviteCode?: string): Promise<Person> {
-  const json = await ok(app, "POST", "/api/auth/start", { body: { name, ...(inviteCode ? { inviteCode } : {}) } });
-  return { token: json.token, id: json.user.id, name, code: json.recoveryCode };
+/** The default address for a test person: the name, lowercased, at example.com. */
+export const emailFor = (name: string): string => `${name.toLowerCase().replace(/[^a-z0-9]/g, "") || "user"}@example.com`;
+
+export async function signUp(app: { port: number }, name: string, inviteCode?: string, email = emailFor(name)): Promise<Person> {
+  const json = await ok(app, "POST", "/api/auth/start", { body: { name, email, ...(inviteCode ? { inviteCode } : {}) } });
+  return { token: json.token, id: json.user.id, name, email, code: json.recoveryCode };
+}
+
+/** An account from before email was required: a row with no email, a device token and a recovery code. */
+export function seedLegacyUser(app: { db: DatabaseSync }, name: string): Person {
+  const id = `legacy-${name.toLowerCase()}`;
+  const token = `legacy-token-${name.toLowerCase()}`;
+  const code = "ABCD-EFGH-JKLM";
+  app.db
+    .prepare("INSERT INTO users (id, name, recovery_hash, created_at) VALUES (?, ?, ?, ?)")
+    .run(id, name, hashSecret(code), START);
+  app.db.prepare("INSERT INTO devices (token_hash, user_id, created_at) VALUES (?, ?, ?)").run(hashSecret(token), id, START);
+  return { token, id, name, email: "", code };
+}
+
+/** Lets the fire-and-forget mail of a lost-code request finish before a test looks at the stub. */
+export async function flush(): Promise<void> {
+  for (let i = 0; i < 5; i++) await new Promise<void>((resolve) => setImmediate(resolve));
+}
+
+/** The token in the link of a mail: `.../verify#t=TOKEN` or `.../recover#t=TOKEN`. */
+export function linkToken(message: MailMessage | undefined, kind: "verify" | "recover"): string {
+  const match = new RegExp(`/${kind}#t=([A-Za-z0-9_-]+)`).exec(message?.text ?? "");
+  if (!match) throw new Error(`no ${kind} link in the mail`);
+  return match[1];
 }
 
 export async function makeGroup(app: { port: number }, who: Person, name: string): Promise<{ id: string; inviteCode: string }> {
