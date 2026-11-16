@@ -7,6 +7,15 @@ import { normalizeEntries } from "./whats-new.js";
  */
 const RAW = [
   {
+    id: "2026-11-16-item-added",
+    date: "2026-11-16",
+    title: "Get an alert when a friend adds an item",
+    bullets: [
+      "When someone in your group adds an item, you get an alert and a push if you have them on.",
+      "Tap Open on the alert to see the item.",
+    ],
+  },
+  {
     id: "2026-11-15-photo-fullscreen",
     date: "2026-11-15",
     title: "Tap an item photo to see it full screen",

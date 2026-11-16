@@ -234,22 +234,22 @@ test("notifications: one is created for each event, to the right person", async 
     const rb = (await ask(app, bob, item, "2026-06-05", "2026-06-07")).json.request;
     const rc = (await ask(app, carol, item, "2026-06-06", "2026-06-08")).json.request;
     assert.deepEqual(await types(alice), ["request_new", "request_new"]);
-    assert.deepEqual(await types(bob), []);
+    assert.deepEqual(await types(bob), ["item_new"], "bob only heard about the new item");
 
     await act(app, alice, rb.id, "approve");
-    assert.deepEqual(await types(bob), ["approved"]);
-    assert.deepEqual(await types(carol), ["blocked"], "carol lost the overlapping dates");
+    assert.deepEqual(await types(bob), ["approved", "item_new"]);
+    assert.deepEqual(await types(carol), ["blocked", "item_new"], "carol lost the overlapping dates");
     assert.ok(rc.id);
 
     await act(app, alice, rb.id, "handover");
-    assert.deepEqual(await types(bob), ["approved", "handed_over"]);
+    assert.deepEqual(await types(bob), ["approved", "handed_over", "item_new"]);
     await act(app, alice, rb.id, "return");
-    assert.deepEqual(await types(bob), ["approved", "handed_over", "returned"]);
+    assert.deepEqual(await types(bob), ["approved", "handed_over", "item_new", "returned"]);
 
     const rd = (await ask(app, bob, item, "2026-06-20", "2026-06-21")).json.request;
     await act(app, alice, rd.id, "decline");
-    assert.deepEqual(await types(bob), ["approved", "declined", "handed_over", "returned"]);
-    // Alice only ever heard about new requests.
+    assert.deepEqual(await types(bob), ["approved", "declined", "handed_over", "item_new", "returned"]);
+    // Alice only ever heard about new requests, never her own item.
     assert.deepEqual(await types(alice), ["request_new", "request_new", "request_new"]);
     const first = (await notes(app, bob)).find((n) => n.type === "approved")!;
     assert.match(first.body, /Alice said yes to Cordless drill/);

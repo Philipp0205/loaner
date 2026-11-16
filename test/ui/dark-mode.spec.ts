@@ -227,7 +227,7 @@ test("dark mode: the What's new and feedback sheets use the dark card, not white
   assert.equal(await computed(page, ".ak-sheet", "color"), DARK_INK, "What's new sheet text");
   assert.equal(await computed(page, ".ak-scrim", "background-color"), "rgba(0, 0, 0, 0.72)", "the scrim is the kit's dark scrim");
   assert.equal(await computed(page, ".wn-entry h3", "color"), DARK_INK);
-  assert.equal(await whatsNew.locator(".wn-date").first().textContent(), "15 Nov 2026");
+  assert.equal(await whatsNew.locator(".wn-date").first().textContent(), "16 Nov 2026");
   assert.equal(await whatsNew.getByRole("heading", { name: "Dark mode", exact: true }).count(), 1, "the dark mode entry is listed");
   await assertDark(page, "what's new sheet");
   await whatsNew.getByRole("button", { name: "Done" }).click();

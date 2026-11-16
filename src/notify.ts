@@ -12,6 +12,7 @@ export type NoteType =
   | "handed_over"
   | "returned"
   | "item_removed"
+  | "item_new"
   | "reminder"
   | "late"
   | "message";

@@ -1,4 +1,4 @@
-const CACHE = "loaner-v21";
+const CACHE = "loaner-v22";
 const SHELL = [
   "/", "/app", "/welcome",
   "/landing.js", "/css/landing.css", "/landing/phone-light.png", "/landing/phone-dark.png", "/landing/shelf-light.png", "/landing/shelf-dark.png", "/icons/mark.svg",

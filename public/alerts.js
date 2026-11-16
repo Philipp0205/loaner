@@ -14,7 +14,7 @@ export async function renderAlerts() {
   const head = h("div", { class: "page-head" }, h("h1", null, "Alerts"), unread ? mark : null);
   if (!data.notifications.length) {
     state.unread = 0;
-    return h("div", null, head, emptyState("All quiet", "You will see requests, answers and reminders here."));
+    return h("div", null, head, emptyState("All quiet", "You will see requests, answers, new items and reminders here."));
   }
   state.unread = data.unread;
   const cards = data.notifications.map((n) =>
