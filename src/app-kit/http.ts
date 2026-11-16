@@ -33,8 +33,9 @@ export const DEFAULT_JSON_MAX_BYTES = 16 * 1024;
  * Over the cap it rejects with HttpError 413 and keeps none of the body: the rest of the
  * upload is read and thrown away, so the connection can still answer and be reused.
  * A declared Content-Length over the cap is rejected before any data is kept.
+ * `options.message` is the 413 message (default "body too large").
  */
-export function readBody(req: http.IncomingMessage, maxBytes: number): Promise<Buffer> {
+export function readBody(req: http.IncomingMessage, maxBytes: number, options: { message?: string } = {}): Promise<Buffer> {
   return new Promise((resolve, reject) => {
     let chunks: Buffer[] = [];
     let size = 0;
@@ -44,7 +45,7 @@ export function readBody(req: http.IncomingMessage, maxBytes: number): Promise<B
       if (over) return;
       over = true;
       chunks = [];
-      reject(new HttpError(413, "body too large", "body_too_large"));
+      reject(new HttpError(413, options.message ?? "body too large", "body_too_large"));
     }
 
     const declared = Number(req.headers["content-length"]);
@@ -96,7 +97,7 @@ export async function readJson(
   return parsed as Record<string, unknown>;
 }
 
-/** Sends a JSON body with the shared security headers. `extraHeaders` win over them. 204 sends no body. */
+/** Sends a JSON body with the shared security headers. `extraHeaders` win over them. 204 sends no body. An undefined body sends `null`. */
 export function sendJson(
   res: http.ServerResponse,
   status: number,
@@ -107,7 +108,7 @@ export function sendJson(
     sendEmpty(res, 204);
     return;
   }
-  const json = JSON.stringify(body);
+  const json = JSON.stringify(body ?? null);
   res.writeHead(status, {
     "content-type": "application/json; charset=utf-8",
     "content-length": Buffer.byteLength(json),

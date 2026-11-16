@@ -17,15 +17,48 @@ export function isHealthRequest(req: Pick<http.IncomingMessage, "url">): boolean
  *
  *   if (healthHandler(req, res)) return;
  *
- * It needs no router and no app state. It does not check the database.
+ * It needs no router and no app state. Without `check` it does not look at the database.
+ *
+ * With a `check` function it returns a Promise<boolean> instead, and runs the check on GET and HEAD of the
+ * health path (after the method test, so other methods stay 405 and never run it):
+ *
+ *   if (await healthHandler(req, res, () => db.prepare("select 1").get())) return;
+ *
+ * A check that throws or rejects answers 503 {"ok":false}. Nothing of the error is sent.
  */
-export function healthHandler(req: Pick<http.IncomingMessage, "url" | "method">, res: http.ServerResponse): boolean {
+export function healthHandler(req: Pick<http.IncomingMessage, "url" | "method">, res: http.ServerResponse): boolean;
+export function healthHandler(
+  req: Pick<http.IncomingMessage, "url" | "method">,
+  res: http.ServerResponse,
+  check: () => unknown | Promise<unknown>,
+): Promise<boolean>;
+export function healthHandler(
+  req: Pick<http.IncomingMessage, "url" | "method">,
+  res: http.ServerResponse,
+  check?: () => unknown | Promise<unknown>,
+): boolean | Promise<boolean> {
+  if (check === undefined) return answer(req, res, 200);
+  if (!isHealthRequest(req)) return Promise.resolve(false);
+  if (req.method !== "GET" && req.method !== "HEAD") return Promise.resolve(answer(req, res, 200));
+  return (async () => {
+    let status: 200 | 503 = 200;
+    try {
+      await check();
+    } catch {
+      status = 503;
+    }
+    return answer(req, res, status);
+  })();
+}
+
+function answer(req: Pick<http.IncomingMessage, "url" | "method">, res: http.ServerResponse, status: 200 | 503): boolean {
   if (!isHealthRequest(req)) return false;
+  const body = { ok: status === 200 };
   if (req.method === "GET") {
-    sendJson(res, 200, { ok: true });
+    sendJson(res, status, body);
   } else if (req.method === "HEAD") {
-    const json = JSON.stringify({ ok: true });
-    res.writeHead(200, {
+    const json = JSON.stringify(body);
+    res.writeHead(status, {
       "content-type": "application/json; charset=utf-8",
       "content-length": Buffer.byteLength(json),
       ...SECURITY_HEADERS,

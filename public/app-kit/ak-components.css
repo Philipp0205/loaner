@@ -105,6 +105,7 @@
   color: var(--ak-text);
   font: inherit;
   font-size: var(--ak-fs-md);
+  text-decoration: none;
   cursor: pointer;
 }
 .ak-chip-on { background: var(--ak-btn-fill); color: var(--ak-btn-ink); }
@@ -349,6 +350,10 @@ html.ak-sheet-open body {
 .ak-sheet.ak-dragging { transition: none; }
 @keyframes ak-sheet-in { from { transform: translateY(100%); } to { transform: translateY(0); } }
 @keyframes ak-fade-in { from { opacity: 0; } to { opacity: 1; } }
+
+/* AppKit.donate: the chip row wraps, the note has a bottom gap. */
+.ak-donate-amounts { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+.ak-donate-note { margin: 0 0 12px; }
 
 /* ---------- Tab bar and screen head ---------- */
 
