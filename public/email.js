@@ -1,5 +1,5 @@
 import { api, setToken } from "./api.js";
-import { loadGroups, loadMe, saveRecovery, state } from "./state.js";
+import { loadGroups, loadMe, saveRecovery, setGroup, state, takePendingInvite } from "./state.js";
 import { busy, copyText, h, toast, wordmarkHeading } from "./util.js";
 
 const WHY = "We use it to confirm it is you and to get you back in if you lose your phone.";
@@ -17,8 +17,9 @@ export function emailInput(id = "email") {
 /**
  * Shown to an account from before email was required. It cannot be dismissed and there is no way around it:
  * the server answers 403 on everything else until an address is saved. onDone runs once it is.
+ * A pending invite (see state.js) is joined right after the save. `groupName` says which group, when known.
  */
-export function renderAddEmail(onDone) {
+export function renderAddEmail(onDone, groupName = "") {
   const input = emailInput();
   const error = h("p", { class: "error-text", role: "alert" });
   const save = h("button", { class: "primary block", type: "submit" }, "Save email");
@@ -33,6 +34,12 @@ export function renderAddEmail(onDone) {
       try {
         await api("PUT", "/api/me/email", { email: input.value });
         await loadMe();
+      } catch (e) {
+        error.textContent = e.message;
+        return;
+      }
+      await joinPendingInvite();
+      try {
         await loadGroups();
         await onDone();
       } catch (e) {
@@ -40,12 +47,29 @@ export function renderAddEmail(onDone) {
       }
     });
   });
+  const lead = groupName ? `To join ${groupName}, add your email first.` : "Loan some now asks for an email.";
   return h("main", { class: "page gate" },
     h("div", { class: "intro" }, wordmarkHeading()),
     h("h2", null, "Add your email"),
-    h("p", { class: "muted" }, `Loan some now asks for an email. ${WHY} We will send you a link to confirm it.`),
+    h("p", { class: "muted", id: "add-email-why" }, `${lead} ${WHY} We will send you a link to confirm it.`),
     form,
   );
+}
+
+/**
+ * Joins the group of a pending invite, once, now that the account has an email. A stale or failed invite
+ * is reported and dropped so it never keeps the person on the add-email screen.
+ */
+async function joinPendingInvite() {
+  const code = takePendingInvite();
+  if (!code) return;
+  try {
+    const res = await api("POST", `/api/invites/${code}/join`);
+    setGroup(res.group.id);
+    toast(`You joined ${res.group.name}`);
+  } catch (e) {
+    toast(e.message, "error");
+  }
 }
 
 /** A quiet reminder above the screen while the address is not confirmed yet. Null when there is nothing to say. */

@@ -1,6 +1,6 @@
 import { api, getToken } from "./api.js";
 import { renderGate } from "./gate.js";
-import { confirmBanner, linkKindFromPath, renderAddEmail, renderLinkPage } from "./email.js";
+import { confirmBanner, emailCard, linkKindFromPath, renderAddEmail, renderLinkPage } from "./email.js";
 import { renderBrowse, renderItem } from "./browse.js";
 import { renderMine, renderItemForm } from "./mine.js";
 import { renderCamera, stopCamera } from "./camera.js";
@@ -8,7 +8,7 @@ import { renderRequests } from "./requests.js";
 import { renderMessages } from "./messages.js";
 import { renderAlerts } from "./alerts.js";
 import { renderYou } from "./you.js";
-import { go, loadGroups, loadMe, state } from "./state.js";
+import { go, loadGroups, loadMe, redraw, state } from "./state.js";
 import { h, toast } from "./util.js";
 import { icon } from "./icons.js";
 import { considerWhatsNew } from "./whats-new-ui.js";
@@ -127,7 +127,10 @@ async function show() {
   considerWhatsNew();
 }
 
-/** Keeps the unread badge fresh without redrawing the screen. */
+/**
+ * One GET /api/me keeps the unread badge fresh and notices when the address was confirmed elsewhere,
+ * without redrawing the screen. Skipped while the page is hidden.
+ */
 async function pollUnread() {
   if (!getToken() || !state.user || document.hidden) return;
   try {
@@ -136,14 +139,31 @@ async function pollUnread() {
       state.unread = me.unread;
       updateBar();
     }
+    if (me.user.emailVerifiedAt && state.user && !state.user.emailVerifiedAt) {
+      state.user = me.user;
+      showConfirmed();
+    }
   } catch {
     /* a missed poll is fine */
   }
 }
 
+/** The address was just confirmed: drop the banner and refresh the You tab email card in place, with no reload. */
+function showConfirmed() {
+  const banner = document.getElementById("confirm-banner");
+  if (banner) banner.remove();
+  const card = document.getElementById("email-card");
+  if (card) card.replaceWith(emailCard(() => redraw("#/you")));
+}
+
+const waitingForConfirm = () => !!state.user && !!state.user.email && !state.user.emailVerifiedAt;
+
 window.addEventListener("hashchange", show);
 setInterval(pollUnread, 30_000);
+// A lighter check while the banner is up, so confirming on another phone shows here within seconds.
+setInterval(() => waitingForConfirm() && pollUnread(), 6_000);
 document.addEventListener("visibilitychange", pollUnread);
+window.addEventListener("focus", pollUnread);
 
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("/sw.js").catch(() => toast("Offline mode is not available here", "error"));

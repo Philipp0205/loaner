@@ -31,6 +31,18 @@ export function setGroup(id) {
   else localStorage.removeItem(GROUP_KEY);
 }
 
+/**
+ * An invite code waiting for an email. A legacy account that opens or recovers from /join/<code> must add an
+ * address first, so the code is kept for the tab session and used once the address is saved (see email.js).
+ */
+const PENDING_INVITE_KEY = "loaner_pending_invite";
+export const setPendingInvite = (code) => sessionStorage.setItem(PENDING_INVITE_KEY, code);
+export function takePendingInvite() {
+  const code = sessionStorage.getItem(PENDING_INVITE_KEY);
+  sessionStorage.removeItem(PENDING_INVITE_KEY);
+  return code;
+}
+
 export const currentGroup = () => state.groups.find((group) => group.id === state.groupId) || null;
 
 export const inviteLink = (group) => `${location.origin}/join/${group.inviteCode}`;

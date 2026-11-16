@@ -8,7 +8,7 @@ import { MailerError } from "../src/app-kit/index.ts";
 import { loadConfig } from "../src/config.js";
 import { openDb } from "../src/db.js";
 import { createMailer } from "../src/mail.js";
-import { api, emailFor, flush, linkToken, ok, seedLegacyUser, signUp, withApp } from "./http.js";
+import { api, emailFor, flush, linkToken, makeGroup, ok, seedLegacyUser, signUp, withApp } from "./http.js";
 
 // A fake key. It never reaches a real server: every test either has no key or injects a fake fetch.
 const FAKE_KEY = "re_test_not_a_real_key";
@@ -117,6 +117,39 @@ test("email: a legacy account signs in with its recovery code, is told it needs 
     assert.equal((await api(app, "GET", "/api/groups", { token: res.token })).status, 403);
     assert.equal((await api(app, "POST", "/api/auth/logout", { token: res.token })).status, 200);
     assert.equal((await api(app, "GET", "/api/me", { token: res.token })).status, 401);
+  });
+});
+
+test("email: a legacy account cannot join by invite until it adds an email, then the join works", async () => {
+  await withApp(async (app) => {
+    const host = await signUp(app, "Hana");
+    const group = await makeGroup(app, host, "Flat 3B");
+    const lena = seedLegacyUser(app, "Lena");
+
+    const refused = await api(app, "POST", `/api/invites/${group.inviteCode}/join`, { token: lena.token });
+    assert.equal(refused.status, 403);
+    assert.equal(refused.json.error, "add an email first");
+    assert.equal((app.db.prepare("SELECT COUNT(*) AS n FROM memberships WHERE user_id = ?").get(lena.id) as any).n, 0, "not a member yet");
+
+    await ok(app, "PUT", "/api/me/email", { token: lena.token, body: { email: "lena@example.com" } });
+    const joined = await ok(app, "POST", `/api/invites/${group.inviteCode}/join`, { token: lena.token });
+    assert.equal(joined.group.id, group.id);
+    const groups = await ok(app, "GET", "/api/groups", { token: lena.token });
+    assert.deepEqual(groups.groups.map((g: any) => g.id), [group.id]);
+  });
+});
+
+test("email: /api/me reports the email and, once the link is used, emailVerifiedAt (what the banner poll reads)", async () => {
+  await withApp(async (app) => {
+    const alice = await signUp(app, "Alice");
+    const before = await ok(app, "GET", "/api/me", { token: alice.token });
+    assert.equal(before.user.email, alice.email);
+    assert.equal(before.user.emailVerifiedAt, null);
+
+    await ok(app, "POST", "/api/auth/verify", { body: { token: linkToken(app.mail.sent[0], "verify") } });
+    const after = await ok(app, "GET", "/api/me", { token: alice.token });
+    assert.equal(after.user.email, alice.email);
+    assert.equal(after.user.emailVerifiedAt, app.ctx.now());
   });
 });
 

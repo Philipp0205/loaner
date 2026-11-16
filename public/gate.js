@@ -1,6 +1,6 @@
 import { api, setToken } from "./api.js";
-import { emailInput } from "./email.js";
-import { go, loadGroups, loadMe, saveRecovery, setGroup, state } from "./state.js";
+import { emailInput, renderAddEmail } from "./email.js";
+import { go, loadGroups, loadMe, saveRecovery, setGroup, setPendingInvite, state } from "./state.js";
 import { busy, h, toast, wordmarkHeading } from "./util.js";
 import { markNewAccountSeen } from "./whats-new-ui.js";
 
@@ -83,7 +83,11 @@ function recoverScreen() {
         const res = await api("POST", "/api/auth/recover", { code: code.value });
         await finish(res);
         const inviteCode = inviteFromPath();
-        if (inviteCode && !state.user.needsEmail) await api("POST", `/api/invites/${inviteCode}/join`);
+        if (inviteCode) {
+          // An account without an email cannot join yet. Keep the code until it has one (see renderAddEmail).
+          if (state.user.needsEmail) setPendingInvite(inviteCode);
+          else await api("POST", `/api/invites/${inviteCode}/join`);
+        }
         history.replaceState(null, "", "/");
         go("#/browse");
       } catch (e) {
@@ -130,6 +134,21 @@ async function joinScreen(code) {
     return h("main", { class: "page gate" }, intro(), h("div", { class: "card" }, h("h2", null, "This invite link does not work"), h("p", { class: "muted" }, "Ask your friend for a new one."), h("a", { class: "btn", href: "/app" }, "Open Loan some")));
   }
   const signedIn = !!localStorage.getItem("loaner_token");
+  if (signedIn) {
+    // An older account has no email, and the server refuses the join until it does. Ask for one first, then join.
+    try {
+      if (!state.user) await loadMe();
+    } catch {
+      /* fall through to the plain join form, which reports its own error */
+    }
+    if (state.user && state.user.needsEmail) {
+      setPendingInvite(code);
+      return renderAddEmail(() => {
+        history.replaceState(null, "", "/");
+        go("#/browse");
+      }, group.name);
+    }
+  }
   const error = h("p", { class: "error-text", role: "alert" });
   const input = signedIn ? null : nameField();
   const email = signedIn ? null : emailField();
