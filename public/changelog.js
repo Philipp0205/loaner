@@ -7,6 +7,16 @@ import { normalizeEntries } from "./whats-new.js";
  */
 const RAW = [
   {
+    id: "2026-11-17-native-feel",
+    date: "2026-11-17",
+    title: "Feels more like an app",
+    bullets: [
+      "Screens slide in and out, and you can swipe back from the left edge once the app is installed.",
+      "Lists show right away from the last visit, then update. Tap the tab you are on to jump back to the top.",
+      "When a new version is ready you get a bar with a Reload button.",
+    ],
+  },
+  {
     id: "2026-11-16-app-kit-v041",
     date: "2026-11-16",
     title: "Sign up with your email, and a Donate button",

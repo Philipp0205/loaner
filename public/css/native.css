@@ -1,0 +1,39 @@
+/* Native feel: the glass navbar with a large title, list skeletons, and the update bar. */
+
+/* How far the page content starts from the top, so the navbar can sit flush against it. */
+.page { --page-top: calc(var(--s4) + env(safe-area-inset-top)); }
+body:has(#ak-install-prompt) .page { --page-top: var(--s3); }
+
+/* display: contents lets the sticky navbar stay pinned for the whole screen, not just its own wrapper. */
+.native-head { display: contents; }
+.native-head .ak-navbar {
+  margin: calc(-1 * var(--page-top)) calc(-1 * (var(--gutter) + env(safe-area-inset-right))) 0 calc(-1 * (var(--gutter) + env(safe-area-inset-left)));
+  /* The title is drawn by the h1 below, so only the small copy shows, and only once collapsed. */
+}
+/* Under the email banner the navbar is not at the top of the page, so it does not pull upward. */
+#confirm-banner + div .native-head .ak-navbar { margin-top: 0; }
+.native-title-row { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--s3); margin: 0 0 var(--s3); }
+.native-title-row .ak-large-title { padding: var(--s1) 0 var(--s2); min-width: 0; overflow-wrap: anywhere; }
+.native-title-actions { display: flex; align-items: center; gap: var(--s2); padding-bottom: var(--s2); flex: none; max-width: 60%; }
+/* The actions box already caps the width, so the group switcher inside it does not shrink again. */
+.native-title-actions .switch { max-width: none; }
+
+/* Skeletons: the kit's .ak-skeleton shimmer, shaped like a browse tile and a card. */
+.skel-pic { aspect-ratio: 4 / 3; border-radius: var(--r-card); }
+.skel-line { height: 12px; margin-top: 10px; border-radius: 6px; }
+.skel-line.short { width: 60%; }
+.skel-stack { display: grid; gap: var(--s3); }
+.skel-card { padding: var(--s3); border-radius: var(--r-card); background: var(--card); }
+.skel-card .skel-pic { aspect-ratio: auto; height: 64px; width: 64px; }
+
+/* The "new version" bar. It floats above the tab bar until the person reloads. */
+.sw-update {
+  position: fixed; z-index: 60;
+  left: calc(var(--s3) + env(safe-area-inset-left)); right: calc(var(--s3) + env(safe-area-inset-right));
+  bottom: calc(var(--tab-h) + var(--s3));
+  display: flex; align-items: center; justify-content: space-between; gap: var(--s3);
+  padding: var(--s3); border-radius: var(--r-card);
+  background: var(--card); color: var(--ink); box-shadow: 0 6px 24px rgb(0 0 0 / 0.18), inset 0 0 0 1px var(--chip-line);
+  font-size: var(--fs-sm); font-weight: 600;
+}
+.sw-update button { flex: none; }

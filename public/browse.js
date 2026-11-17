@@ -5,7 +5,7 @@ import { viewable } from "./photo-viewer.js";
 import { messageButton } from "./messages.js";
 import { requestCard } from "./requests.js";
 import { go, currentGroup, redraw, setGroup, state } from "./state.js";
-import { busy, emptyState, fmtAmount, fmtDate, fmtMoment, fmtRange, h, statusPill, toast, wordmarkHeading } from "./util.js";
+import { busy, emptyState, fmtAmount, fmtDate, fmtMoment, fmtRange, h, largeTitleHead, skeletonList, statusPill, swrList, toast, wordmarkHeading } from "./util.js";
 import { icon } from "./icons.js";
 
 export async function renderBrowse() {
@@ -22,16 +22,22 @@ export async function renderBrowse() {
   const filter = h("label", { class: "chip" },
     h("input", { type: "checkbox", id: "available-only", checked: state.availableOnly, onchange: (event) => { state.availableOnly = event.target.checked; go("#/browse"); } }),
     "Available only");
-  const { items } = await api("GET", `/api/groups/${group.id}/items${state.availableOnly ? "?available=1" : ""}`);
-  const body = items.length
-    ? h("div", { class: "grid" }, items.map(tile))
-    : state.availableOnly
-      ? emptyState("Nothing available right now", "Everything in this group is lent out or paused. Uncheck the filter to see it all.")
-      : emptyState("Nothing here yet", "Nobody has shared an item with this group. Be the first from the My items tab.");
+  const grid = h("div", { class: "swr-mount" });
+  swrList(
+    grid,
+    `browse:${state.user.id}:${group.id}:${state.availableOnly ? 1 : 0}`,
+    () => api("GET", `/api/groups/${group.id}/items${state.availableOnly ? "?available=1" : ""}`),
+    ({ items }) => (items.length
+      ? h("div", { class: "grid" }, items.map(tile))
+      : state.availableOnly
+        ? emptyState("Nothing available right now", "Everything in this group is lent out or paused. Uncheck the filter to see it all.")
+        : emptyState("Nothing here yet", "Nobody has shared an item with this group. Be the first from the My items tab.")),
+    () => skeletonList("tile", 6),
+  );
   return h("div", null,
-    h("div", { class: "page-head brandbar" }, wordmarkHeading(), h("span", { class: "switch" }, select)),
+    largeTitleHead("Browse", h("span", { class: "switch" }, select)),
     h("div", { class: "chips" }, filter),
-    body);
+    grid);
 }
 
 function tile(item) {

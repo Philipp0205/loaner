@@ -1,10 +1,6 @@
 import assert from "node:assert/strict";
-import fs from "node:fs";
 import test from "node:test";
-import vm from "node:vm";
-
-const ORIGIN = "https://app.example";
-const source = fs.readFileSync(new URL("../public/sw.js", import.meta.url), "utf8");
+import { ORIGIN, loadWorker } from "./sw-sandbox.js";
 
 type FakeClient = { url: string; calls: string[]; navigate?: (url: string) => Promise<unknown>; focus: () => Promise<unknown> };
 
@@ -20,23 +16,19 @@ function fakeClient(url: string, calls: string[], options: { navigate?: boolean;
   return client;
 }
 
-// Runs the real sw.js in a sandbox and fires one notificationclick.
+// Runs the real sw.js (and the real kit worker it imports) in a sandbox and fires one notificationclick.
 async function click(url: string | undefined, makeClients: (calls: string[]) => FakeClient[]): Promise<{ calls: string[]; closed: boolean }> {
   const calls: string[] = [];
-  const handlers: Record<string, (event: any) => void> = {};
-  const self = {
-    location: { origin: ORIGIN },
-    addEventListener: (type: string, handler: (event: any) => void) => { handlers[type] = handler; },
+  const worker = loadWorker({
     clients: {
       matchAll: async () => makeClients(calls),
       openWindow: async (to: string) => { calls.push(`open ${to}`); return null; },
       claim: () => {},
     },
-  };
-  vm.runInNewContext(source, { self, URL });
+  });
   let closed = false;
   let pending: Promise<unknown> = Promise.resolve();
-  handlers.notificationclick({
+  worker.handlers.notificationclick[0]({
     notification: { close: () => { closed = true; }, data: url === undefined ? undefined : { url } },
     waitUntil: (promise: Promise<unknown>) => { pending = promise; },
   });

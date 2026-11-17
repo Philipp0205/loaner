@@ -3,18 +3,26 @@ import { CATEGORIES } from "./categories.js";
 import { clearDraft, getDraft } from "./draft.js";
 import { downscale, photoEl } from "./photo.js";
 import { go, redraw, state, stayedPut } from "./state.js";
-import { busy, emptyState, fmtAmountPlain, h, statusPill, toast } from "./util.js";
+import { busy, emptyState, fmtAmountPlain, h, largeTitleHead, skeletonList, statusPill, swrList, toast } from "./util.js";
 
 export async function renderMine() {
-  const { items } = await api("GET", "/api/items/mine");
   const add = h("button", { class: "primary", type: "button", onclick: () => go("#/mine/new") }, "Add an item");
   const rerender = () => redraw("#/mine");
-  const head = h("div", { class: "page-head" }, h("h1", null, "My items"), add);
+  const head = largeTitleHead("My items", add);
   if (!state.groups.length) {
     return h("div", null, head, emptyState("Join or create a group first", "Items are shared with your groups. Open the Browse tab to create one."));
   }
-  if (!items.length) return h("div", null, head, emptyState("Nothing listed yet", "Got a drill, a tent or a board game gathering dust? Add it and choose who can borrow it."));
-  return h("div", null, head, items.map((item) => mineCard(item, rerender)));
+  const list = h("div", { class: "swr-mount" });
+  swrList(
+    list,
+    `mine:${state.user.id}`,
+    () => api("GET", "/api/items/mine"),
+    ({ items }) => (items.length
+      ? items.map((item) => mineCard(item, rerender))
+      : emptyState("Nothing listed yet", "Got a drill, a tent or a board game gathering dust? Add it and choose who can borrow it.")),
+    () => skeletonList("card", 3),
+  );
+  return h("div", null, head, list);
 }
 
 function mineCard(item, rerender) {

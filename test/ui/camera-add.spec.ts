@@ -58,6 +58,8 @@ test("Add an item opens the camera, Type it in gives an empty form, a gallery ph
   assert.equal(new URL(page.url()).hash, "#/mine/new");
   await page.waitForFunction(() => (document.querySelector("#camera-video") as HTMLVideoElement | null)?.videoWidth! > 0);
   assert.equal(await streamsLive(page), true);
+  // The push transition overlays the page with its snapshots, which would hide the hit test.
+  await page.waitForFunction(() => !document.documentElement.hasAttribute("data-ak-nav"));
   const layout = await page.evaluate(() => {
     const cam = document.querySelector("#camera-add")!.getBoundingClientRect();
     const camZ = Number(getComputedStyle(document.querySelector("#camera-add")!).zIndex);

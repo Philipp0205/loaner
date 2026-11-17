@@ -29,8 +29,10 @@ async function signUp(page: Page, name: string) {
 }
 
 async function openFeedback(page: Page) {
-  await page.locator(".ak-tabbar").getByRole("button", { name: "You" }).click();
-  await page.getByRole("heading", { level: 1, name: "You" }).waitFor();
+  const heading = page.getByRole("heading", { level: 1, name: "You" });
+  // Tapping the active tab redraws it, which would swap the row out from under the click.
+  if (!(await heading.isVisible())) await page.locator(".ak-tabbar").getByRole("button", { name: "You" }).click();
+  await heading.waitFor();
   const row = page.locator("#open-feedback");
   await row.scrollIntoViewIfNeeded();
   await row.click();

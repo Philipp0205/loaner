@@ -1,7 +1,8 @@
 /**
  * Sheets with the phone's Back button wired in. A thin wrapper over AppKit.sheet.show: it counts the open
  * sheets and hands that count to AppKit.nav.syncOverlayHistory, so Back closes the top sheet instead of
- * leaving the installed app. Same options as the kit: { head, onClose, focus }.
+ * leaving the installed app. Same options as the kit: { head, onClose, focus, snaps, snap }. The app root scales
+ * down behind every sheet unless the caller passes its own scaleBackground.
  */
 const open = [];
 
@@ -12,10 +13,11 @@ function sync() {
   });
 }
 
-/** Returns { close } or null when a sheet is already open. */
+/** Returns { close, snapTo } or null when a sheet is already open. */
 export function showSheet(node, opts = {}) {
   const entry = { close: () => {} };
   const control = window.AppKit.sheet.show(node, {
+    scaleBackground: document.getElementById("root"),
     ...opts,
     onClose: () => {
       const at = open.indexOf(entry);

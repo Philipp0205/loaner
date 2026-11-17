@@ -2,7 +2,7 @@ import { api } from "./api.js";
 import { messageButton } from "./messages.js";
 import { photoEl } from "./photo.js";
 import { redraw, state } from "./state.js";
-import { busy, emptyState, fmtDate, fmtRange, h, toast } from "./util.js";
+import { busy, emptyState, fmtDate, fmtRange, h, largeTitleHead, toast } from "./util.js";
 
 const LABEL = { pending: "Waiting", approved: "Approved", declined: "Declined", cancelled: "Cancelled", lent: "Lent out", returned: "Returned" };
 
@@ -64,7 +64,7 @@ export async function renderRequests() {
   const onLoan = [...incoming.requests.filter((r) => r.status === "lent").map((r) => [r, "owner"]), ...outgoing.requests.filter((r) => r.status === "lent").map((r) => [r, "borrower"])];
   const closed = (list) => list.requests.filter((r) => !["pending", "approved", "lent"].includes(r.status));
   const label = (text) => h("h2", { class: "label" }, text);
-  const parts = [h("h1", null, "Requests"), label("On your items")];
+  const parts = [largeTitleHead("Requests"), label("On your items")];
   parts.push(open(incoming).length ? open(incoming).map((r) => requestCard(r, "owner", rerender)) : h("p", { class: "muted" }, "No open requests on your items."));
   parts.push(label("Your requests"));
   parts.push(open(outgoing).length ? open(outgoing).map((r) => requestCard(r, "borrower", rerender)) : h("p", { class: "muted" }, "You have not asked to borrow anything right now."));
@@ -74,7 +74,7 @@ export async function renderRequests() {
     parts.push(label("Earlier"), old.slice(0, 20).map(([r, role]) => requestCard(r, role, rerender)));
   }
   if (!incoming.requests.length && !outgoing.requests.length) {
-    return h("div", null, h("h1", null, "Requests"), emptyState("No requests yet", "When you ask to borrow something, or a friend asks for one of your items, it shows up here."));
+    return h("div", null, largeTitleHead("Requests"), emptyState("No requests yet", "When you ask to borrow something, or a friend asks for one of your items, it shows up here."));
   }
   return h("div", null, parts);
 }
