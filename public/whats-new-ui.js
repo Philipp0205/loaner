@@ -64,5 +64,7 @@ function openSheet(entries, popup) {
     h("div", { class: "ak-sheet-scroll" }, entries.map(entryView)),
     h("div", { class: "ak-sheet-dock" }, done),
   );
-  control = showSheet(sheet, { head, onClose: () => writeSeen(latestId(CHANGELOG)), focus: done });
+  // The full list is long, so it can rest half open or full. It opens full: at half the Done button would be off screen.
+  const snapping = popup ? {} : { snaps: [0.5, 1], snap: 1 };
+  control = showSheet(sheet, { head, onClose: () => writeSeen(latestId(CHANGELOG)), focus: done, ...snapping });
 }

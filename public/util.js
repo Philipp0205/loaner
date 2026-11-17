@@ -26,6 +26,55 @@ function add(el, children) {
   }
 }
 
+/**
+ * The glass navbar and the large title for a tab root. The h1 carries the name for assistive tech, the navbar
+ * copy is decoration. app.js hooks AppKit.largeTitle onto the h1 once the screen is mounted.
+ * `actions` sit on the right of the large title (a button, a switcher).
+ */
+export function largeTitleHead(title, ...actions) {
+  return h("div", { class: "native-head" },
+    h("header", { class: "ak-navbar" }, h("span", { class: "ak-navbar-title", "aria-hidden": "true" }, title)),
+    h("div", { class: "native-title-row" }, h("h1", { class: "ak-large-title" }, title), actions.length ? h("div", { class: "native-title-actions" }, actions) : null));
+}
+
+/** Grey placeholder shapes while a list loads. `kind` is "tile" (browse grid) or "card" (a list of cards). */
+export function skeletonList(kind, count = 4) {
+  const shape = () => h("div", { class: `skel-${kind}`, "aria-hidden": "true" },
+    h("div", { class: "ak-skeleton skel-pic" }),
+    h("div", { class: "ak-skeleton skel-line" }),
+    h("div", { class: "ak-skeleton skel-line short" }));
+  return h("div", { class: kind === "tile" ? "grid" : "skel-stack" },
+    Array.from({ length: count }, shape));
+}
+
+/**
+ * Shows `data` for a list right away from the saved copy (AppKit.swr), then replaces it with fresh data.
+ * `mount` is the container that holds the list, `draw(data)` returns the nodes. With nothing saved the
+ * container shows skeleton shapes while the first fetch runs, and a message with a "Try again" button if it fails.
+ */
+export function swrList(mount, key, fetcher, draw, skeleton) {
+  const run = () => {
+    let drawn = false;
+    // A saved copy renders synchronously inside swr(), so the skeleton never flashes when there is one.
+    mount.replaceChildren(skeleton());
+    mount.setAttribute("aria-busy", "true");
+    const fail = (error) => {
+      // With a saved copy on screen, a failed refresh just leaves it there.
+      if (drawn) return;
+      mount.replaceChildren(h("div", null,
+        h("p", { class: "error-text", role: "alert" }, error.message || "Something went wrong"),
+        h("button", { type: "button", onclick: run }, "Try again")));
+      mount.removeAttribute("aria-busy");
+    };
+    window.AppKit.swr(key, fetcher, (data) => {
+      drawn = true;
+      mount.replaceChildren(...[].concat(draw(data)));
+      mount.removeAttribute("aria-busy");
+    }, { onError: fail }).catch(() => {});
+  };
+  run();
+}
+
 /** A short message at the bottom of the screen (the kit's AppKit.toast). `kind` is "info" or "error". */
 export function toast(message, kind = "info") {
   window.AppKit.toast(message, { kind });

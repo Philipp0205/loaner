@@ -1,7 +1,7 @@
 import { api } from "./api.js";
 import { threadHash } from "./messages.js";
 import { go, redraw, state } from "./state.js";
-import { emptyState, fmtMoment, h } from "./util.js";
+import { emptyState, fmtMoment, h, largeTitleHead } from "./util.js";
 
 export async function renderAlerts() {
   const data = await api("GET", "/api/notifications");
@@ -11,7 +11,7 @@ export async function renderAlerts() {
     state.unread = 0;
     redraw("#/alerts");
   } }, "Mark all as read");
-  const head = h("div", { class: "page-head" }, h("h1", null, "Alerts"), unread ? mark : null);
+  const head = largeTitleHead("Alerts", unread ? mark : null);
   if (!data.notifications.length) {
     state.unread = 0;
     return h("div", null, head, emptyState("All quiet", "You will see requests, answers, new items and reminders here."));

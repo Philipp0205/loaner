@@ -3,7 +3,7 @@ import { emailCard } from "./email.js";
 import { createGroupForm, groupCard } from "./groups.js";
 import { openFeedback } from "./feedback-ui.js";
 import { redraw, loadGroups, loadMe, saveRecovery, savedRecovery, state } from "./state.js";
-import { busy, copyText, h, toast } from "./util.js";
+import { busy, copyText, h, largeTitleHead, toast } from "./util.js";
 import { openWhatsNewList } from "./whats-new-ui.js";
 
 // A voluntary tip. It only links out to PayPal, the app never touches money.
@@ -12,7 +12,7 @@ const DONATE_URL = "https://www.paypal.me/philippkurrle1";
 export async function renderYou() {
   await loadGroups();
   const rerender = () => redraw("#/you");
-  const parts = [h("h1", null, "You"), nameCard(rerender), emailCard(rerender), recoveryCard(rerender), h("h2", null, "Your groups")];
+  const parts = [largeTitleHead("You"), nameCard(rerender), emailCard(rerender), recoveryCard(rerender), h("h2", null, "Your groups")];
   parts.push(state.groups.length ? state.groups.map((g) => groupCard(g, rerender)) : h("p", { class: "muted" }, "You are not in a group yet."));
   parts.push(h("div", { class: "card" }, h("h3", { style: "margin-bottom:8px" }, "Start a new group"), createGroupForm(rerender)));
   parts.push(pushCard());

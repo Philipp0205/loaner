@@ -256,7 +256,7 @@ test("the camera stays dark and is not reassigned in any scheme block", () => {
 
 test("index.html loads the kit in order, has the four theme-color metas, and the head metas the kit asks for", () => {
   const html = read("index.html");
-  assert.match(html, /<html lang="en" class="ak-status-strip">/);
+  assert.match(html, /<html lang="en" class="ak-status-strip ak-native ak-no-bounce">/);
   assert.doesNotMatch(html, /eink/);
   assert.match(html, /<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">/);
   assert.match(html, /<meta name="color-scheme" content="light dark">/);
@@ -279,14 +279,14 @@ test("index.html loads the kit in order, has the four theme-color metas, and the
   });
 
   const sheets = [...html.matchAll(/<link rel="stylesheet" href="([^"]+)"/g)].map((m) => m[1]);
-  assert.deepEqual(sheets.slice(0, 5), ["/app-kit/ak-tokens.css", "/app-kit/app-kit.css", "/app-kit/ak-components.css", "/app-kit/install-prompt.css", "/css/tokens.css"], "kit first, then the Loan some tokens for overrides");
+  assert.deepEqual(sheets.slice(0, 7), ["/app-kit/ak-tokens.css", "/app-kit/app-kit.css", "/app-kit/ak-components.css", "/app-kit/ak-native.css", "/app-kit/ak-view-transitions.css", "/app-kit/install-prompt.css", "/css/tokens.css"], "kit first, then the Loan some tokens for overrides");
   assert.ok(!sheets.includes("/app-kit/ak-base.css"), "ak-base.css is not used");
   assert.ok(sheets.indexOf("/css/base.css") > sheets.indexOf("/css/tokens.css"));
 
   const scripts = [...html.matchAll(/<script ([^>]*)src="([^"]+)"/g)].map((m) => ({ src: m[2], module: /type="module"/.test(m[1]) }));
   assert.deepEqual(
     scripts.map((s) => s.src),
-    ["/app-kit/theme-color.js", "/app-kit/install-prompt.js", "/app-kit/ak-dom.js", "/app-kit/ak-nav.js", "/app-kit/ak-sheet.js", "/app-kit/ak-donate.js", "/app-kit/ak-tabbar.js", "/app-kit/ak-toast.js", "/app.js"],
+    ["/app-kit/theme-color.js", "/app-kit/install-prompt.js", "/app-kit/ak-dom.js", "/app-kit/ak-nav.js", "/app-kit/ak-sheet.js", "/app-kit/ak-donate.js", "/app-kit/ak-tabbar.js", "/app-kit/ak-toast.js", "/app-kit/ak-native.js", "/app-kit/ak-transition.js", "/app-kit/ak-swr.js", "/app-kit/ak-sw-register.js", "/app.js"],
   );
   assert.deepEqual(scripts.filter((s) => s.module).map((s) => s.src), ["/app.js"], "only app.js is a module, so the kit scripts run first");
   assert.doesNotMatch(html, /id="toasts"/, "the kit makes #ak-toasts itself");
@@ -321,7 +321,8 @@ test("the dark mode and app kit entries are in What's new", async () => {
   assert.equal(dark.title, "Dark mode");
   const kit = CHANGELOG.find((item) => item.id === "2026-11-15-app-kit");
   assert.ok(kit, "the app kit entry is kept");
-  assert.equal(CHANGELOG[0].id, "2026-11-16-app-kit-v041", "the newest entry is the app kit v0.4.1 one");
+  assert.equal(CHANGELOG[0].id, "2026-11-17-native-feel", "the newest entry is the native feel one");
+  assert.ok(CHANGELOG.some((item) => item.id === "2026-11-16-app-kit-v041"), "the app kit v0.4.1 entry is kept");
   assert.ok(CHANGELOG.some((item) => item.id === "2026-11-16-item-added"), "the item added entry is kept");
   assert.ok(CHANGELOG.some((item) => item.id === "2026-11-15-photo-fullscreen"), "the fullscreen photo entry is kept");
   assert.ok(CHANGELOG.some((item) => item.id === "2026-11-15-welcome"), "the /welcome entry is kept");

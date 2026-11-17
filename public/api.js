@@ -1,7 +1,20 @@
 const KEY = "loaner_token";
 
 export const getToken = () => localStorage.getItem(KEY);
-export const setToken = (token) => (token ? localStorage.setItem(KEY, token) : localStorage.removeItem(KEY));
+
+/**
+ * The saved list copies (AppKit.swr) belong to one person, so they go whenever the token changes
+ * (sign in, sign out, a 401) and after any write, so a list never shows what the write just changed.
+ */
+function forgetLists() {
+  window.AppKit?.swr?.clear();
+}
+
+export const setToken = (token) => {
+  forgetLists();
+  if (token) localStorage.setItem(KEY, token);
+  else localStorage.removeItem(KEY);
+};
 
 /**
  * JSON call. `raw` sends a Blob as is (photo upload). Throws Error with .status on a failure.
@@ -36,6 +49,7 @@ export async function api(method, path, body, raw) {
     error.status = res.status;
     throw error;
   }
+  if (method !== "GET") forgetLists();
   return data;
 }
 

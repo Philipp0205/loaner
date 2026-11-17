@@ -1,46 +1,21 @@
-const CACHE = "loaner-v23";
+// The shell, caching and update flow come from the app kit worker. This file adds the push handlers.
+importScripts("/app-kit/ak-sw.js");
+
+const VERSION = "v24"; // loaner-v24
 const SHELL = [
   "/", "/app", "/welcome",
   "/landing.js", "/css/landing.css", "/landing/phone-light.png", "/landing/phone-dark.png", "/landing/shelf-light.png", "/landing/shelf-dark.png", "/icons/mark.svg",
-  "/app-kit/ak-tokens.css", "/app-kit/app-kit.css", "/app-kit/ak-components.css", "/app-kit/install-prompt.css",
-  "/css/tokens.css", "/css/base.css", "/css/layout.css", "/css/items.css", "/css/forms.css", "/css/requests.css", "/css/messages.css", "/css/feedback.css", "/css/sheet.css", "/css/camera.css", "/css/photo-viewer.css",
+  "/app-kit/ak-tokens.css", "/app-kit/app-kit.css", "/app-kit/ak-components.css", "/app-kit/ak-native.css", "/app-kit/ak-view-transitions.css", "/app-kit/install-prompt.css",
+  "/css/tokens.css", "/css/base.css", "/css/layout.css", "/css/items.css", "/css/forms.css", "/css/requests.css", "/css/messages.css", "/css/feedback.css", "/css/sheet.css", "/css/camera.css", "/css/photo-viewer.css", "/css/native.css",
   "/fonts/inter-latin-var.woff2",
   "/app-kit/theme-color.js", "/app-kit/install-prompt.js", "/app-kit/ak-dom.js", "/app-kit/ak-nav.js", "/app-kit/ak-sheet.js", "/app-kit/ak-donate.js", "/app-kit/ak-tabbar.js", "/app-kit/ak-toast.js",
+  "/app-kit/ak-native.js", "/app-kit/ak-transition.js", "/app-kit/ak-swr.js", "/app-kit/ak-sw-register.js",
   "/app.js", "/util.js", "/api.js", "/state.js", "/photo.js", "/icons.js", "/overlay.js", "/photo-viewer.js",
   "/gate.js", "/email.js", "/groups.js", "/browse.js", "/requests.js", "/messages.js", "/mine.js", "/alerts.js", "/you.js",
   "/whats-new.js", "/changelog.js", "/whats-new-ui.js", "/feedback-ui.js",
   "/camera.js", "/draft.js", "/categories.js", "/suggest-photo.js", "/suggest-labels.js",
   "/manifest.webmanifest?v=1", "/logo.svg", "/icons/icon-192.png", "/icons/icon-512.png",
 ];
-
-self.addEventListener("install", (event) => {
-  event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(SHELL)));
-  self.skipWaiting();
-});
-
-self.addEventListener("activate", (event) => {
-  event.waitUntil(caches.keys().then((keys) => Promise.all(keys.filter((key) => key !== CACHE).map((key) => caches.delete(key)))));
-  self.clients.claim();
-});
-
-// Network first for the app shell, so a deploy shows up at once. The cache is the offline fallback.
-// The API is never cached: it carries private data.
-self.addEventListener("fetch", (event) => {
-  const url = new URL(event.request.url);
-  if (url.origin !== self.location.origin) return;
-  if (url.pathname.startsWith("/api/") || event.request.method !== "GET") return;
-  event.respondWith(
-    fetch(event.request)
-      .then((response) => {
-        if (response.ok) {
-          const copy = response.clone();
-          caches.open(CACHE).then((cache) => cache.put(event.request, copy)).catch(() => {});
-        }
-        return response;
-      })
-      .catch(() => caches.match(event.request).then((hit) => hit || caches.match("/"))),
-  );
-});
 
 self.addEventListener("push", (event) => {
   let data = { title: "Loan some", body: "You have a new alert", url: "/", tag: "loaner" };
@@ -73,4 +48,13 @@ self.addEventListener("notificationclick", (event) => {
       return client.focus();
     }),
   );
+});
+
+// The API is never cached: it carries private data. A new worker waits until the page asks it to take over.
+AppKitSW.setup({
+  version: VERSION,
+  prefix: "loaner",
+  shell: SHELL,
+  networkOnly: ["/api/"],
+  offlineFallback: "/",
 });
