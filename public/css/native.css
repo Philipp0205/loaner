@@ -15,6 +15,8 @@ body:has(#ak-install-prompt) .page { --page-top: var(--s3); }
 .native-title-row { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--s3); margin: 0 0 var(--s3); }
 .native-title-row .ak-large-title { padding: var(--s1) 0 var(--s2); min-width: 0; overflow-wrap: anywhere; }
 .native-title-actions { display: flex; align-items: center; gap: var(--s2); padding-bottom: var(--s2); flex: none; max-width: 60%; }
+/* The actions box already caps the width, so the group switcher inside it does not shrink again. */
+.native-title-actions .switch { max-width: none; }
 
 /* Skeletons: the kit's .ak-skeleton shimmer, shaped like a browse tile and a card. */
 .skel-pic { aspect-ratio: 4 / 3; border-radius: var(--r-card); }
