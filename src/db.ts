@@ -7,8 +7,20 @@ CREATE TABLE IF NOT EXISTS users (
   id TEXT PRIMARY KEY,
   name TEXT NOT NULL,
   recovery_hash TEXT NOT NULL UNIQUE,
-  created_at INTEGER NOT NULL
+  created_at INTEGER NOT NULL,
+  email TEXT,
+  email_verified_at INTEGER
 );
+
+-- One-time email links (kind: verify or recover). Only the hash of the token is stored.
+CREATE TABLE IF NOT EXISTS auth_links (
+  token_hash TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  kind TEXT NOT NULL,
+  email TEXT NOT NULL,
+  expires_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS auth_links_user ON auth_links(user_id, kind);
 
 CREATE TABLE IF NOT EXISTS devices (
   token_hash TEXT PRIMARY KEY,
@@ -151,6 +163,13 @@ function migrate(db: DatabaseSync): void {
   if (!columns.some((column) => column.name === "category")) db.exec("ALTER TABLE items ADD COLUMN category TEXT");
   const noteColumns = db.prepare("PRAGMA table_info(notifications)").all() as unknown as { name: string }[];
   if (!noteColumns.some((column) => column.name === "borrower_id")) db.exec("ALTER TABLE notifications ADD COLUMN borrower_id TEXT");
+  const userColumns = db.prepare("PRAGMA table_info(users)").all() as unknown as { name: string }[];
+  if (!userColumns.some((column) => column.name === "email")) db.exec("ALTER TABLE users ADD COLUMN email TEXT");
+  if (!userColumns.some((column) => column.name === "email_verified_at")) db.exec("ALTER TABLE users ADD COLUMN email_verified_at INTEGER");
+  // Only verified addresses are unique. Unverified duplicates are allowed until one of them is confirmed.
+  db.exec(
+    "CREATE UNIQUE INDEX IF NOT EXISTS users_verified_email ON users(email) WHERE email IS NOT NULL AND email_verified_at IS NOT NULL",
+  );
 }
 
 /** Runs fn in one transaction. Rolls back and rethrows on error. Not reentrant. */

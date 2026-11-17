@@ -36,6 +36,7 @@ test("Alice lends a drill to Bob, from invite to return", { timeout: 120_000 }, 
   await alice.getByRole("heading", { level: 1, name: "Loan some" }).waitFor();
   await shot(alice, "alice-welcome");
   await alice.locator("#name").fill("Alice");
+  await alice.locator("#email").fill("alice@example.com");
   await alice.getByRole("button", { name: "Get started" }).click();
   await alice.locator("nav.ak-tabbar").waitFor();
   await alice.getByRole("heading", { name: "No groups yet" }).waitFor();
@@ -57,6 +58,7 @@ test("Alice lends a drill to Bob, from invite to return", { timeout: 120_000 }, 
   await bob.getByRole("heading", { name: "Join Flat 3B?" }).waitFor();
   await shot(bob, "bob-join");
   await bob.locator("#name").fill("Bob");
+  await bob.locator("#email").fill("bob@example.com");
   await bob.getByRole("button", { name: "Join Flat 3B" }).click();
   await bob.locator("nav.ak-tabbar").waitFor();
   await bob.getByText("Nothing here yet").waitFor();

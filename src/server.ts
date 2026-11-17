@@ -1,7 +1,7 @@
 import http from "node:http";
 import { installGracefulShutdown } from "./app-kit/index.ts";
 import { createApp } from "./app.js";
-import { loadConfig } from "./config.js";
+import { loadConfig, isProduction } from "./config.js";
 import { openDb } from "./db.js";
 import { createNoopPushSender, createWebPushSender } from "./push.js";
 import { runReminders } from "./remind.js";
@@ -32,6 +32,9 @@ server.listen(config.port, "0.0.0.0", () => {
   console.log(`  database   ${config.dbPath}`);
   console.log(`  timezone   ${config.tz}`);
   console.log(config.vapid ? "  web push   enabled" : "  web push   off (no VAPID keys), in-app notifications still work");
+  console.log(config.resendApiKey ? "  email      on" : "  email      off (no RESEND_API_KEY), links and lost-code mail are not sent");
+  // Without a mailer nobody can confirm an address or get a lost-code link. Say so loudly in production.
+  if (!config.resendApiKey && isProduction(process.env)) console.warn("WARNING: RESEND_API_KEY is not set in production, so no email is sent");
 });
 
 installGracefulShutdown({

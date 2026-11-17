@@ -17,17 +17,41 @@ export type Config = {
   vapid: VapidConfig | null;
   /** Bearer token for the feedback admin routes. Null when unset, and then those routes answer 404. */
   adminToken: string | null;
+  /** Null when unset. Without it no mail is sent: sign-up still works, links just never arrive. */
+  resendApiKey: string | null;
+  /** The From header of every mail. */
+  mailFrom: string;
+  /** Public origin used in email links, no trailing slash. */
+  appOrigin: string;
 };
 
 export const ADMIN_TOKEN_MIN = 32;
 export const DEFAULT_VAPID_SUBJECT = "https://www.loanso.me";
+export const DEFAULT_MAIL_FROM = "Loan some <hello@loanso.me>";
 
 export function loadConfig(env: NodeJS.ProcessEnv = process.env, cwd = process.cwd()): Config {
   const rawDb = env.DB_PATH?.trim() ?? "";
   const dbPath = rawDb === ":memory:" ? rawDb : rawDb ? path.resolve(cwd, rawDb) : path.join(cwd, "data", "loaner.db");
   const tz = env.APP_TZ?.trim() || "UTC";
   assertTimeZone(tz);
-  return { port: readPort(env.PORT), dbPath, tz, vapid: readVapid(env), adminToken: readAdminToken(env) };
+  const port = readPort(env.PORT);
+  return {
+    port,
+    dbPath,
+    tz,
+    vapid: readVapid(env),
+    adminToken: readAdminToken(env),
+    resendApiKey: env.RESEND_API_KEY?.trim() || null,
+    mailFrom: env.MAIL_FROM?.trim() || DEFAULT_MAIL_FROM,
+    appOrigin: readOrigin(env, port),
+  };
+}
+
+function readOrigin(env: NodeJS.ProcessEnv, port: number): string {
+  const raw = env.APP_ORIGIN?.trim().replace(/\/+$/, "") ?? "";
+  if (!raw) return isProduction(env) ? "https://www.loanso.me" : `http://localhost:${port}`;
+  if (!/^https?:\/\/[^\s/]+$/i.test(raw)) throw new Error("APP_ORIGIN must be an http(s) origin such as https://www.loanso.me");
+  return raw;
 }
 
 function readAdminToken(env: NodeJS.ProcessEnv): string | null {
@@ -60,6 +84,6 @@ function readVapid(env: NodeJS.ProcessEnv): VapidConfig | null {
   return { publicKey, privateKey, subject };
 }
 
-function isProduction(env: NodeJS.ProcessEnv): boolean {
+export function isProduction(env: NodeJS.ProcessEnv): boolean {
   return env.NODE_ENV === "production" || env.RAILWAY_ENVIRONMENT === "production";
 }

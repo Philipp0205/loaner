@@ -7,6 +7,16 @@ import { normalizeEntries } from "./whats-new.js";
  */
 const RAW = [
   {
+    id: "2026-11-16-app-kit-v041",
+    date: "2026-11-16",
+    title: "Sign up with your email, and a Donate button",
+    bullets: [
+      "New accounts add an email and confirm it with a link. It also lets you get back in if you lose your recovery code.",
+      "If you joined before, the app asks for your email once.",
+      "The You tab has an optional Donate button. It only opens a PayPal link.",
+    ],
+  },
+  {
     id: "2026-11-16-item-added",
     date: "2026-11-16",
     title: "Get an alert when a friend adds an item",

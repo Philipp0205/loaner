@@ -19,8 +19,8 @@ async function call(method: string, url: string, token: string | null, body?: un
 
 /** Lena lists a drill with a photo and a ladder without one. Max is a member of the group. */
 async function seed() {
-  const lena = await call("POST", "/api/auth/start", null, { name: "Lena" });
-  const max = await call("POST", "/api/auth/start", null, { name: "Max" });
+  const lena = await call("POST", "/api/auth/start", null, { name: "Lena", email: "lena@example.com" });
+  const max = await call("POST", "/api/auth/start", null, { name: "Max", email: "max@example.com" });
   const { group } = await call("POST", "/api/groups", lena.token, { name: "WG Lissabon" });
   await call("POST", `/api/invites/${group.inviteCode}/join`, max.token);
   const drill = (await call("POST", "/api/items", lena.token, { name: "Cordless drill", note: "", donation: null, groupIds: [group.id] })).item;

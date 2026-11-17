@@ -5,7 +5,7 @@ Loan some (formerly called Loaner) is a small app for lending things to friends.
 - Invite-only groups of people who know each other (family, flatmates, climbing club). You can be in several.
 - List an item with a photo, say which of your groups can see it, and optionally suggest a donation for valuable things. Money never moves in the app.
 - Friends request it for dates, you approve, hand it over, and mark it returned. Everyone gets reminders before it is due.
-- No passwords: your phone gets a device token, plus a recovery code in case you switch phones.
+- No passwords: your phone gets a device token, plus a recovery code in case you switch phones. Sign-up asks for an email, confirmed with a link, and a confirmed email can mail a one-time sign-in link if the recovery code is lost.
 
 Status: early v1 in progress.
 
@@ -22,6 +22,8 @@ npm install && npm start
 Then open http://localhost:3000 on your phone or in a browser.
 
 Optional environment: `PORT` (3000), `DB_PATH` (`data/loaner.db`), `APP_TZ` (`UTC`, used for due dates and reminders). Web push is off unless `VAPID_PUBLIC_KEY` and `VAPID_PRIVATE_KEY` are set; `npm run vapid` prints a fresh pair. Never commit them.
+
+Email: set `RESEND_API_KEY` to send the confirm and sign-in links through Resend. `MAIL_FROM` is the From header (default `Loan some <hello@loanso.me>`) and `APP_ORIGIN` is the public address used inside the links (default `https://www.loanso.me` in production, `http://localhost:<port>` otherwise). Without the key the app still runs and sign-up works, but no mail is sent, so nobody can confirm an address or get a sign-in link. The server prints `email on` or `email off` at start, and warns in production when the key is missing. Never commit the key.
 
 ## Deploy on Railway
 

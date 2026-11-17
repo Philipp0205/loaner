@@ -37,7 +37,7 @@ function markRead(ctx: Ctx, itemId: string, borrowerId: string, userId: string, 
   );
 }
 
-type Thread = { item: ItemRow; borrower: User };
+type Thread = { item: ItemRow; borrower: Pick<User, "id" | "name"> };
 
 /**
  * The thread this caller is allowed to use, or a 404. The borrower's thread is always (item, caller).
@@ -52,7 +52,7 @@ function requireThread(ctx: Ctx, user: User, itemId: string, asked: string | nul
   }
   if (!asked) throw new HttpError(400, "borrower is required");
   if (asked === user.id) throw notFound();
-  const borrower = get<User>(ctx.db, "SELECT id, name FROM users WHERE id = ?", asked);
+  const borrower = get<Pick<User, "id" | "name">>(ctx.db, "SELECT id, name FROM users WHERE id = ?", asked);
   if (!borrower) throw notFound();
   // The owner can only open a thread with someone who could see the item, or who already wrote or asked.
   const known = get(

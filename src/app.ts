@@ -4,15 +4,20 @@ import { fileURLToPath } from "node:url";
 import {
   SECURITY_HEADERS,
   buildCsp,
+  createAuth,
+  createRateLimiter,
   healthHandler,
   isHealthRequest,
+  needsEmail,
   readBody,
   sendJson,
   serveStatic,
+  type Mailer,
 } from "./app-kit/index.ts";
-import { sha256 } from "./code.js";
+import { sqliteAuthStore } from "./auth-store.js";
 import type { Config } from "./config.js";
 import { get } from "./db.js";
+import { createMailer } from "./mail.js";
 import type { DatabaseSync } from "node:sqlite";
 import type { PushSender } from "./push.js";
 import { authRoutes } from "./routes-auth.js";
@@ -22,13 +27,15 @@ import { itemRoutes } from "./routes-items.js";
 import { messageRoutes } from "./routes-messages.js";
 import { notificationRoutes } from "./routes-notifications.js";
 import { requestRoutes } from "./routes-requests.js";
-import { HttpError, Reply, type Ctx, type Route, type User } from "./types.js";
+import { HttpError, Reply, bearerToken, type Ctx, type Route, type User } from "./types.js";
 
 export type AppDeps = {
   db: DatabaseSync;
   config: Config;
   now: () => number;
   push: PushSender;
+  /** Defaults to Resend when RESEND_API_KEY is set, otherwise no mail is sent. Tests pass a stub. */
+  mailer?: Mailer;
 };
 
 const PUBLIC_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "public");
@@ -72,8 +79,17 @@ function compile(routes: Route[]): Compiled[] {
 
 export function createApp(deps: AppDeps): http.RequestListener {
   const ctx: Ctx = { db: deps.db, config: deps.config, now: deps.now, push: deps.push };
+  const auth = createAuth({
+    store: sqliteAuthStore(deps.db),
+    mailer: deps.mailer ?? createMailer(deps.config),
+    limiter: createRateLimiter({ limit: 10, windowMs: 10 * 60 * 1000 }),
+    appName: "Loan some",
+    now: deps.now,
+    // The token rides in the fragment, so it never reaches a server log or a Referer header.
+    linkUrl: (kind, token) => `${deps.config.appOrigin}/${kind}#t=${token}`,
+  });
   const routes = compile([
-    ...authRoutes(),
+    ...authRoutes(auth),
     ...groupRoutes(),
     ...itemRoutes(),
     ...requestRoutes(),
@@ -108,9 +124,8 @@ export function createApp(deps: AppDeps): http.RequestListener {
     const url = new URL(req.url ?? "/", "http://localhost");
     const method = req.method ?? "GET";
     if (isHealthRequest(req)) {
-      // The kit handler does not touch the database. If this throws, the request fails with a 500.
-      get(ctx.db, "SELECT 1 AS ok");
-      healthHandler(req, res);
+      // A check that throws (a broken database) answers 503 {"ok":false}. Returning false would still be a 200.
+      await healthHandler(req, res, () => get(ctx.db, "SELECT 1 AS ok"));
       return;
     }
     if (!url.pathname.startsWith("/api/")) {
@@ -136,14 +151,16 @@ export function createApp(deps: AppDeps): http.RequestListener {
           throw new HttpError(400, "bad path");
         }
       });
-      const user = entry.route.open ? optionalUser(req) : requiredUser(req);
-      const body = await readCapped(req, entry.route.maxBody ?? 16 * 1024);
+      const user = entry.route.open ? await optionalUser(req) : await requiredUser(req);
+      // An account from before email was required adds one first. Only the routes that do that stay open to it.
+      if (user && !entry.route.open && !entry.route.allowNoEmail && needsEmail(user)) throw new HttpError(403, "add an email first");
+      const body = await readBody(req, entry.route.maxBody ?? 16 * 1024, { message: "that upload is too large" });
       const result = await entry.route.handler({ ctx, user, params, query: url.searchParams, raw: req, body });
       if (result instanceof Reply) {
         if (result.bytes) sendBytes(res, result.status, result.bytes, result.headers);
-        else sendJson(res, result.status, result.body ?? null, result.headers);
+        else sendJson(res, result.status, result.body, result.headers);
       } else {
-        sendJson(res, 200, result ?? null);
+        sendJson(res, 200, result);
       }
       return;
     }
@@ -155,37 +172,15 @@ export function createApp(deps: AppDeps): http.RequestListener {
     throw new HttpError(404, "not found");
   }
 
-  function lookup(req: http.IncomingMessage): User | null {
-    const header = req.headers.authorization ?? "";
-    const match = /^Bearer\s+(\S+)$/i.exec(header);
-    if (!match) return null;
-    return (
-      get<User>(
-        deps.db,
-        "SELECT u.id, u.name FROM devices d JOIN users u ON u.id = d.user_id WHERE d.token_hash = ?",
-        sha256(match[1]),
-      ) ?? null
-    );
+  async function optionalUser(req: http.IncomingMessage): Promise<User | null> {
+    const token = bearerToken(req);
+    return token ? ((await auth.userForToken(token)) ?? null) : null;
   }
 
-  function requiredUser(req: http.IncomingMessage): User {
-    const user = lookup(req);
+  async function requiredUser(req: http.IncomingMessage): Promise<User> {
+    const user = await optionalUser(req);
     if (!user) throw new HttpError(401, "sign in first");
     return user;
-  }
-
-  function optionalUser(req: http.IncomingMessage): User | null {
-    return lookup(req);
-  }
-}
-
-/** The kit's capped reader, with Loan some's own words for the 413. */
-async function readCapped(req: http.IncomingMessage, limit: number): Promise<Buffer> {
-  try {
-    return await readBody(req, limit);
-  } catch (error) {
-    if (error instanceof HttpError && error.status === 413) throw new HttpError(413, "that upload is too large");
-    throw error;
   }
 }
 

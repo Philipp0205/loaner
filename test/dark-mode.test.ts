@@ -286,7 +286,7 @@ test("index.html loads the kit in order, has the four theme-color metas, and the
   const scripts = [...html.matchAll(/<script ([^>]*)src="([^"]+)"/g)].map((m) => ({ src: m[2], module: /type="module"/.test(m[1]) }));
   assert.deepEqual(
     scripts.map((s) => s.src),
-    ["/app-kit/theme-color.js", "/app-kit/install-prompt.js", "/app-kit/ak-dom.js", "/app-kit/ak-nav.js", "/app-kit/ak-sheet.js", "/app-kit/ak-tabbar.js", "/app-kit/ak-toast.js", "/app.js"],
+    ["/app-kit/theme-color.js", "/app-kit/install-prompt.js", "/app-kit/ak-dom.js", "/app-kit/ak-nav.js", "/app-kit/ak-sheet.js", "/app-kit/ak-donate.js", "/app-kit/ak-tabbar.js", "/app-kit/ak-toast.js", "/app.js"],
   );
   assert.deepEqual(scripts.filter((s) => s.module).map((s) => s.src), ["/app.js"], "only app.js is a module, so the kit scripts run first");
   assert.doesNotMatch(html, /id="toasts"/, "the kit makes #ak-toasts itself");
@@ -321,7 +321,8 @@ test("the dark mode and app kit entries are in What's new", async () => {
   assert.equal(dark.title, "Dark mode");
   const kit = CHANGELOG.find((item) => item.id === "2026-11-15-app-kit");
   assert.ok(kit, "the app kit entry is kept");
-  assert.equal(CHANGELOG[0].id, "2026-11-16-item-added", "the newest entry is the item added one");
+  assert.equal(CHANGELOG[0].id, "2026-11-16-app-kit-v041", "the newest entry is the app kit v0.4.1 one");
+  assert.ok(CHANGELOG.some((item) => item.id === "2026-11-16-item-added"), "the item added entry is kept");
   assert.ok(CHANGELOG.some((item) => item.id === "2026-11-15-photo-fullscreen"), "the fullscreen photo entry is kept");
   assert.ok(CHANGELOG.some((item) => item.id === "2026-11-15-welcome"), "the /welcome entry is kept");
   assert.ok(CHANGELOG.some((item) => item.id === "2026-11-15-landing"), "the home page entry is kept");

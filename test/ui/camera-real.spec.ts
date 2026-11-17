@@ -16,6 +16,7 @@ const loaner = useLoaner({}, ["--use-fake-device-for-media-stream", "--use-fake-
 async function startOnMyItems(page: Page) {
   await openWelcome(page, loaner.baseUrl);
   await page.locator("#name").fill("Real");
+  await page.locator("#email").fill("real@example.com");
   await page.getByRole("button", { name: "Get started" }).click();
   await page.getByRole("heading", { name: "No groups yet" }).waitFor();
   await page.locator("#group-name").fill("Flat 3B");

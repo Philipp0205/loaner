@@ -21,8 +21,8 @@ async function call(method: string, url: string, token: string | null, body?: un
 
 /** Alice owns a 5 euro drill and a 12.50 euro tent that is lent to Bob. Returns Bob's token and today's date. */
 async function seed() {
-  const alice = await call("POST", "/api/auth/start", null, { name: "Alice" });
-  const bob = await call("POST", "/api/auth/start", null, { name: "Bob" });
+  const alice = await call("POST", "/api/auth/start", null, { name: "Alice", email: "alice@example.com" });
+  const bob = await call("POST", "/api/auth/start", null, { name: "Bob", email: "bob@example.com" });
   const { group } = await call("POST", "/api/groups", alice.token, { name: "Flat 3B" });
   await call("POST", `/api/invites/${group.inviteCode}/join`, bob.token);
   const drill = (await call("POST", "/api/items", alice.token, { name: "Cordless drill", note: "", donation: 5, groupIds: [group.id] })).item;

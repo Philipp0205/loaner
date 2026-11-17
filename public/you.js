@@ -1,14 +1,18 @@
 import { api, setToken } from "./api.js";
+import { emailCard } from "./email.js";
 import { createGroupForm, groupCard } from "./groups.js";
 import { openFeedback } from "./feedback-ui.js";
 import { redraw, loadGroups, loadMe, saveRecovery, savedRecovery, state } from "./state.js";
 import { busy, copyText, h, toast } from "./util.js";
 import { openWhatsNewList } from "./whats-new-ui.js";
 
+// A voluntary tip. It only links out to PayPal, the app never touches money.
+const DONATE_URL = "https://www.paypal.me/philippkurrle1";
+
 export async function renderYou() {
   await loadGroups();
   const rerender = () => redraw("#/you");
-  const parts = [h("h1", null, "You"), nameCard(rerender), recoveryCard(rerender), h("h2", null, "Your groups")];
+  const parts = [h("h1", null, "You"), nameCard(rerender), emailCard(rerender), recoveryCard(rerender), h("h2", null, "Your groups")];
   parts.push(state.groups.length ? state.groups.map((g) => groupCard(g, rerender)) : h("p", { class: "muted" }, "You are not in a group yet."));
   parts.push(h("div", { class: "card" }, h("h3", { style: "margin-bottom:8px" }, "Start a new group"), createGroupForm(rerender)));
   parts.push(pushCard());
@@ -16,9 +20,24 @@ export async function renderYou() {
     h("div", { class: "stack" },
       h("button", { type: "button", class: "block", id: "open-whats-new", onclick: openWhatsNewList }, "What's new"),
       h("button", { type: "button", class: "block", id: "open-feedback", onclick: openFeedback }, "Send feedback"),
+      donateButton(),
     ));
   parts.push(h("h2", null, "This phone"), h("button", { type: "button", class: "block", id: "sign-out", onclick: signOut }, "Sign out of this phone"));
   return h("div", null, parts);
+}
+
+/**
+ * The kit's Donate button, next to What's new and Send feedback. It opens the kit sheet with a PayPal link,
+ * no amounts. Left out when the kit script is missing, so an old cached shell still works.
+ */
+function donateButton() {
+  const kit = window.AppKit && window.AppKit.donate;
+  if (!kit) return null;
+  const button = kit.button({ url: DONATE_URL, label: "Donate" });
+  button.id = "open-donate";
+  button.classList.add("block");
+  button.addEventListener("click", () => kit.show({ url: DONATE_URL, appName: "Loan some" }));
+  return button;
 }
 
 function nameCard(rerender) {
