@@ -51,6 +51,33 @@ export function centsToAmount(cents: number | null): number | null {
   return cents === null ? null : cents / 100;
 }
 
+export const MAX_DONATION_TEXT = 60;
+
+/** A suggested donation in words, like "a beer". Empty or null means none. A bare number is refused: send it as an amount. */
+export function donationText(value: unknown): string | null {
+  if (value === undefined || value === null) return null;
+  if (typeof value !== "string") throw new HttpError(400, "donationText must be text");
+  const trimmed = value.trim().replace(/\s+/g, " ");
+  if (trimmed === "") return null;
+  if ([...trimmed].length > MAX_DONATION_TEXT) throw new HttpError(400, `donationText must be at most ${MAX_DONATION_TEXT} characters`);
+  if (/^[\d\s.,]+$/.test(trimmed)) throw new HttpError(400, "send a number as donation (an amount), not as donationText");
+  return trimmed;
+}
+
+export type Donation = { cents: number | null; text: string | null };
+
+/**
+ * The suggested donation for a create or update. If the body names neither field, the current values stay.
+ * If it names either, both are replaced (a missing one becomes none). An amount and a text together are a 400.
+ */
+export function resolveDonation(body: Record<string, unknown>, current: Donation): Donation {
+  if (!("donation" in body) && !("donationText" in body)) return current;
+  const cents = donationCents(body.donation);
+  const text = donationText(body.donationText);
+  if (cents !== null && text !== null) throw new HttpError(400, "send either donation or donationText, not both");
+  return { cents, text };
+}
+
 /** A category from the fixed list. null or an empty string clears it. Anything else is a 400. */
 export function categoryValue(value: unknown): string | null {
   if (value === null || value === "") return null;

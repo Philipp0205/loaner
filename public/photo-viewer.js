@@ -1,5 +1,7 @@
 import { icon } from "./icons.js";
 import { showOverlay } from "./overlay.js";
+import { counterText, slideLabel } from "./photos/copy.js";
+import { indexAfterKey, indexFromScroll } from "./photos/pure.js";
 import { h } from "./util.js";
 
 const LOCK = "pv-open";
@@ -37,14 +39,27 @@ export function viewable(img, item) {
   return img;
 }
 
+/** One full width slide of the viewer's track. */
+function slide(src, index, total) {
+  return h("img", { class: "pv-img", src, alt: total > 1 ? slideLabel(index, total) : "", draggable: "false" });
+}
+
 /**
- * Opens a photo full screen: dark backdrop, the photo fitted inside it, a close button.
- * Closes on the button, a tap on the backdrop (not the photo), Escape and the Back button.
- * `trigger` is the element to give focus back to. Returns { close }.
+ * Opens photos full screen: dark backdrop, each photo fitted inside it, a close button. `sources` is one
+ * URL or a list. With more than one, the photos sit in a swipeable track, with an "x / y" counter and the
+ * arrow keys, and `start` is the one shown first. Closes on the button, a tap on the backdrop (not on a photo),
+ * Escape and the Back button. `trigger` is the element to give focus back to. Returns { close }.
  */
-export function openPhotoViewer(src, name, trigger) {
+export function openPhotoViewer(sources, name, trigger, start = 0) {
+  const list = Array.isArray(sources) ? sources : [sources];
   const close = h("button", { class: "pv-close", type: "button", "aria-label": "Close photo", onclick: () => view.close() }, icon("close"));
-  const img = h("img", { class: "pv-img", src, alt: "", draggable: "false" });
+  const track = h("div", { class: "pv-track" }, list.map((src, index) => slide(src, index, list.length)));
+  const counter = list.length > 1 ? h("p", { class: "pv-count", role: "status" }, counterText(start, list.length)) : null;
+  const current = () => indexFromScroll(track.scrollLeft, track.clientWidth, list.length);
+  const goTo = (index) => track.scrollTo({ left: index * track.clientWidth, behavior: "smooth" });
+  track.addEventListener("scroll", () => {
+    if (counter) counter.textContent = counterText(current(), list.length);
+  });
   const root = h("div", {
     class: "pv",
     role: "dialog",
@@ -52,10 +67,10 @@ export function openPhotoViewer(src, name, trigger) {
     "aria-label": `Photo of ${name}`,
     onclick: (event) => {
       if (event.target === close || close.contains(event.target)) return;
-      if (event.target === img) {
-        const box = img.getBoundingClientRect();
+      if (event.target.classList.contains("pv-img")) {
+        const box = event.target.getBoundingClientRect();
         const point = { x: event.clientX - box.left, y: event.clientY - box.top };
-        if (onPicture(point, box.width, box.height, img.naturalWidth, img.naturalHeight)) return;
+        if (onPicture(point, box.width, box.height, event.target.naturalWidth, event.target.naturalHeight)) return;
       }
       view.close();
     },
@@ -64,14 +79,19 @@ export function openPhotoViewer(src, name, trigger) {
       if (event.key === "Tab") {
         event.preventDefault();
         close.focus({ preventScroll: true });
+        return;
       }
+      const next = indexAfterKey(event.key, current(), list.length);
+      if (next !== null) goTo(next);
     },
-  }, img, close);
+  }, track, counter, close);
   document.documentElement.classList.add(LOCK);
   const view = showOverlay(root, {
     focus: close,
     returnFocus: trigger,
     onClose: () => document.documentElement.classList.remove(LOCK),
   });
+  // The track has a width only once it is mounted, so jump to the chosen photo now.
+  if (start > 0) track.scrollLeft = start * track.clientWidth;
   return view;
 }

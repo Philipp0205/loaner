@@ -26,6 +26,7 @@ import { groupRoutes } from "./routes-groups.js";
 import { itemRoutes } from "./routes-items.js";
 import { messageRoutes } from "./routes-messages.js";
 import { notificationRoutes } from "./routes-notifications.js";
+import { photoRoutes } from "./photos/routes.js";
 import { requestRoutes } from "./routes-requests.js";
 import { HttpError, Reply, bearerToken, type Ctx, type Route, type User } from "./types.js";
 
@@ -40,22 +41,15 @@ export type AppDeps = {
 
 const PUBLIC_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "public");
 
-// The on-device photo suggester loads a pinned Transformers.js build from jsDelivr and its CLIP weights
-// from Hugging Face, so those hosts are allowed for scripts and fetches. Nothing else is.
-// Hugging Face answers a weight download with a 302 to its CDN (for example us.aws.cdn.hf.co), and the
-// CDN host has several labels, so it is listed explicitly instead of relying on a single *.hf.co match.
-const CDN = "https://cdn.jsdelivr.net";
-const HF = ["https://huggingface.co", "https://*.huggingface.co", "https://*.hf.co", "https://*.cdn.hf.co", "https://*.xethub.hf.co"];
-
+// Everything is served from this origin. Nothing is loaded from a CDN, and there are no workers or wasm.
 export const CONTENT_SECURITY_POLICY = buildCsp({
   "default-src": ["'self'"],
   "img-src": ["'self'", "blob:", "data:"],
   "media-src": ["'self'", "blob:"],
   "style-src": ["'self'"],
   "style-src-attr": ["'unsafe-inline'"],
-  "script-src": ["'self'", "'wasm-unsafe-eval'", CDN],
-  "worker-src": ["'self'", "blob:"],
-  "connect-src": ["'self'", CDN, ...HF],
+  "script-src": ["'self'"],
+  "connect-src": ["'self'"],
   "object-src": ["'none'"],
   "base-uri": ["'none'"],
   "frame-ancestors": ["'none'"],
@@ -92,6 +86,7 @@ export function createApp(deps: AppDeps): http.RequestListener {
     ...authRoutes(auth),
     ...groupRoutes(),
     ...itemRoutes(),
+    ...photoRoutes(),
     ...requestRoutes(),
     ...messageRoutes(),
     ...notificationRoutes(),

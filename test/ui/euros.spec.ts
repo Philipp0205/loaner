@@ -77,21 +77,78 @@ test("suggested donation shows as euros on the tile, the item page and the item 
   await owner.locator("article.card", { hasText: "Four person tent" }).waitFor();
   assert.equal(await owner.locator("article.card", { hasText: "Four person tent" }).getByText(/donation|€/).count(), 0);
 
-  // The form: the label says euros, there is a visible euro sign, and the stored amount is prefilled.
+  // The form: one input, no euro sign, and the stored amount is prefilled as a plain number.
   await owner.goto(`${loaner.baseUrl}/#/mine/edit/${tent.id}`);
-  await owner.getByText("Suggested amount (EUR)").waitFor();
-  assert.equal(await owner.locator(".money-sign").innerText(), "€");
+  await owner.getByText("Suggested donation", { exact: true }).waitFor();
+  assert.equal(await owner.locator(".money-sign").count(), 0, "no separate euro sign: the field takes an amount or words");
   assert.equal(await owner.locator("#item-donation").inputValue(), "12.50");
   await shot(owner, "item-form.png");
 
-  // 5, 5.5 and 5,5 are all accepted, and shown back as euros.
-  for (const [typed, shown] of [["5", "€5"], ["5.5", "€5.50"], ["5,5", "€5.50"]] as const) {
+  // 5, 5.5, 5,5 and a euro sign are all accepted as amounts, and shown back as euros.
+  for (const [typed, shown] of [["5", "€5"], ["5.5", "€5.50"], ["5,5", "€5.50"], ["€7", "€7"]] as const) {
     await owner.goto(`${loaner.baseUrl}/#/mine/edit/${drill.id}`);
     await owner.locator("#item-donation").fill(typed);
     await owner.getByRole("button", { name: "Save changes" }).click();
     await owner.locator("[data-donation] strong").waitFor();
     await owner.getByText(`Suggested donation: ${shown}`).waitFor();
   }
+});
+
+test("a suggested donation in words shows on the tile, the item page and the bar, and switching back to an amount clears it", { timeout: 90_000 }, async () => {
+  const { alice, bob, drill } = await seed();
+  const owner = await signedIn(alice.token, { width: 390, height: 844 });
+  await owner.goto(`${loaner.baseUrl}/#/mine/edit/${drill.id}`);
+  assert.equal(await owner.locator("#item-donation").inputValue(), "5");
+  await owner.locator("#item-donation").fill("a beer");
+  await owner.getByRole("button", { name: "Save changes" }).click();
+  await owner.locator("[data-donation] strong").waitFor();
+  assert.equal(await owner.locator("[data-donation] strong").innerText(), "Suggested donation: a beer");
+  assert.equal(await owner.locator("[data-bar] .amt").innerText(), "a beer");
+  assert.equal(await owner.locator("[data-bar] .sub").innerText(), "suggested donation");
+
+  const browse = await signedIn(bob.token, { width: 390, height: 844 });
+  await browse.goto(loaner.baseUrl);
+  const tile = browse.locator("button.tile", { hasText: "Cordless drill" });
+  await tile.waitFor();
+  assert.equal(await tile.locator(".donation").innerText(), "Suggested donation: a beer");
+  await shot(browse, "browse-text-donation.png");
+
+  // The form shows the words back, and an empty field with the toggle on is refused.
+  await owner.goto(`${loaner.baseUrl}/#/mine/edit/${drill.id}`);
+  assert.equal(await owner.locator("#item-donation").inputValue(), "a beer");
+  await owner.locator("#item-donation").fill("");
+  await owner.getByRole("button", { name: "Save changes" }).click();
+  await owner.getByText(/Type an amount or a few words/).waitFor();
+
+  // An amount replaces the words.
+  await owner.locator("#item-donation").fill("3");
+  await owner.getByRole("button", { name: "Save changes" }).click();
+  await owner.getByText("Suggested donation: €3", { exact: true }).waitFor();
+  const { item } = await call("GET", `/api/items/${drill.id}`, alice.token);
+  assert.deepEqual([item.donation, item.donationText], [3, null]);
+});
+
+test("a long donation in words wraps inside the tile and the bar without overflowing", { timeout: 60_000 }, async () => {
+  const { alice, bob, drill } = await seed();
+  await call("PATCH", `/api/items/${drill.id}`, alice.token, { donationText: "A homemade lemon cake for the whole street" });
+  const page = await signedIn(bob.token, { width: 360, height: 780 });
+  await page.goto(loaner.baseUrl);
+  await page.locator("button.tile", { hasText: "Cordless drill" }).waitFor();
+  const overflow = await page.evaluate(() => ({
+    page: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+    tiles: [...document.querySelectorAll(".tile")].map((el) => el.scrollWidth - el.clientWidth),
+  }));
+  assert.equal(overflow.page, 0, "the page does not scroll sideways");
+  assert.deepEqual(overflow.tiles, [0, 0], "no tile overflows");
+  await page.locator("button.tile", { hasText: "Cordless drill" }).click();
+  await page.locator("[data-bar]").waitFor();
+  const bar = await page.evaluate(() => {
+    const el = document.querySelector("[data-bar]")!;
+    return { overflow: el.scrollWidth - el.clientWidth, button: document.querySelector("[data-bar] button")!.getBoundingClientRect().width };
+  });
+  assert.equal(bar.overflow, 0, "the bar does not overflow");
+  assert.ok(bar.button >= 80, "the action button keeps its size");
+  await shot(page, "item-long-text-donation.png");
 });
 
 for (const size of [{ width: 360, height: 780 }, { width: 390, height: 844 }]) {

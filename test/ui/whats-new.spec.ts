@@ -46,7 +46,7 @@ test("a new sign-up starts with everything seen, then older seen ids get the new
   await sheet.getByRole("heading", { name: ENTRIES[1].title, exact: true }).waitFor();
   assert.equal(await sheet.getByRole("heading", { name: ENTRIES[2].title, exact: true }).count(), 0, "the seen entry is not listed");
   await sheet.getByText(ENTRIES[0].bullets[0], { exact: true }).waitFor();
-  assert.equal(await sheet.locator(".wn-date").first().textContent(), "17 Nov 2026");
+  assert.equal(await sheet.locator(".wn-date").first().textContent(), "20 Nov 2026");
   assert.equal(await sheet.getByRole("button", { name: "Got it" }).count(), 1);
 
   // It slides up from the bottom of a 390x844 phone, over a scrim, with room for the safe area.

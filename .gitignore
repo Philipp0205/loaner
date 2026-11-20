@@ -13,5 +13,4 @@ data/
 .DS_Store
 test-results/
 test/ui/screenshots/
-test/.model-cache/
 .oc/

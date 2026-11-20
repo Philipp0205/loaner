@@ -1,11 +1,13 @@
 import { api } from "./api.js";
+import { DONATION_COPY } from "./donation/copy.js";
+import { donationLabel, hasDonation } from "./donation/label.js";
 import { createGroupForm } from "./groups.js";
 import { photoEl } from "./photo.js";
-import { viewable } from "./photo-viewer.js";
+import { photoGallery } from "./photos/gallery.js";
 import { messageButton } from "./messages.js";
 import { requestCard } from "./requests.js";
 import { go, currentGroup, redraw, setGroup, state } from "./state.js";
-import { busy, emptyState, fmtAmount, fmtDate, fmtMoment, fmtRange, h, largeTitleHead, skeletonList, statusPill, swrList, toast, wordmarkHeading } from "./util.js";
+import { busy, emptyState, fmtDate, fmtMoment, fmtRange, h, largeTitleHead, skeletonList, statusPill, swrList, toast, wordmarkHeading } from "./util.js";
 import { icon } from "./icons.js";
 
 export async function renderBrowse() {
@@ -47,8 +49,8 @@ function tile(item) {
     h("span", { class: "info" },
       h("span", { class: "name" }, item.name),
       lent ? h("span", { class: "who" }, `With ${item.lent.to.name} \u00b7 back ${fmtDate(item.lent.until)}`) : null,
-      item.donation !== null
-        ? h("span", { class: "donation" }, `Suggested donation: ${fmtAmount(item.donation)}`)
+      hasDonation(item)
+        ? h("span", { class: "donation" }, `${DONATION_COPY.prefix}${donationLabel(item)}`)
         : lent ? null : h("span", { class: "free" }, "Free to borrow"),
       h("span", { class: "who" }, item.mine ? "Yours" : `From ${item.owner.name}`),
       statusPill(item, true),
@@ -61,7 +63,7 @@ export async function renderItem(id) {
   const { item, history, myRequestIds, unreadMessages } = await api("GET", `/api/items/${id}`);
   const parts = [
     h("div", { class: "hero" },
-      item.hasPhoto ? viewable(photoEl(item, "big"), item) : photoEl(item, "big"),
+      photoGallery(item),
       h("button", { class: "fab", type: "button", "aria-label": "Back", onclick: () => history_back(item) }, icon("back")),
     ),
     h("h1", null, item.name),
@@ -73,7 +75,7 @@ export async function renderItem(id) {
       item.mine ? null : messageButton(item.id, null, unreadMessages),
     ),
     item.note ? [h("hr", { class: "rule" }), h("p", { class: "note" }, item.note)] : null,
-    item.donation !== null ? [h("hr", { class: "rule" }), donationNote(item)] : null,
+    hasDonation(item) ? [h("hr", { class: "rule" }), donationNote(item)] : null,
   ];
   let bar = null;
 
@@ -110,8 +112,8 @@ export async function renderItem(id) {
 
 /** Sticky bar above the tab bar: the suggested amount on the left, the main action on the right. */
 function stickyBar(item, action) {
-  const left = item.donation !== null
-    ? h("div", { class: "left" }, h("div", { class: "amt" }, fmtAmount(item.donation)), h("div", { class: "sub" }, "suggested donation"))
+  const left = hasDonation(item)
+    ? h("div", { class: "left" }, h("div", { class: "amt" }, donationLabel(item)), h("div", { class: "sub" }, DONATION_COPY.shortLabel))
     : h("div", { class: "left" }, h("div", { class: "amt" }, "Free"), h("div", { class: "sub" }, "to borrow"));
   return h("div", { class: "bar", "data-bar": "" }, left, action);
 }
@@ -123,7 +125,7 @@ function history_back() {
 
 function donationNote(item) {
   return h("div", { class: "donation-note", "data-donation": "" },
-    h("strong", null, `Suggested donation: ${fmtAmount(item.donation)}`),
+    h("strong", null, `${DONATION_COPY.prefix}${donationLabel(item)}`),
     "Paid in person or by transfer, not in the app.",
   );
 }

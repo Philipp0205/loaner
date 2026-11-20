@@ -1,0 +1,24 @@
+/* Photos on the item page (gallery) and in the item form (picker). Colors come from the shared tokens. */
+.gallery { position: relative; }
+.gal-track {
+  display: flex; overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory;
+  scrollbar-width: none; overscroll-behavior-x: contain;
+}
+.gal-track::-webkit-scrollbar { display: none; }
+.gal-track .photo.big { flex: 0 0 100%; scroll-snap-align: center; scroll-snap-stop: always; cursor: zoom-in; }
+.gal-count {
+  position: absolute; right: var(--gutter); bottom: var(--s3); margin: 0; padding: 2px 10px; border-radius: var(--r-pill);
+  background: rgb(0 0 0 / 0.55); color: var(--pv-ink); font-size: var(--fs-xs); font-weight: 600;
+}
+.gal-dots { position: absolute; left: 0; right: 0; bottom: var(--s3); display: flex; justify-content: center; gap: 6px; pointer-events: none; }
+.gal-dot { width: 6px; height: 6px; border-radius: 3px; background: rgb(255 255 255 / 0.5); }
+.gal-dot.on { background: var(--pv-ink); }
+
+.picker-grid { display: flex; flex-wrap: wrap; gap: var(--s2); margin-bottom: var(--s2); }
+.picker-item { position: relative; width: 96px; }
+.picker-item .preview, .picker-item .photo { width: 96px; max-width: 96px; margin: 0; }
+.picker-remove {
+  position: absolute; top: 4px; right: 4px; width: 32px; height: 32px; min-height: 32px; padding: 0;
+  border: 0; border-radius: var(--r-pill); background: rgb(0 0 0 / 0.6); color: var(--pv-ink); font-size: 1.1rem; line-height: 1;
+}
+.picker-count { margin: 0 0 var(--s2); }

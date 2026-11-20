@@ -1,13 +1,12 @@
-import { ITEM_SELECT, VISIBLE, isMember, requireOwnedItem, requireVisibleItem, requireMember, type ItemRow } from "./access.js";
+import { ITEM_SELECT, isMember, requireOwnedItem, requireVisibleItem, requireMember, type ItemRow } from "./access.js";
 import { newId } from "./code.js";
 import { all, get, run, tx } from "./db.js";
 import { addNote, flush, type PendingPush } from "./notify.js";
+import { photoIds } from "./photos/store.js";
 import { threadUnread } from "./routes-messages.js";
 import { HttpError, Reply, jsonBody, me, type Ctx, type Route } from "./types.js";
-import { centsToAmount, categoryValue, donationCents, longText, stringArray, text } from "./validate.js";
+import { centsToAmount, categoryValue, longText, resolveDonation, stringArray, text } from "./validate.js";
 import { isoDate } from "./time.js";
-
-export const MAX_PHOTO_BYTES = 2 * 1024 * 1024;
 
 type RequestRow = { id: string; borrower_id: string; borrower_name: string; from_date: string; until_date: string; handed_over_at: number | null; returned_at: number | null; status: string };
 
@@ -49,7 +48,10 @@ export function itemView(ctx: Ctx, item: ItemRow, viewerId: string) {
     status,
     lent: lent ? { to: { id: lent.borrower_id, name: lent.borrower_name }, until: lent.until_date, late: lent.until_date < today, requestId: lent.id } : null,
     donation: centsToAmount(item.donation_cents),
+    donationText: item.donation_text,
     hasPhoto: !!item.has_photo,
+    // Ids in display order. The first one is the cover shown on tiles.
+    photoIds: item.has_photo ? photoIds(ctx.db, item.id) : [],
     photoVersion: item.updated_at,
     groupIds: itemGroupIds(ctx, item.id, viewerId, item.owner_id),
   };
@@ -85,13 +87,6 @@ function setGroups(ctx: Ctx, itemId: string, groupIds: string[]): void {
   for (const groupId of groupIds) run(ctx.db, "INSERT INTO item_groups (item_id, group_id) VALUES (?, ?)", itemId, groupId);
 }
 
-export function sniff(bytes: Buffer): string | null {
-  if (bytes.length >= 3 && bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) return "image/jpeg";
-  if (bytes.length >= 8 && bytes.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))) return "image/png";
-  if (bytes.length >= 12 && bytes.toString("latin1", 0, 4) === "RIFF" && bytes.toString("latin1", 8, 12) === "WEBP") return "image/webp";
-  return null;
-}
-
 export function itemRoutes(): Route[] {
   return [
     {
@@ -102,7 +97,7 @@ export function itemRoutes(): Route[] {
         const body = jsonBody(req);
         const name = text(body.name, "name", 1, 60);
         const note = longText(body.note, "note", 280);
-        const cents = donationCents(body.donation);
+        const donation = resolveDonation(body, { cents: null, text: null });
         const category = "category" in body ? categoryValue(body.category) : null;
         const groupIds = ownerGroups(req.ctx, user.id, body.groupIds);
         const id = newId();
@@ -111,8 +106,8 @@ export function itemRoutes(): Route[] {
         tx(req.ctx.db, () => {
           run(
             req.ctx.db,
-            "INSERT INTO items (id, owner_id, name, note, category, available, donation_cents, created_at, updated_at) VALUES (?, ?, ?, ?, ?, 1, ?, ?, ?)",
-            id, user.id, name, note, category, cents, now, now,
+            "INSERT INTO items (id, owner_id, name, note, category, available, donation_cents, donation_text, created_at, updated_at) VALUES (?, ?, ?, ?, ?, 1, ?, ?, ?, ?)",
+            id, user.id, name, note, category, donation.cents, donation.text, now, now,
           );
           setGroups(req.ctx, id, groupIds);
           // Everyone else in any of the item's groups hears about it once, however many groups they share.
@@ -187,7 +182,7 @@ export function itemRoutes(): Route[] {
         const body = jsonBody(req);
         const name = "name" in body ? text(body.name, "name", 1, 60) : item.name;
         const note = "note" in body ? longText(body.note, "note", 280) : item.note;
-        const cents = "donation" in body ? donationCents(body.donation) : item.donation_cents;
+        const donation = resolveDonation(body, { cents: item.donation_cents, text: item.donation_text });
         const category = "category" in body ? categoryValue(body.category) : item.category;
         let available = item.available;
         if ("available" in body) {
@@ -196,7 +191,11 @@ export function itemRoutes(): Route[] {
         }
         const groupIds = "groupIds" in body ? ownerGroups(req.ctx, user.id, body.groupIds) : null;
         tx(req.ctx.db, () => {
-          run(req.ctx.db, "UPDATE items SET name = ?, note = ?, category = ?, donation_cents = ?, available = ?, updated_at = ? WHERE id = ?", name, note, category, cents, available, req.ctx.now(), item.id);
+          run(
+            req.ctx.db,
+            "UPDATE items SET name = ?, note = ?, category = ?, donation_cents = ?, donation_text = ?, available = ?, updated_at = ? WHERE id = ?",
+            name, note, category, donation.cents, donation.text, available, req.ctx.now(), item.id,
+          );
           if (groupIds) setGroups(req.ctx, item.id, groupIds);
         });
         return { item: itemView(req.ctx, requireVisibleItem(req.ctx, user.id, item.id), user.id) };
@@ -225,48 +224,6 @@ export function itemRoutes(): Route[] {
         });
         await flush(req.ctx, pending);
         return { ok: true };
-      },
-    },
-    {
-      method: "PUT",
-      path: "/api/items/:id/photo",
-      maxBody: MAX_PHOTO_BYTES,
-      handler(req) {
-        const user = me(req);
-        const item = requireOwnedItem(req.ctx, user.id, req.params.id);
-        const declared = (req.raw.headers["content-type"] ?? "").split(";")[0].trim().toLowerCase();
-        if (!["image/jpeg", "image/png", "image/webp"].includes(declared)) throw new HttpError(415, "photo must be a JPEG, PNG or WebP image");
-        if (req.body.length === 0) throw new HttpError(400, "photo is empty");
-        // The bytes must match what the header claims, so a file renamed to .jpg is refused.
-        if (sniff(req.body) !== declared) throw new HttpError(415, "that file is not a valid image of the declared type");
-        run(req.ctx.db, "UPDATE items SET photo = ?, photo_type = ?, updated_at = ? WHERE id = ?", req.body, declared, req.ctx.now(), item.id);
-        return { ok: true };
-      },
-    },
-    {
-      method: "DELETE",
-      path: "/api/items/:id/photo",
-      handler(req) {
-        const user = me(req);
-        const item = requireOwnedItem(req.ctx, user.id, req.params.id);
-        run(req.ctx.db, "UPDATE items SET photo = NULL, photo_type = NULL, updated_at = ? WHERE id = ?", req.ctx.now(), item.id);
-        return { ok: true };
-      },
-    },
-    {
-      method: "GET",
-      path: "/api/items/:id/photo",
-      handler(req) {
-        const user = me(req);
-        const row = get<{ photo: Uint8Array | null; photo_type: string | null }>(
-          req.ctx.db,
-          `SELECT i.photo, i.photo_type FROM items i WHERE i.id = ? AND ${VISIBLE}`,
-          req.params.id,
-          user.id,
-          user.id,
-        );
-        if (!row || !row.photo || !row.photo_type) throw new HttpError(404, "no photo");
-        return new Reply(200, null, { "content-type": row.photo_type }, Buffer.from(row.photo));
       },
     },
   ];

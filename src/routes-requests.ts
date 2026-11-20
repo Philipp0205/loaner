@@ -1,4 +1,4 @@
-import { requireVisibleItem } from "./access.js";
+import { HAS_PHOTO, requireVisibleItem } from "./access.js";
 import { newId } from "./code.js";
 import { all, get, run, tx } from "./db.js";
 import { addNote, flush, type PendingPush } from "./notify.js";
@@ -30,7 +30,7 @@ export type RequestRow = {
 };
 
 const REQUEST_SELECT = `
-  SELECT r.id, r.item_id, i.name AS item_name, (i.photo IS NOT NULL) AS item_has_photo, i.updated_at AS item_updated_at,
+  SELECT r.id, r.item_id, i.name AS item_name, ${HAS_PHOTO} AS item_has_photo, i.updated_at AS item_updated_at,
          i.owner_id, o.name AS owner_name,
          r.borrower_id, b.name AS borrower_name, r.from_date, r.until_date, r.message, r.reply,
          r.status, r.auto_declined, r.created_at, r.decided_at, r.handed_over_at, r.returned_at

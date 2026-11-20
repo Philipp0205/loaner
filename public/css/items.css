@@ -17,7 +17,8 @@
 }
 .tile .info { display: flex; flex-direction: column; gap: 2px; min-width: 0; padding: var(--s2) 0 0; }
 .tile .name { font-size: var(--fs-md); font-weight: 600; letter-spacing: -0.015em; line-height: 1.25; overflow-wrap: anywhere; }
-.tile .donation, .tile .free { font-size: 0.6875rem; font-weight: 600; letter-spacing: -0.01em; color: var(--teal); white-space: nowrap; }
+.tile .donation, .tile .free { font-size: 0.6875rem; font-weight: 600; letter-spacing: -0.01em; color: var(--teal); overflow-wrap: anywhere; }
+.tile .free { white-space: nowrap; }
 .tile .who { font-size: var(--fs-xs); color: var(--muted); overflow-wrap: anywhere; }
 .tile .pill { margin: 2px 0; }
 
@@ -49,5 +50,5 @@
 .member-text .sub { font-size: var(--fs-sm); color: var(--muted); }
 .note { font-size: var(--fs-md); line-height: 1.5; margin: 0; }
 .donation-note { margin: 0 0 var(--s3); font-size: var(--fs-sm); color: var(--muted); line-height: 1.4; }
-.donation-note strong { color: var(--teal); font-size: var(--fs-md); display: block; font-weight: 600; }
+.donation-note strong { color: var(--teal); font-size: var(--fs-md); display: block; font-weight: 600; overflow-wrap: anywhere; }
 .callout { background: var(--soft); border-radius: var(--r-photo); padding: var(--s3) 14px; margin: 0 0 14px; }

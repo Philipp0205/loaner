@@ -3,23 +3,32 @@ import { h } from "./util.js";
 
 const urls = new Map();
 
-/** A blob URL for an item's photo, cached per item and edit version. */
-async function photoUrl(item) {
-  const key = `${item.id}:${item.photoVersion}`;
+/**
+ * A blob URL for one photo. With a photo id it is fetched from the per-photo route, otherwise from the
+ * older first-photo route (request cards carry no ids). Cached per photo and edit version.
+ */
+async function photoUrl(item, photoId) {
+  const key = photoId ? `${photoId}:${item.photoVersion}` : `${item.id}:${item.photoVersion}`;
   if (!urls.has(key)) {
-    urls.set(key, fetchBlob(`/api/items/${item.id}/photo`).then((blob) => (blob ? URL.createObjectURL(blob) : null)));
+    const path = photoId ? `/api/items/${item.id}/photos/${photoId}` : `/api/items/${item.id}/photo`;
+    urls.set(key, fetchBlob(path).then((blob) => (blob ? URL.createObjectURL(blob) : null)));
   }
   return urls.get(key);
 }
 
-/** An <img> for the item, or a plain placeholder when it has no photo. */
-export function photoEl(item, extra = "") {
-  if (!item.hasPhoto) return h("div", { class: `photo none ${extra}` }, "No photo");
+/** An <img> for one photo of an item. `photoId` may be omitted to get the first photo. */
+export function photoElAt(item, photoId, extra = "") {
   const img = h("img", { class: `photo ${extra}`, alt: `Photo of ${item.name}`, loading: "lazy" });
-  photoUrl(item).then((url) => {
+  photoUrl(item, photoId).then((url) => {
     if (url) img.src = url;
   });
   return img;
+}
+
+/** An <img> for the item's first photo, or a plain placeholder when it has no photo. */
+export function photoEl(item, extra = "") {
+  if (!item.hasPhoto) return h("div", { class: `photo none ${extra}` }, "No photo");
+  return photoElAt(item, item.photoIds ? item.photoIds[0] : undefined, extra);
 }
 
 /** Shrinks a picked image to at most `max` pixels on the long side and returns a JPEG blob under 2 MB. */
