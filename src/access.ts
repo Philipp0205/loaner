@@ -10,15 +10,19 @@ export type ItemRow = {
   category: string | null;
   available: number;
   donation_cents: number | null;
+  donation_text: string | null;
   has_photo: number;
   updated_at: number;
   created_at: number;
 };
 
-/** Everything but the photo blob, so lists never load image bytes. */
+/** SQL: 1 when the item has at least one photo. Needs the items table aliased as i. */
+export const HAS_PHOTO = "EXISTS (SELECT 1 FROM item_photos p WHERE p.item_id = i.id)";
+
+/** Everything but the photo blobs, so lists never load image bytes. */
 export const ITEM_SELECT = `
-  SELECT i.id, i.owner_id, u.name AS owner_name, i.name, i.note, i.category, i.available, i.donation_cents,
-         (i.photo IS NOT NULL) AS has_photo, i.updated_at, i.created_at
+  SELECT i.id, i.owner_id, u.name AS owner_name, i.name, i.note, i.category, i.available, i.donation_cents, i.donation_text,
+         ${HAS_PHOTO} AS has_photo, i.updated_at, i.created_at
   FROM items i JOIN users u ON u.id = i.owner_id`;
 
 /** SQL condition (two params: user id, user id): the user owns the item or shares a group with it. */

@@ -1,8 +1,9 @@
 import { downscale } from "./photo.js";
-import { NO_NAME, STILL_LOOKING, clearDraft, lateGuess, setDraft } from "./draft.js";
+import { clearDraft, setDraft } from "./draft.js";
+import { PHOTO_COPY } from "./photos/copy.js";
+import { limitFiles } from "./photos/pure.js";
 import { go, stayedPut } from "./state.js";
-import { SUGGEST_TIMEOUT_MS, raceTimeout, suggestFromPhoto } from "./suggest-photo.js";
-import { h } from "./util.js";
+import { h, toast } from "./util.js";
 
 const FORM = "#/mine/new/form";
 let stream = null;
@@ -30,9 +31,9 @@ export function renderCamera() {
   const status = h("p", { id: "camera-status", class: "cam-status", role: "status" });
   const fallback = h("p", { id: "camera-fallback", class: "cam-fallback hidden" });
   const shutter = h("button", { id: "camera-shutter", class: "cam-shutter", type: "button", "aria-label": "Take photo" });
-  const pick = h("input", { id: "camera-gallery", type: "file", accept: "image/*", class: "sr-only" });
-  const gallery = h("label", { class: "cam-btn" }, "From gallery", pick);
-  const type = h("button", { id: "camera-type", class: "cam-btn", type: "button", onclick: () => typeItIn() }, "Type it in");
+  const pick = h("input", { id: "camera-gallery", type: "file", accept: "image/*", multiple: true, class: "sr-only" });
+  const gallery = h("label", { class: "cam-btn" }, PHOTO_COPY.fromGallery, pick);
+  const type = h("button", { id: "camera-type", class: "cam-btn", type: "button", onclick: () => openForm([]) }, "Type it in");
   const close = h("button", { id: "camera-close", class: "cam-close", type: "button", "aria-label": "Close", onclick: () => { stopCamera(); go("#/mine"); } }, "\u00d7");
 
   const lock = (on) => {
@@ -41,58 +42,30 @@ export function renderCamera() {
     gallery.classList.toggle("disabled", on);
   };
 
-  let chosen = null; // the photo being prepared, as a promise of the shrunk blob
-  let work = null; // the suggestion for it. It never rejects and may finish after the form is open.
   let opened = false;
 
-  const begin = (blob) => (work ||= suggestFromPhoto(blob, undefined, (text) => { if (text && !opened) status.textContent = text; }));
-
-  /** Opens the form with the photo. `guess` is the answer if there is one yet; otherwise the form fills in later if the model finishes. */
-  function openForm(blob, finished, guess) {
+  /** Opens the new item form with these photos (none for Type it in). */
+  function openForm(blobs) {
+    if (opened) return;
     opened = true;
-    const draft = setDraft({
-      blob,
-      name: guess ? guess.name : "",
-      category: guess ? guess.category : "",
-      hint: finished ? (guess ? "" : NO_NAME) : STILL_LOOKING,
-    });
-    if (!finished) begin(blob).then((late) => lateGuess(draft, late));
+    setDraft({ blobs });
     stopCamera();
     go(FORM);
   }
 
-  /** Type it in is never disabled. With a photo already chosen it opens the form with that photo. */
-  async function typeItIn() {
-    if (opened) return;
-    if (!chosen) {
-      opened = true;
-      stopCamera();
-      go(FORM);
-      return;
-    }
-    try {
-      const blob = await chosen;
-      if (!opened) openForm(blob, false);
-    } catch {
-      /* useBlob is already showing why the photo could not be used */
-    }
-  }
-
-  /** Shrinks the photo, asks the on-device model for a name for up to 15 seconds, then opens the form with whatever came back. */
-  async function useBlob(source) {
+  /** Shrinks the chosen photos (at most 6), then opens the form with them. A bad file keeps the camera open. */
+  async function useFiles(files) {
     const samePlace = stayedPut();
+    const { kept, dropped } = limitFiles(files, 0);
     lock(true);
-    opened = false;
-    work = null;
-    status.textContent = "Looking at the photo...";
+    status.textContent = PHOTO_COPY.working;
     try {
-      chosen = downscale(source);
-      const blob = await chosen;
-      const result = await raceTimeout(begin(blob), Number(globalThis.__loanerSuggestTimeoutMs) || SUGGEST_TIMEOUT_MS);
-      if (opened || !samePlace()) return;
-      openForm(blob, result.done, result.done ? result.guess : null);
+      const blobs = [];
+      for (const file of kept) blobs.push(await downscale(file));
+      if (!samePlace()) return;
+      if (dropped) toast(PHOTO_COPY.onlySome);
+      openForm(blobs);
     } catch (e) {
-      chosen = null;
       status.textContent = e.message || "Could not use that photo.";
       lock(false);
     }
@@ -107,13 +80,13 @@ export function renderCamera() {
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
     canvas.getContext("2d").drawImage(video, 0, 0);
-    canvas.toBlob((blob) => (blob ? useBlob(blob) : (status.textContent = "Could not take the photo. Try again.")), "image/jpeg", 0.92);
+    canvas.toBlob((blob) => (blob ? useFiles([blob]) : (status.textContent = "Could not take the photo. Try again.")), "image/jpeg", 0.92);
   });
 
   pick.addEventListener("change", () => {
-    const file = pick.files[0];
+    const files = Array.from(pick.files);
     pick.value = "";
-    if (file) useBlob(file);
+    if (files.length) useFiles(files);
   });
 
   const showFallback = (error) => {

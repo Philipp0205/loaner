@@ -194,7 +194,7 @@ test("a new service worker shows an update bar, and Reload swaps it in with one 
   // so the update check fetches the real sw.js: different bytes, a new worker, as after a deploy.
   await ctx.route("**/sw.js", async (route) => {
     const res = await route.fetch();
-    await route.fulfill({ response: res, body: (await res.text()).replace('const VERSION = "v24"', 'const VERSION = "v24-old"') });
+    await route.fulfill({ response: res, body: (await res.text()).replace('const VERSION = "v25"', 'const VERSION = "v25-old"') });
   });
   await ctx.addInitScript(() => sessionStorage.setItem("loads", String(Number(sessionStorage.getItem("loads") || 0) + 1)));
 
@@ -203,7 +203,7 @@ test("a new service worker shows an update bar, and Reload swaps it in with one 
   await page.evaluate(() => navigator.serviceWorker.ready);
   await page.waitForFunction(() => !!navigator.serviceWorker.controller, undefined, { timeout: 30_000 });
   assert.equal(await page.locator("#sw-update").count(), 0, "a first install is not an update");
-  assert.deepEqual(await page.evaluate(() => caches.keys()), ["loaner-shell-v24-old"]);
+  assert.deepEqual(await page.evaluate(() => caches.keys()), ["loaner-shell-v25-old"]);
 
   await ctx.unroute("**/sw.js");
   await page.evaluate(async () => { await (await navigator.serviceWorker.getRegistration())!.update(); });
@@ -215,7 +215,7 @@ test("a new service worker shows an update bar, and Reload swaps it in with one 
   await bar.getByRole("button", { name: "Reload" }).click();
   await page.waitForFunction(() => sessionStorage.getItem("loads") === "2", undefined, { timeout: 30_000 });
   await page.locator("button.tile").first().waitFor();
-  await page.waitForFunction(async () => (await caches.keys()).join() === "loaner-shell-v24", undefined, { timeout: 30_000 });
+  await page.waitForFunction(async () => (await caches.keys()).join() === "loaner-shell-v25", undefined, { timeout: 30_000 });
   await page.waitForTimeout(800);
   assert.equal(await page.evaluate(() => sessionStorage.getItem("loads")), "2", "exactly one reload");
   assert.equal(await page.locator("#sw-update").count(), 0, "the bar is gone on the new version");

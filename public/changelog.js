@@ -7,6 +7,16 @@ import { normalizeEntries } from "./whats-new.js";
  */
 const RAW = [
   {
+    id: "2026-11-20-photos-and-donation",
+    date: "2026-11-20",
+    title: "More photos, and a donation in words",
+    bullets: [
+      "Add up to 6 photos to an item. Swipe through them on the item page, and tap one to see it full screen.",
+      "The app no longer guesses a name from your photo, so nothing is downloaded when you add an item.",
+      "A suggested donation can be words, like a beer, as well as an amount.",
+    ],
+  },
+  {
     id: "2026-11-17-native-feel",
     date: "2026-11-17",
     title: "Feels more like an app",

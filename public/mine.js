@@ -1,9 +1,14 @@
 import { api } from "./api.js";
 import { CATEGORIES } from "./categories.js";
 import { clearDraft, getDraft } from "./draft.js";
-import { downscale, photoEl } from "./photo.js";
+import { DONATION_COPY } from "./donation/copy.js";
+import { donationInputValue, hasDonation } from "./donation/label.js";
+import { donationFields, parseDonation } from "./donation/parse.js";
+import { photoEl } from "./photo.js";
+import { PHOTO_COPY } from "./photos/copy.js";
+import { photoPicker } from "./photos/picker.js";
 import { go, redraw, state, stayedPut } from "./state.js";
-import { busy, emptyState, fmtAmountPlain, h, largeTitleHead, skeletonList, statusPill, swrList, toast } from "./util.js";
+import { busy, emptyState, h, largeTitleHead, skeletonList, statusPill, swrList, toast } from "./util.js";
 
 export async function renderMine() {
   const add = h("button", { class: "primary", type: "button", onclick: () => go("#/mine/new") }, "Add an item");
@@ -49,45 +54,17 @@ export async function renderItemForm(id) {
   const existing = id ? (await api("GET", `/api/items/${id}`)).item : null;
   if (id && !existing.mine) throw new Error("Only the owner can edit this item.");
   const draft = existing ? null : getDraft();
-  const name = h("input", { type: "text", id: "item-name", maxlength: "60", required: true, value: existing ? existing.name : draft.name });
+  const name = h("input", { type: "text", id: "item-name", maxlength: "60", required: true, value: existing ? existing.name : "" });
   const category = h("select", { id: "item-category" },
     h("option", { value: "" }, "Choose a category"),
     CATEGORIES.map((c) => h("option", { value: c }, c)));
-  category.value = existing ? existing.category || "" : draft.category;
-  // A late suggestion may fill these, but never over something the person has started typing or chosen.
-  const hint = h("p", { class: "hint hidden", id: "suggest-note", role: "status" });
-  const showHint = (text) => { hint.textContent = text; hint.classList.toggle("hidden", !text); };
-  if (draft) {
-    showHint(draft.hint);
-    name.addEventListener("input", () => { draft.touched = true; draft.name = name.value; draft.hint = ""; showHint(""); });
-    category.addEventListener("change", () => { draft.category = category.value; });
-    draft.onchange = () => {
-      name.value = draft.name;
-      category.value = draft.category;
-      showHint(draft.hint);
-    };
-  }
+  category.value = existing ? existing.category || "" : "";
   const note = h("textarea", { id: "item-note", maxlength: "280", placeholder: "Battery lasts about 30 min" });
   note.value = existing ? existing.note : "";
-  let blob = draft ? draft.blob : null;
-  const preview = h("div", null,
-    existing && existing.hasPhoto ? photoEl(existing, "preview")
-      : blob ? h("img", { class: "preview", alt: "New photo preview", src: URL.createObjectURL(blob) }) : null);
-  const file = h("input", { type: "file", id: "item-photo", accept: "image/*", onchange: async () => {
-    const picked = file.files[0];
-    if (!picked) return;
-    try {
-      blob = await downscale(picked);
-      const img = h("img", { class: "preview", alt: "New photo preview", src: URL.createObjectURL(blob) });
-      preview.replaceChildren(img);
-    } catch (e) {
-      blob = null;
-      toast(e.message, "error");
-    }
-  } });
-  const wantsDonation = h("input", { type: "checkbox", id: "item-donation-on", checked: !!(existing && existing.donation !== null) });
-  const amount = h("input", { type: "text", id: "item-donation", inputmode: "decimal", placeholder: "5", value: existing && existing.donation !== null ? fmtAmountPlain(existing.donation) : "" });
-  const amountField = h("label", { class: "field" }, h("span", null, "Suggested amount (EUR)"), h("span", { class: "money-input" }, h("span", { class: "money-sign", "aria-hidden": "true" }, "€"), amount));
+  const picker = photoPicker(existing, draft ? draft.blobs : []);
+  const wantsDonation = h("input", { type: "checkbox", id: "item-donation-on", checked: !!(existing && hasDonation(existing)) });
+  const amount = h("input", { type: "text", id: "item-donation", maxlength: "60", placeholder: DONATION_COPY.placeholder, value: donationInputValue(existing) });
+  const amountField = h("label", { class: "field" }, h("span", null, DONATION_COPY.label), amount);
   const sync = () => amountField.classList.toggle("hidden", !wantsDonation.checked);
   wantsDonation.addEventListener("change", sync);
   sync();
@@ -98,13 +75,12 @@ export async function renderItemForm(id) {
   const form = h("form", { class: "stack item-form" },
     h("h1", null, existing ? "Edit item" : "Add an item"),
     h("label", { class: "field" }, h("span", null, "Name"), name),
-    hint,
     h("label", { class: "field" }, h("span", null, "Category"), category),
     h("label", { class: "field" }, h("span", null, "Short note"), note),
-    h("div", { class: "field" }, h("span", null, "Photo"), preview, file),
-    h("label", { class: "check toggle-row" }, wantsDonation, "Ask for a donation"),
+    h("div", { class: "field" }, h("span", null, "Photos"), picker.node),
+    h("label", { class: "check toggle-row" }, wantsDonation, DONATION_COPY.toggle),
     amountField,
-    h("p", { class: "hint" }, "Display only. Money is never handled in the app."),
+    h("p", { class: "hint" }, DONATION_COPY.hint),
     h("fieldset", null, h("legend", null, "Share with"), boxes),
     error,
     save,
@@ -115,17 +91,24 @@ export async function renderItemForm(id) {
     const samePlace = stayedPut();
     busy(save, async () => {
       try {
-        let donation = null;
+        let fields = donationFields(null);
         if (wantsDonation.checked) {
-          donation = Number(amount.value.replace(",", "."));
-          if (!amount.value.trim() || !Number.isFinite(donation)) throw new Error("Enter the suggested amount in euros as a number.");
+          const parsed = parseDonation(amount.value);
+          if (parsed.error) throw new Error(parsed.error);
+          fields = donationFields(parsed);
         }
-        const body = { name: name.value, note: note.value, category: category.value || null, donation, groupIds: [...chosen] };
+        const body = { name: name.value, note: note.value, category: category.value || null, ...fields, groupIds: [...chosen] };
         let itemId = id;
         if (existing) await api("PATCH", `/api/items/${id}`, body);
         else itemId = (await api("POST", "/api/items", body)).item.id;
-        if (blob) await api("PUT", `/api/items/${itemId}/photo`, undefined, blob);
+        const failed = await syncPhotos(itemId, picker);
         if (!existing) clearDraft();
+        if (failed) {
+          // The item exists now, so send the person to its edit page to add the photo again, not to a second create.
+          toast(PHOTO_COPY.uploadFailed, "error");
+          if (samePlace()) go(`#/mine/edit/${itemId}`);
+          return;
+        }
         toast(existing ? "Saved" : "Item added");
         if (samePlace()) go(`#/item/${itemId}`);
       } catch (e) {
@@ -137,12 +120,28 @@ export async function renderItemForm(id) {
   if (existing) {
     const del = h("button", { class: "danger block", type: "button", style: "margin-top:20px", onclick: () => deleteItem(existing, del) }, "Delete item");
     parts.push(del);
-    if (existing.hasPhoto) {
-      const drop = h("button", { class: "block", type: "button", style: "margin-top:10px", onclick: () => busy(drop, async () => { await api("DELETE", `/api/items/${id}/photo`); toast("Photo removed"); redraw(`#/mine/edit/${id}`); }) }, "Remove photo");
-      parts.push(drop);
-    }
   }
   return h("div", null, parts);
+}
+
+/** Deletes the removed photos, then uploads the new ones one at a time. Returns true if any step failed. */
+async function syncPhotos(itemId, picker) {
+  let failed = false;
+  for (const photoId of picker.removed()) {
+    try {
+      await api("DELETE", `/api/items/${itemId}/photos/${photoId}`);
+    } catch {
+      failed = true;
+    }
+  }
+  for (const blob of picker.added()) {
+    try {
+      await api("POST", `/api/items/${itemId}/photos`, undefined, blob);
+    } catch {
+      failed = true;
+    }
+  }
+  return failed;
 }
 
 async function deleteItem(item, button) {

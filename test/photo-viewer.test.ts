@@ -91,7 +91,8 @@ test("showOverlay closes on Escape and on the Back handler, and calls onClose on
 
 test("the viewer is wired in: item detail only, own files cached, not an ak-sheet", () => {
   const read = (file: string) => fs.readFileSync(new URL(`../public/${file}`, import.meta.url), "utf8");
-  assert.match(read("browse.js"), /item\.hasPhoto \? viewable\(photoEl\(item, "big"\), item\) : photoEl\(item, "big"\)/);
+  assert.match(read("browse.js"), /photoGallery\(item\)/);
+  assert.match(read("photos/gallery.js"), /viewable\(photoEl\(item, "big"\), item\)/, "one photo keeps the single photo markup");
   assert.doesNotMatch(read("photo.js"), /viewable|openPhotoViewer/, "tiles and previews do not open the viewer");
   const viewer = read("photo-viewer.js");
   assert.match(viewer, /showOverlay/);

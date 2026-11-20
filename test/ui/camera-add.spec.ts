@@ -15,6 +15,8 @@ const shot = async (page: Page, name: string) => {
   await page.screenshot({ path: path.join(SHOTS, name) });
 };
 
+const png = (name: string, w: number, h: number, rgb: [number, number, number]) => ({ name, mimeType: "image/png", buffer: solidPng(w, h, rgb) });
+
 /** Signs up through the UI (which also marks What's new as seen), creates a group, and opens My items. */
 async function startOnMyItems(page: Page) {
   await openWelcome(page, loaner.baseUrl);
@@ -35,16 +37,9 @@ const streamsLive = (page: Page) =>
     return !!stream && stream.getTracks().some((t) => t.readyState === "live");
   });
 
-test("Add an item opens the camera, Type it in gives an empty form, a gallery photo prefills it", { timeout: 120_000 }, async () => {
+test("Add an item opens the camera, Type it in gives an empty form, a gallery photo opens it with the photo", { timeout: 120_000 }, async () => {
   const ctx = await loaner.phone();
   await ctx.grantPermissions(["camera"], { origin: loaner.baseUrl });
-  // The stand-in for the on-device model: tests never download CLIP.
-  await ctx.addInitScript(() => {
-    (window as unknown as Record<string, unknown>).__loanerSuggestFromPhoto = async () => {
-      await new Promise((resolve) => setTimeout(resolve, 400));
-      return { name: "Cordless drill", category: "Tools" };
-    };
-  });
   const page = await ctx.newPage();
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(String(error)));
@@ -73,10 +68,11 @@ test("Add an item opens the camera, Type it in gives an empty form, a gallery ph
   assert.equal(layout.top, true, "the camera, not the tab bar, is at the bottom of the screen");
   assert.ok(layout.shutter >= 64 && layout.type >= 44, "large tap targets");
   assert.equal(await page.locator("#camera-fallback").isVisible(), false);
+  assert.equal(await page.locator("#camera-gallery").getAttribute("multiple"), "", "the gallery takes several photos");
   await page.getByText("From gallery").waitFor();
   await shot(page, "01-camera.png");
 
-  // 2. Type it in: the empty form. The camera stops.
+  // 2. Type it in: the empty form with no photos. The camera stops.
   await page.locator("#camera-type").click();
   await page.locator("#item-name").waitFor();
   assert.equal(new URL(page.url()).hash, "#/mine/new/form");
@@ -84,7 +80,7 @@ test("Add an item opens the camera, Type it in gives an empty form, a gallery ph
   assert.equal(await page.locator("#item-category").inputValue(), "");
   assert.equal(await page.locator("img.preview").count(), 0);
   assert.equal(await page.locator("#camera-add").count(), 0);
-  await page.locator("#item-photo").setInputFiles({ name: "a.png", mimeType: "image/png", buffer: solidPng(40, 30, [10, 120, 90]) });
+  await page.locator("#item-photo").setInputFiles(png("a.png", 40, 30, [10, 120, 90]));
   await page.locator("img.preview").waitFor();
   await shot(page, "02-form-typed.png");
 
@@ -94,21 +90,17 @@ test("Add an item opens the camera, Type it in gives an empty form, a gallery ph
   await page.getByRole("button", { name: "Add an item" }).click();
   await page.locator("#camera-add").waitFor();
 
-  // 3. A gallery photo: "Looking at the photo...", then the form with the suggestion.
-  await page.locator("#camera-gallery").setInputFiles({ name: "drill.png", mimeType: "image/png", buffer: solidPng(800, 600, [200, 90, 40]) });
-  await page.locator("#camera-status", { hasText: "Looking at the photo..." }).waitFor();
-  assert.equal(await page.locator("#camera-shutter").isDisabled(), true, "shutter is off while suggesting");
-  assert.equal(await page.locator("#camera-gallery").isDisabled(), true, "gallery is off while suggesting");
-  await shot(page, "03-looking.png");
+  // 3. A gallery photo opens the form straight away. Nothing is guessed from it.
+  await page.locator("#camera-gallery").setInputFiles(png("drill.png", 800, 600, [200, 90, 40]));
   await page.locator("#item-name").waitFor();
   assert.equal(new URL(page.url()).hash, "#/mine/new/form");
-  assert.equal(await page.locator("#item-name").inputValue(), "Cordless drill");
-  assert.equal(await page.locator("#item-category").inputValue(), "Tools");
+  assert.equal(await page.locator("#item-name").inputValue(), "");
+  assert.equal(await page.locator("#item-category").inputValue(), "");
   await page.locator("img.preview").waitFor();
   assert.equal(await page.locator("img.preview").evaluate((img: HTMLImageElement) => img.naturalWidth), 800);
-  await shot(page, "04-form-suggested.png");
+  await shot(page, "03-form-with-photo.png");
 
-  // 4. Both fields stay editable, and the item saves with the edited values.
+  // 4. The item saves with the typed values.
   await page.locator("#item-name").fill("Drill driver");
   await page.locator("#item-category").selectOption("Household");
   await page.getByRole("button", { name: "Add item" }).click();
@@ -132,41 +124,20 @@ test("Add an item opens the camera, Type it in gives an empty form, a gallery ph
   assert.equal(await page.locator("#item-category").inputValue(), "Household");
 
   assert.deepEqual(errors, []);
-  assert.deepEqual(external, [], "nothing leaves the app in this test, no model download");
-  await ctx.close();
-});
-
-test("a failed or unsure suggestion keeps the photo and leaves the name empty", { timeout: 90_000 }, async () => {
-  const ctx = await loaner.phone();
-  await ctx.addInitScript(() => {
-    (window as unknown as Record<string, unknown>).__loanerSuggestFromPhoto = async () => null;
-  });
-  const page = await ctx.newPage();
-  await startOnMyItems(page);
-  await page.getByRole("button", { name: "Add an item" }).click();
-  await page.locator("#camera-add").waitFor();
-  await page.locator("#camera-gallery").setInputFiles({ name: "thing.png", mimeType: "image/png", buffer: solidPng(300, 200, [30, 30, 200]) });
-  await page.locator("#item-name").waitFor();
-  assert.equal(await page.locator("#item-name").inputValue(), "");
-  assert.equal(await page.locator("#item-category").inputValue(), "");
-  await page.locator("img.preview").waitFor();
+  assert.deepEqual(external, [], "nothing leaves the app in this test");
   await ctx.close();
 });
 
 test("the shutter takes a frame from the live camera and opens the form with it", { timeout: 90_000 }, async () => {
   const ctx = await loaner.phone();
   await ctx.grantPermissions(["camera"], { origin: loaner.baseUrl });
-  await ctx.addInitScript(() => {
-    (window as unknown as Record<string, unknown>).__loanerSuggestFromPhoto = async () => ({ name: "Tent", category: "Camping" });
-  });
   const page = await ctx.newPage();
   await startOnMyItems(page);
   await page.getByRole("button", { name: "Add an item" }).click();
   await page.waitForFunction(() => (document.querySelector("#camera-video") as HTMLVideoElement | null)?.videoWidth! > 0);
   await page.locator("#camera-shutter").click();
   await page.locator("#item-name").waitFor();
-  assert.equal(await page.locator("#item-name").inputValue(), "Tent");
-  assert.equal(await page.locator("#item-category").inputValue(), "Camping");
+  assert.equal(await page.locator("#item-name").inputValue(), "");
   await page.locator("img.preview").waitFor();
   await ctx.close();
 });
@@ -212,7 +183,6 @@ test("with the camera denied, the view stays put with a message, gallery and Typ
   // the way a real denial does (NotAllowedError). A device with no camera at all is covered further down.
   await ctx.addInitScript(() => {
     navigator.mediaDevices.getUserMedia = () => Promise.reject(new DOMException("Permission denied", "NotAllowedError"));
-    (window as unknown as Record<string, unknown>).__loanerSuggestFromPhoto = async () => ({ name: "Hammer", category: "Tools" });
   });
   const page = await ctx.newPage();
   await startOnMyItems(page);
@@ -226,9 +196,9 @@ test("with the camera denied, the view stays put with a message, gallery and Typ
   await page.getByText("From gallery").waitFor();
   await shot(page, "05-camera-denied.png");
 
-  await page.locator("#camera-gallery").setInputFiles({ name: "h.png", mimeType: "image/png", buffer: solidPng(120, 90, [90, 90, 90]) });
+  await page.locator("#camera-gallery").setInputFiles(png("h.png", 120, 90, [90, 90, 90]));
   await page.locator("#item-name").waitFor();
-  assert.equal(await page.locator("#item-name").inputValue(), "Hammer");
+  await page.locator("img.preview").waitFor();
   await ctx.close();
 });
 
@@ -246,86 +216,5 @@ test("with no camera at all, the view shows the no-camera message and Type it in
   await page.locator("#camera-type").click();
   await page.locator("#item-name").waitFor();
   assert.equal(await page.locator("#item-name").inputValue(), "");
-  await ctx.close();
-});
-
-type Hooks = { __loanerSuggestFromPhoto?: () => Promise<unknown>; __loanerSuggestTimeoutMs?: number; __release?: (guess: unknown) => void };
-
-/** A phone context whose suggester waits until the test calls window.__release(guess), with a short timeout. */
-async function slowSuggester(timeoutMs: number) {
-  const ctx = await loaner.phone();
-  await ctx.addInitScript((ms) => {
-    const w = window as unknown as Hooks;
-    w.__loanerSuggestTimeoutMs = ms;
-    w.__loanerSuggestFromPhoto = () => new Promise((resolve) => { w.__release = resolve; });
-  }, timeoutMs);
-  const page = await ctx.newPage();
-  await startOnMyItems(page);
-  await page.getByRole("button", { name: "Add an item" }).click();
-  await page.locator("#camera-add").waitFor();
-  return { ctx, page };
-}
-const pickDrill = (page: Page) => page.locator("#camera-gallery").setInputFiles({ name: "drill.png", mimeType: "image/png", buffer: solidPng(400, 300, [200, 90, 40]) });
-
-test("a suggester that never answers is cut off: the form opens with the photo and a quiet note", { timeout: 60_000 }, async () => {
-  const { ctx, page } = await slowSuggester(1500);
-  const started = Date.now();
-  await pickDrill(page);
-  await page.locator("#camera-status", { hasText: "Looking at the photo..." }).waitFor();
-  assert.equal(await page.locator("#camera-type").isEnabled(), true, "Type it in stays on while looking");
-  await page.locator("#item-name").waitFor({ timeout: 10_000 });
-  assert.ok(Date.now() - started >= 1400, "waited for the timeout");
-  assert.equal(await page.locator("#item-name").inputValue(), "");
-  assert.equal(await page.locator("#item-category").inputValue(), "");
-  assert.match(await page.locator("#suggest-note").innerText(), /still looking/i);
-  await page.locator("img.preview").waitFor();
-  await shot(page, "06-timeout-form.png");
-  await ctx.close();
-});
-
-test("Type it in while looking opens the form with the photo, and a late answer fills an untouched name", { timeout: 60_000 }, async () => {
-  const { ctx, page } = await slowSuggester(30_000);
-  await pickDrill(page);
-  await page.locator("#camera-status", { hasText: "Looking at the photo..." }).waitFor();
-  await page.locator("#camera-type").click();
-  await page.locator("#item-name").waitFor();
-  assert.equal(await page.locator("#item-name").inputValue(), "");
-  await page.locator("img.preview").waitFor();
-  await page.waitForFunction(() => !!(window as unknown as Hooks).__release);
-  await page.evaluate(() => (window as unknown as Hooks).__release!({ name: "Cordless drill", category: "Tools" }));
-  await page.waitForFunction(() => (document.querySelector("#item-name") as HTMLInputElement).value === "Cordless drill");
-  assert.equal(await page.locator("#item-category").inputValue(), "Tools");
-  assert.match(await page.locator("#suggest-note").innerText(), /suggested/i);
-  await ctx.close();
-});
-
-test("a late answer never overwrites a name the person has started typing", { timeout: 60_000 }, async () => {
-  const { ctx, page } = await slowSuggester(800);
-  await pickDrill(page);
-  await page.locator("#item-name").waitFor({ timeout: 10_000 });
-  await page.locator("#item-name").fill("Dad's drill");
-  await page.waitForFunction(() => !!(window as unknown as Hooks).__release);
-  await page.evaluate(() => (window as unknown as Hooks).__release!({ name: "Cordless drill", category: "Tools" }));
-  await page.waitForTimeout(300);
-  assert.equal(await page.locator("#item-name").inputValue(), "Dad's drill");
-  assert.equal(await page.locator("#item-category").inputValue(), "", "an untouched category is left alone too when the name was typed");
-  assert.equal(await page.locator("#suggest-note").isVisible(), false);
-  await ctx.close();
-});
-
-test("a suggester that fails falls back the same way, with the photo and an empty editable form", { timeout: 60_000 }, async () => {
-  const ctx = await loaner.phone();
-  await ctx.addInitScript(() => {
-    (window as unknown as Hooks).__loanerSuggestFromPhoto = () => Promise.reject(new Error("model failed to load"));
-  });
-  const page = await ctx.newPage();
-  await startOnMyItems(page);
-  await page.getByRole("button", { name: "Add an item" }).click();
-  await pickDrill(page);
-  await page.locator("#item-name").waitFor();
-  assert.equal(await page.locator("#item-name").inputValue(), "");
-  assert.equal(await page.locator("#item-category").inputValue(), "");
-  assert.match(await page.locator("#suggest-note").innerText(), /type one in/i);
-  await page.locator("img.preview").waitFor();
   await ctx.close();
 });

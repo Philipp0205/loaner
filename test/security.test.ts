@@ -3,9 +3,9 @@ import http from "node:http";
 import test from "node:test";
 import { api, makeGroup, makeItem, signUp, TINY_PNG, withApp, type AppCtx } from "./http.js";
 
-/** The header Loan some sent before the kit CSP builder, as the exact string. */
-const BEFORE =
-  "default-src 'self'; img-src 'self' blob: data:; media-src 'self' blob:; style-src 'self'; style-src-attr 'unsafe-inline'; script-src 'self' 'wasm-unsafe-eval' https://cdn.jsdelivr.net; worker-src 'self' blob:; connect-src 'self' https://cdn.jsdelivr.net https://huggingface.co https://*.huggingface.co https://*.hf.co https://*.cdn.hf.co https://*.xethub.hf.co; object-src 'none'; base-uri 'none'; frame-ancestors 'none'";
+/** The header Loan some sends: everything from this origin only. No CDN, no workers, no wasm. */
+const EXPECTED =
+  "default-src 'self'; img-src 'self' blob: data:; media-src 'self' blob:; style-src 'self'; style-src-attr 'unsafe-inline'; script-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'";
 
 /** Directive name to its sorted sources, so order does not matter but every directive and source does. */
 function directives(csp: string): Record<string, string[]> {
@@ -32,7 +32,7 @@ function raw(app: AppCtx, method: string, path: string): Promise<{ status: numbe
 
 const csp = (headers: http.IncomingHttpHeaders) => String(headers["content-security-policy"]);
 
-test("csp: the same directives and sources as before, with base-uri none, on every kind of response", async () => {
+test("csp: the same directives and sources, with base-uri none, on every kind of response", async () => {
   await withApp(async (app) => {
     const person = await signUp(app, "Pat");
     const photoItem = await (async () => {
@@ -54,18 +54,21 @@ test("csp: the same directives and sources as before, with base-uri none, on eve
       await raw(app, "GET", `/api/items/${photoItem}/photo`),
     ];
     for (const res of responses) {
-      assert.deepEqual(directives(csp(res.headers)), directives(BEFORE), `${res.status} ${res.headers["content-type"]}`);
+      assert.deepEqual(directives(csp(res.headers)), directives(EXPECTED), `${res.status} ${res.headers["content-type"]}`);
       assert.match(csp(res.headers), /base-uri 'none'/);
     }
   });
 });
 
-test("csp: jsDelivr and the Hugging Face hosts stay allowed, nothing else is", async () => {
+test("csp: scripts and fetches come from this origin only, with no CDN, model host, worker or wasm", async () => {
   await withApp(async (app) => {
     const { headers } = await raw(app, "GET", "/");
-    const policy = directives(csp(headers));
-    assert.deepEqual(policy["script-src"], ["'self'", "'wasm-unsafe-eval'", "https://cdn.jsdelivr.net"].sort());
-    assert.deepEqual(policy["connect-src"], ["'self'", "https://cdn.jsdelivr.net", "https://huggingface.co", "https://*.huggingface.co", "https://*.hf.co", "https://*.cdn.hf.co", "https://*.xethub.hf.co"].sort());
+    const header = csp(headers);
+    const policy = directives(header);
+    assert.deepEqual(policy["script-src"], ["'self'"]);
+    assert.deepEqual(policy["connect-src"], ["'self'"]);
+    assert.equal(policy["worker-src"], undefined, "no worker-src, so workers fall back to default-src 'self'");
+    assert.doesNotMatch(header, /jsdelivr|huggingface|hf\.co|wasm-unsafe-eval|https?:/);
     assert.deepEqual(policy["base-uri"], ["'none'"]);
     assert.deepEqual(policy["frame-ancestors"], ["'none'"]);
   });

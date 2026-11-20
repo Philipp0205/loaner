@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
+import { PHOTOS_SCHEMA, migratePhotos } from "./photos/migrate.js";
 
 const SCHEMA = `
 CREATE TABLE IF NOT EXISTS users (
@@ -153,7 +154,9 @@ export function openDb(file: string): DatabaseSync {
   db.exec("PRAGMA foreign_keys = ON");
   if (file !== ":memory:") db.exec("PRAGMA journal_mode = WAL");
   db.exec(SCHEMA);
+  db.exec(PHOTOS_SCHEMA);
   migrate(db);
+  migratePhotos(db);
   return db;
 }
 
@@ -161,6 +164,8 @@ export function openDb(file: string): DatabaseSync {
 function migrate(db: DatabaseSync): void {
   const columns = db.prepare("PRAGMA table_info(items)").all() as unknown as { name: string }[];
   if (!columns.some((column) => column.name === "category")) db.exec("ALTER TABLE items ADD COLUMN category TEXT");
+  // A suggested donation in words (for example "a beer"). At most one of donation_cents and donation_text is set.
+  if (!columns.some((column) => column.name === "donation_text")) db.exec("ALTER TABLE items ADD COLUMN donation_text TEXT");
   const noteColumns = db.prepare("PRAGMA table_info(notifications)").all() as unknown as { name: string }[];
   if (!noteColumns.some((column) => column.name === "borrower_id")) db.exec("ALTER TABLE notifications ADD COLUMN borrower_id TEXT");
   const userColumns = db.prepare("PRAGMA table_info(users)").all() as unknown as { name: string }[];
