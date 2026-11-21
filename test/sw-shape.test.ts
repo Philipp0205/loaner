@@ -9,7 +9,7 @@ test("sw.js imports the kit worker and sets it up for Loan some", () => {
   const worker = loadWorker();
   assert.deepEqual(worker.imported, ["/app-kit/ak-sw.js"]);
   const options = worker.setupOptions()!;
-  assert.equal(options.version, "v25");
+  assert.equal(options.version, "v26");
   assert.equal(options.prefix, "loaner");
   assert.deepEqual([...options.networkOnly], ["/api/"]);
   assert.equal(options.offlineFallback, "/");
@@ -53,7 +53,7 @@ test("activate deletes the old caches, including the pre-kit loaner-v23, and cla
   const worker = loadWorker({
     caches: {
       open: async () => ({ addAll: async () => {} }),
-      keys: async () => ["loaner-v23", "loaner-shell-v25", "loaner-shell-v22", "other-app-cache"],
+      keys: async () => ["loaner-v23", "loaner-shell-v26", "loaner-shell-v22", "other-app-cache"],
       delete: async (key: string) => { deleted.push(key); return true; },
     },
   });
