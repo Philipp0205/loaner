@@ -9,9 +9,11 @@ import { renderMessages } from "./messages.js";
 import { renderAlerts } from "./alerts.js";
 import { renderYou } from "./you.js";
 import { go, loadGroups, loadMe, redraw, state } from "./state.js";
-import { h, toast } from "./util.js";
+import { h, listsSettled, toast } from "./util.js";
 import { icon } from "./icons.js";
 import { considerWhatsNew } from "./whats-new-ui.js";
+import { REFRESH_COPY } from "./refresh/copy.js";
+import { createPullRefresh } from "./refresh/pull.js";
 
 const { AppKit } = window;
 
@@ -93,7 +95,30 @@ let lastDepth = null;
 let titleHandle = null;
 let swipeHandle = null;
 
+/** Shared state a screen draws from: who I am, the unread badge, my groups. */
+async function refreshShared() {
+  await loadMe();
+  if (!state.user.needsEmail) await loadGroups();
+  updateBar();
+}
+
+/** What a pull does: fresh shared state, then the current screen again, kept up until its lists are fresh. */
+async function refreshAll() {
+  await refreshShared();
+  await show();
+  await listsSettled();
+}
+
+/** Pull to refresh, bound only while the signed-in main app shows (see show and dropNativeParts). */
+const pull = createPullRefresh({
+  refreshAll,
+  refreshShared,
+  hash: () => location.hash || "#/browse",
+  onError: () => toast(REFRESH_COPY.failed, "error"),
+});
+
 function dropNativeParts() {
+  pull.unbind();
   titleHandle?.destroy();
   titleHandle = null;
   swipeHandle?.destroy();
@@ -164,6 +189,7 @@ async function show() {
     root.replaceChildren(h("main", { class: "page" }, h("div", { class: "spinner" }, "Loading...")));
   }
   showBar();
+  pull.bind();
   let screen;
   try {
     screen = await view(match);
@@ -183,6 +209,7 @@ async function show() {
     if (title) titleHandle = AppKit.largeTitle(title, { navbar: root.querySelector(".ak-navbar") });
     lastDepth = depth;
     setSwipe(depth, tab);
+    pull.screenShown();
   }, { direction });
   if (mine !== serial) return;
   considerWhatsNew();

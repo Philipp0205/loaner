@@ -7,6 +7,15 @@ import { normalizeEntries } from "./whats-new.js";
  */
 const RAW = [
   {
+    id: "2026-11-21-pull-to-refresh",
+    date: "2026-11-21",
+    title: "Pull down to refresh",
+    bullets: [
+      "Pull down from the top of any screen to load the latest items, requests and messages.",
+      "A small spinner shows while it loads, and the page stays where it is.",
+    ],
+  },
+  {
     id: "2026-11-20-photos-and-donation",
     date: "2026-11-20",
     title: "More photos, and a donation in words",

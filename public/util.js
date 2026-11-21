@@ -54,6 +54,12 @@ export function skeletonList(kind, count = 4) {
  */
 export function swrList(mount, key, fetcher, draw, skeleton) {
   const run = () => {
+    // Pull to refresh waits on these (see listsSettled), so its spinner lasts until the list is fresh.
+    const settle = (promise) => {
+      const tracked = promise.catch(() => {});
+      loading.add(tracked);
+      tracked.then(() => loading.delete(tracked));
+    };
     let drawn = false;
     // A saved copy renders synchronously inside swr(), so the skeleton never flashes when there is one.
     mount.replaceChildren(skeleton());
@@ -66,14 +72,20 @@ export function swrList(mount, key, fetcher, draw, skeleton) {
         h("button", { type: "button", onclick: run }, "Try again")));
       mount.removeAttribute("aria-busy");
     };
-    window.AppKit.swr(key, fetcher, (data) => {
+    settle(window.AppKit.swr(key, fetcher, (data) => {
       drawn = true;
       mount.replaceChildren(...[].concat(draw(data)));
       mount.removeAttribute("aria-busy");
-    }, { onError: fail }).catch(() => {});
+    }, { onError: fail }));
   };
   run();
 }
+
+/** The list loads that swrList has started and not finished yet. */
+const loading = new Set();
+
+/** Resolves once every list that is loading has its fresh data (or has failed). Never rejects. */
+export const listsSettled = () => Promise.allSettled([...loading]);
 
 /** A short message at the bottom of the screen (the kit's AppKit.toast). `kind` is "info" or "error". */
 export function toast(message, kind = "info") {

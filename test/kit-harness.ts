@@ -62,6 +62,17 @@ export class FakeNode {
   addEventListener(type: string, fn: Listener) {
     this.listeners.set(type, [...(this.listeners.get(type) ?? []), fn]);
   }
+  removeEventListener(type: string, fn: Listener) {
+    this.listeners.set(type, (this.listeners.get(type) ?? []).filter((item) => item !== fn));
+  }
+  /** Calls the listeners of `type` with an event. Returns the event. */
+  dispatch(type: string, event: Record<string, unknown> = {}) {
+    const full = { type, cancelable: true, defaultPrevented: false, preventDefault() { full.defaultPrevented = true; }, ...event };
+    for (const fn of this.listeners.get(type) ?? []) fn(full);
+    return full;
+  }
+  /** What the scroller reports. Only the page scroller uses it. */
+  scrollTop = 0;
   click() {
     for (const fn of this.listeners.get("click") ?? []) fn({ type: "click" });
   }
@@ -104,6 +115,10 @@ export type Env = {
   /** Change which media queries match, then fire their change listeners. */
   setMedia: (matching: string[]) => void;
   style: { html: string; body: string };
+  /** The page scroller (document.scrollingElement). Set its scrollTop to move the page. */
+  scroller: FakeNode;
+  /** Sends a touch event to the document, like the browser does for a finger at `points` (clientX, clientY). Returns the event. */
+  touch: (type: "touchstart" | "touchmove" | "touchend" | "touchcancel", points?: [number, number][]) => { defaultPrevented: boolean };
 };
 
 export type EnvOptions = {
@@ -156,8 +171,10 @@ export function loadKit(files: string[], options: EnvOptions = {}): Env {
   const windowListeners = new Map<string, Listener[]>();
   const style = { html: options.htmlBackground ?? "rgba(0, 0, 0, 0)", body: options.bodyBackground ?? "rgba(0, 0, 0, 0)" };
 
+  const scroller = new FakeNode("html");
   const document = {
     documentElement: html,
+    scrollingElement: scroller,
     head,
     body,
     readyState: "complete",
@@ -168,8 +185,11 @@ export function loadKit(files: string[], options: EnvOptions = {}): Env {
       if (selector === 'meta[name="theme-color"]') return head.children.filter((n) => n.tagName === "META" && n.getAttribute("name") === "theme-color");
       return [];
     },
-    addEventListener: () => {},
-    removeEventListener: () => {},
+    // Real listeners, so touch events can be sent through them.
+    listeners: new Map<string, Listener[]>(),
+    addEventListener: (type: string, fn: Listener) => FakeNode.prototype.addEventListener.call(document, type, fn),
+    removeEventListener: (type: string, fn: Listener) => FakeNode.prototype.removeEventListener.call(document, type, fn),
+    dispatch: (type: string, event?: Record<string, unknown>) => FakeNode.prototype.dispatch.call(document, type, event),
   };
 
   const sandbox: Record<string, unknown> = {
@@ -208,6 +228,8 @@ export function loadKit(files: string[], options: EnvOptions = {}): Env {
     body,
     head,
     style,
+    scroller,
+    touch: (type, points = []) => document.dispatch(type, { touches: points.map(([clientX, clientY]) => ({ clientX, clientY })) }),
     fire: (type, event = {}) => {
       for (const fn of windowListeners.get(type) ?? []) fn({ type, preventDefault() {}, ...event });
     },
