@@ -3,6 +3,7 @@ import { icon } from "../icons.js";
 import { go, state } from "../state.js";
 import { h, toast } from "../util.js";
 import { CHAT_COPY } from "./copy.js";
+import { UNREAD_EVENT, totalUnread } from "./pure.js";
 
 let active = null;
 
@@ -12,7 +13,7 @@ export function stopChat() {
   active = null;
 }
 
-const goBack = () => (window.history.length > 1 ? window.history.back() : go("#/you"));
+const goBack = () => (window.history.length > 1 ? window.history.back() : go("#/chat"));
 
 /** The mute button. `set(muted)` updates its label and state. */
 function muteControl(groupId, startMuted) {
@@ -50,6 +51,13 @@ function mountWhenAttached(screen, host, options) {
   tick();
 }
 
+/** Opening a thread marks it read on the server. Drop its count here too, and tell app.js so the Chat badge follows. */
+function clearUnread(groupId) {
+  for (const list of [state.groups, state.chats]) list.forEach((item) => { if (item.id === groupId) item.unreadChat = 0; });
+  state.chatUnread = totalUnread(state.chats.length ? state.chats : state.groups);
+  document.dispatchEvent(new Event(UNREAD_EVENT));
+}
+
 /**
  * The group chat screen for #/group/:id/chat. The first read happens here, so a group that is not yours
  * (a 404) shows the usual error and retry. The kit pane then loads, polls and sends.
@@ -58,6 +66,7 @@ export async function renderChat(groupId) {
   stopChat();
   const base = `/api/groups/${encodeURIComponent(groupId)}/chat`;
   let first = await api("GET", base);
+  clearUnread(groupId);
   const group = state.groups.find((item) => item.id === groupId);
   const mute = muteControl(groupId, first.muted);
 

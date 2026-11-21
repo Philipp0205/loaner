@@ -4,7 +4,7 @@ import path from "node:path";
 import test from "node:test";
 import type { Page } from "playwright-core";
 import { signUp as signUpVia, useLoaner } from "./harness.js";
-import { ENTRIES, LATEST_WHATS_NEW, SEEN_STORAGE_KEY } from "./whats-new-seen.js";
+import { ENTRIES, LATEST_WHATS_NEW, SEEN_STORAGE_KEY, formatEntryDate } from "./whats-new-seen.js";
 
 const SHOTS = path.resolve("test/ui/screenshots/whatsnew");
 const loaner = useLoaner();
@@ -46,7 +46,7 @@ test("a new sign-up starts with everything seen, then older seen ids get the new
   await sheet.getByRole("heading", { name: ENTRIES[1].title, exact: true }).waitFor();
   assert.equal(await sheet.getByRole("heading", { name: ENTRIES[2].title, exact: true }).count(), 0, "the seen entry is not listed");
   await sheet.getByText(ENTRIES[0].bullets[0], { exact: true }).waitFor();
-  assert.equal(await sheet.locator(".wn-date").first().textContent(), "21 Nov 2026");
+  assert.equal(await sheet.locator(".wn-date").first().textContent(), formatEntryDate(ENTRIES[0].date));
   assert.equal(await sheet.getByRole("button", { name: "Got it" }).count(), 1);
 
   // It slides up from the bottom of a 390x844 phone, over a scrim, with room for the safe area.

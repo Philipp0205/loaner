@@ -106,10 +106,10 @@ test("the shipped changelog is newest first, well formed, and free of em dashes"
   assert.equal(CHANGELOG[0].date, "2026-11-21");
 });
 
-test("the service worker is built on the kit worker at v27 and caches every kit and app file that index.html and landing.html load", () => {
+test("the service worker is built on the kit worker at v28 and caches every kit and app file that index.html and landing.html load", () => {
   const sw = fs.readFileSync(new URL("../public/sw.js", import.meta.url), "utf8");
-  assert.equal(/const VERSION = "([^"]+)"/.exec(sw)?.[1], "v27");
-  assert.match(sw, /\/\/ loaner-v27/);
+  assert.equal(/const VERSION = "([^"]+)"/.exec(sw)?.[1], "v28");
+  assert.match(sw, /\/\/ loaner-v28/);
   const paths = [...(/const SHELL = \[([^\]]*)\]/.exec(sw)?.[1] ?? "").matchAll(/"([^"]+)"/g)].map((m) => m[1]);
   for (const file of ["/whats-new.js", "/changelog.js", "/whats-new-ui.js", "/overlay.js", "/feedback-ui.js", "/css/sheet.css", "/logo.svg", "/messages.js", "/css/messages.css", "/photo-viewer.js", "/css/photo-viewer.css", "/email.js"]) assert.ok(paths.includes(file), file);
   for (const file of ["/", "/app", "/welcome", "/landing.js", "/css/landing.css", "/landing/phone-light.png", "/landing/phone-dark.png", "/landing/shelf-light.png", "/landing/shelf-dark.png", "/icons/mark.svg"]) assert.ok(paths.includes(file), file);

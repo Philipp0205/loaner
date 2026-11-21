@@ -1,4 +1,5 @@
 import { api } from "./api.js";
+import { alertsBell, tabHead } from "./alerts/bell.js";
 import { DONATION_COPY } from "./donation/copy.js";
 import { donationLabel, hasDonation } from "./donation/label.js";
 import { createGroupForm } from "./groups.js";
@@ -7,14 +8,14 @@ import { photoGallery } from "./photos/gallery.js";
 import { messageButton } from "./messages.js";
 import { requestCard } from "./requests.js";
 import { go, currentGroup, redraw, setGroup, state } from "./state.js";
-import { busy, emptyState, fmtDate, fmtMoment, fmtRange, h, largeTitleHead, skeletonList, statusPill, swrList, toast, wordmarkHeading } from "./util.js";
+import { busy, emptyState, fmtDate, fmtMoment, fmtRange, h, skeletonList, statusPill, swrList, toast, wordmarkHeading } from "./util.js";
 import { icon } from "./icons.js";
 
 export async function renderBrowse() {
   const group = currentGroup();
   if (!group) {
     return h("div", null,
-      h("div", { class: "page-head brandbar" }, wordmarkHeading()),
+      h("div", { class: "page-head brandbar" }, wordmarkHeading(), alertsBell()),
       emptyState("No groups yet", "Create a group for your family, flatmates or club, then send them the invite link. Or open a link a friend sent you."),
       h("div", { class: "card" }, h("h2", { style: "margin-top:0" }, "Start a group"), createGroupForm(() => go("#/browse"))),
     );
@@ -37,7 +38,7 @@ export async function renderBrowse() {
     () => skeletonList("tile", 6),
   );
   return h("div", null,
-    largeTitleHead("Browse", h("span", { class: "switch" }, select)),
+    tabHead("Browse", h("span", { class: "switch" }, select)),
     h("div", { class: "chips" }, filter),
     grid);
 }

@@ -1,4 +1,5 @@
 import { api } from "./api.js";
+import { totalUnread } from "./chat/pure.js";
 
 const GROUP_KEY = "loaner_group";
 const RECOVERY_KEY = "loaner_recovery";
@@ -6,8 +7,12 @@ const RECOVERY_KEY = "loaner_recovery";
 export const state = {
   user: null,
   groups: [],
+  // The last Chat tab list, so a poll can tell whether it changed.
+  chats: [],
   groupId: localStorage.getItem(GROUP_KEY),
   unread: 0,
+  // Unread group chat messages across my groups: the Chat tab badge.
+  chatUnread: 0,
   today: "",
   availableOnly: false,
   pushKey: null,
@@ -22,6 +27,7 @@ export async function loadMe() {
 
 export async function loadGroups() {
   state.groups = (await api("GET", "/api/groups")).groups;
+  state.chatUnread = totalUnread(state.groups);
   if (!state.groups.some((group) => group.id === state.groupId)) setGroup(state.groups[0] ? state.groups[0].id : null);
 }
 

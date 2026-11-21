@@ -3,7 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import test from "node:test";
 import type { Page } from "playwright-core";
-import { openWelcome, useLoaner } from "./harness.js";
+import { bellBadge, openAlerts, openWelcome, useLoaner } from "./harness.js";
 import { solidPng } from "./png.js";
 
 const SHOTS = path.resolve("test/ui/screenshots/flow");
@@ -116,9 +116,11 @@ test("Alice lends a drill to Bob, from invite to return", { timeout: 120_000 }, 
 
   // Alice sees the notification (unread badge) and approves.
   await alice.evaluate(() => document.dispatchEvent(new Event("visibilitychange")));
-  await alice.locator(".ak-tabbar .ak-badge").waitFor();
-  assert.equal(await alice.locator(".ak-tabbar .ak-badge").textContent(), "1");
-  await tab(alice, "Alerts");
+  await tab(alice, "Requests");
+  await bellBadge(alice).waitFor();
+  assert.equal(await bellBadge(alice).textContent(), "1");
+  assert.equal(await alice.locator(".ak-tabbar .ak-badge").count(), 0, "alerts are not counted on the tab bar");
+  await openAlerts(alice);
   const note = alice.locator("article.card.unread", { hasText: "New request" });
   await note.getByText("Bob would like Cordless drill").waitFor();
   await shot(alice, "alice-alerts");
@@ -129,8 +131,9 @@ test("Alice lends a drill to Bob, from invite to return", { timeout: 120_000 }, 
   await alice.locator("article.card", { hasText: "Bob wants Cordless drill" }).locator(".pill", { hasText: "Approved" }).waitFor();
   await shot(alice, "alice-approved");
 
-  // Bob is told.
-  await tab(bob, "Alerts");
+  // Bob is told. The bell lives on tab roots, so he leaves the item page first.
+  await tab(bob, "Requests");
+  await openAlerts(bob);
   await bob.locator("article.card", { hasText: "Request approved" }).getByText("Alice said yes to Cordless drill").waitFor();
 
   // Alice hands it over: the item shows lent to Bob.
@@ -168,7 +171,8 @@ test("Alice lends a drill to Bob, from invite to return", { timeout: 120_000 }, 
   await bob.locator(".tile .pill", { hasText: "Available" }).waitFor();
   await bob.locator('button.tile', { hasText: "Cordless drill" }).click();
   await bob.locator("[data-history] li", { hasText: "Bob" }).waitFor();
-  await tab(bob, "Alerts");
+  await tab(bob, "Browse");
+  await openAlerts(bob);
   await bob.getByRole("heading", { name: "Returned" }).waitFor();
 
   // Layout: no sideways scroll, comfortable tap targets in the tab bar.

@@ -7,12 +7,21 @@ import { normalizeEntries } from "./whats-new.js";
  */
 const RAW = [
   {
+    id: "2026-11-21-chat-tab",
+    date: "2026-11-21",
+    title: "A Chat tab, and alerts in the bell",
+    bullets: [
+      "The new Chat tab lists your group chats, with the last message and a badge for what you have not read.",
+      "Alerts moved to the bell at the top right of every tab. Tap it to see them, and Back to return.",
+    ],
+  },
+  {
     id: "2026-11-21-group-chat",
     date: "2026-11-21",
     title: "A chat for each group",
     bullets: [
-      "Open the group chat from a group on the You tab and talk with everyone in it.",
-      "A badge on the group shows how many messages you have not read.",
+      "Open the group chat from the Chat tab and talk with everyone in a group.",
+      "A badge shows how many messages you have not read.",
       "Mute a chat when it gets busy. Notifications never include the message text.",
     ],
   },

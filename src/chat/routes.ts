@@ -1,5 +1,6 @@
 import { requireMember } from "../access.js";
 import { HttpError, Reply, jsonBody, me, type Route } from "../types.js";
+import { chatList } from "./list.js";
 import type { GroupChat } from "./service.js";
 
 const REASONS = { empty: "write a message first", too_long: "that message is too long" } as const;
@@ -19,6 +20,14 @@ export function chatRoutes(groupChat: GroupChat): Route[] {
   };
 
   return [
+    {
+      // The Chat tab: my groups, newest message first, each with its last message and unread count.
+      method: "GET",
+      path: "/api/chats",
+      async handler(req) {
+        return { chats: await chatList(req.ctx, groupChat, me(req).id) };
+      },
+    },
     {
       // The thread. Opening it marks the chat read (the kit's thread() does not).
       method: "GET",

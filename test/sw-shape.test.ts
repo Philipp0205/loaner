@@ -9,7 +9,7 @@ test("sw.js imports the kit worker and sets it up for Loan some", () => {
   const worker = loadWorker();
   assert.deepEqual(worker.imported, ["/app-kit/ak-sw.js"]);
   const options = worker.setupOptions()!;
-  assert.equal(options.version, "v27");
+  assert.equal(options.version, "v28");
   assert.equal(options.prefix, "loaner");
   assert.deepEqual([...options.networkOnly], ["/api/"]);
   assert.equal(options.offlineFallback, "/");
@@ -24,7 +24,7 @@ test("every shell URL is a real file in public/ or one of the server routes", ()
     const path = url.split("?")[0];
     assert.ok(fs.existsSync(new URL(`../public${path}`, import.meta.url)), `${url} is in the shell but not in public/`);
   }
-  for (const file of ["/app-kit/ak-native.css", "/app-kit/ak-view-transitions.css", "/app-kit/ak-chat.css", "/app-kit/ak-native.js", "/app-kit/ak-transition.js", "/app-kit/ak-swr.js", "/app-kit/ak-sw-register.js", "/app-kit/ak-chat.js", "/css/native.css", "/css/chat.css", "/chat/copy.js", "/chat/button.js", "/chat/screen.js", "/refresh/copy.js", "/refresh/pull.js", "/refresh/pure.js"]) {
+  for (const file of ["/app-kit/ak-native.css", "/app-kit/ak-view-transitions.css", "/app-kit/ak-chat.css", "/app-kit/ak-native.js", "/app-kit/ak-transition.js", "/app-kit/ak-swr.js", "/app-kit/ak-sw-register.js", "/app-kit/ak-chat.js", "/css/native.css", "/css/chat.css", "/chat/copy.js", "/chat/pure.js", "/chat/list.js", "/chat/screen.js", "/alerts/copy.js", "/alerts/return.js", "/alerts/bell.js", "/nav/tabs.js", "/refresh/copy.js", "/refresh/pull.js", "/refresh/pure.js"]) {
     assert.ok(shell.includes(file), file);
   }
 });
@@ -53,7 +53,7 @@ test("activate deletes the old caches, including the pre-kit loaner-v23, and cla
   const worker = loadWorker({
     caches: {
       open: async () => ({ addAll: async () => {} }),
-      keys: async () => ["loaner-v23", "loaner-shell-v27", "loaner-shell-v22", "other-app-cache"],
+      keys: async () => ["loaner-v23", "loaner-shell-v28", "loaner-shell-v22", "other-app-cache"],
       delete: async (key: string) => { deleted.push(key); return true; },
     },
   });

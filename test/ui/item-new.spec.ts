@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { Page } from "playwright-core";
-import { openWelcome, useLoaner } from "./harness.js";
+import { bellBadge, openAlerts, openWelcome, useLoaner } from "./harness.js";
 import { skipWhatsNew } from "./whats-new-seen.js";
 
 const loaner = useLoaner();
@@ -51,9 +51,10 @@ test("a friend adds an item and the other member gets an alert that opens it", {
 
   // Bob sees the alert, unread, then opens the item from it.
   await bob.evaluate(() => document.dispatchEvent(new Event("visibilitychange")));
-  await bob.locator(".ak-tabbar .ak-badge").waitFor();
-  assert.equal(await bob.locator(".ak-tabbar .ak-badge").textContent(), "1");
-  await tab(bob, "Alerts");
+  await bellBadge(bob).waitFor();
+  assert.equal(await bellBadge(bob).textContent(), "1");
+  assert.equal(await bob.locator(".ak-tabbar .ak-badge").count(), 0, "alerts are not counted on the tab bar");
+  await openAlerts(bob);
   const note = bob.locator("article.card.unread", { hasText: "Alice added Cordless drill" });
   await note.getByText("It's now on the shelf.").waitFor();
   assert.equal(await note.getAttribute("data-note"), "item_new");
@@ -62,8 +63,9 @@ test("a friend adds an item and the other member gets an alert that opens it", {
   assert.match(new URL(bob.url()).hash, /^#\/item\/[^/]+$/);
   await bob.getByText("Owned by Alice").waitFor();
 
-  // Alice, the owner, has no alert about her own item.
-  await tab(alice, "Alerts");
+  // Alice, the owner, has no alert about her own item. The bell lives on tab roots, so leave the item page first.
+  await tab(alice, "Browse");
+  await openAlerts(alice);
   await alice.getByText("All quiet").waitFor();
 
   assert.deepEqual(errors, []);

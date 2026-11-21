@@ -4,10 +4,11 @@ type Entry = { id: string; date: string; title: string; bullets: string[] };
 
 // public/changelog.js is plain JS with no DOM use, so node can load it directly.
 const { CHANGELOG } = (await import(new URL("../../public/changelog.js", import.meta.url).href)) as { CHANGELOG: Entry[] };
-const { SEEN_KEY } = (await import(new URL("../../public/whats-new.js", import.meta.url).href)) as { SEEN_KEY: string };
+const { SEEN_KEY, formatEntryDate: format } = (await import(new URL("../../public/whats-new.js", import.meta.url).href)) as { SEEN_KEY: string; formatEntryDate: (date: string) => string };
 
 export const ENTRIES: Entry[] = CHANGELOG;
 export const SEEN_STORAGE_KEY: string = SEEN_KEY;
+export const formatEntryDate: (date: string) => string = format;
 
 /** Newest What's new id in the shipped changelog. */
 export const LATEST_WHATS_NEW: string = CHANGELOG[0]?.id ?? "";
