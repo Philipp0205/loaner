@@ -1,4 +1,5 @@
 import { api } from "./api.js";
+import { chatButton } from "./chat/button.js";
 import { inviteLink, loadGroups, setGroup, state, stayedPut } from "./state.js";
 import { busy, copyText, h, toast } from "./util.js";
 
@@ -48,6 +49,7 @@ export function groupCard(group, rerender) {
   });
   return h("section", { class: "card", "data-group": group.id },
     title,
+    chatButton(group),
     membersList(group),
     h("p", { class: "small" }, "Anyone with this link can join:"),
     h("code", { class: "invite-link" }, link),

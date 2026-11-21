@@ -106,10 +106,10 @@ test("the shipped changelog is newest first, well formed, and free of em dashes"
   assert.equal(CHANGELOG[0].date, "2026-11-21");
 });
 
-test("the service worker is built on the kit worker at v26 and caches every kit and app file that index.html and landing.html load", () => {
+test("the service worker is built on the kit worker at v27 and caches every kit and app file that index.html and landing.html load", () => {
   const sw = fs.readFileSync(new URL("../public/sw.js", import.meta.url), "utf8");
-  assert.equal(/const VERSION = "([^"]+)"/.exec(sw)?.[1], "v26");
-  assert.match(sw, /\/\/ loaner-v26/);
+  assert.equal(/const VERSION = "([^"]+)"/.exec(sw)?.[1], "v27");
+  assert.match(sw, /\/\/ loaner-v27/);
   const paths = [...(/const SHELL = \[([^\]]*)\]/.exec(sw)?.[1] ?? "").matchAll(/"([^"]+)"/g)].map((m) => m[1]);
   for (const file of ["/whats-new.js", "/changelog.js", "/whats-new-ui.js", "/overlay.js", "/feedback-ui.js", "/css/sheet.css", "/logo.svg", "/messages.js", "/css/messages.css", "/photo-viewer.js", "/css/photo-viewer.css", "/email.js"]) assert.ok(paths.includes(file), file);
   for (const file of ["/", "/app", "/welcome", "/landing.js", "/css/landing.css", "/landing/phone-light.png", "/landing/phone-dark.png", "/landing/shelf-light.png", "/landing/shelf-dark.png", "/icons/mark.svg"]) assert.ok(paths.includes(file), file);
@@ -127,7 +127,7 @@ test("the service worker is built on the kit worker at v26 and caches every kit 
   const landing = loadedBy("landing.html");
   assert.ok(landing.includes("/css/landing.css") && landing.includes("/landing.js"), "landing.html loads its css and script");
   for (const file of landing) assert.ok(paths.includes(file), `${file} is loaded by landing.html but not cached`);
-  for (const kit of ["ak-tokens.css", "app-kit.css", "ak-components.css", "ak-native.css", "ak-view-transitions.css", "install-prompt.css", "theme-color.js", "install-prompt.js", "ak-dom.js", "ak-nav.js", "ak-sheet.js", "ak-donate.js", "ak-tabbar.js", "ak-toast.js", "ak-native.js", "ak-transition.js", "ak-swr.js", "ak-sw-register.js"]) {
+  for (const kit of ["ak-tokens.css", "app-kit.css", "ak-components.css", "ak-native.css", "ak-view-transitions.css", "ak-chat.css", "install-prompt.css", "theme-color.js", "install-prompt.js", "ak-dom.js", "ak-nav.js", "ak-sheet.js", "ak-donate.js", "ak-tabbar.js", "ak-toast.js", "ak-native.js", "ak-transition.js", "ak-swr.js", "ak-sw-register.js", "ak-chat.js"]) {
     assert.ok(paths.includes(`/app-kit/${kit}`), `/app-kit/${kit}`);
   }
   for (const gone of ["/sheet.js", "/install-prompt.js", "/theme-color.js", "/css/install-prompt.css"]) assert.ok(!paths.includes(gone), `${gone} was deleted`);

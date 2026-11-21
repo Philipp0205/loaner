@@ -56,7 +56,8 @@ export function addNote(ctx: Ctx, input: NoteInput): PendingPush {
   };
 }
 
-export type PendingPush = { userId: string; title: string; body: string; tag: string };
+/** `url` is where a tap on the notification goes. It defaults to the alerts list. */
+export type PendingPush = { userId: string; title: string; body: string; tag: string; url?: string };
 
 /**
  * Sends web push for recorded notes. Skipped silently unless VAPID keys are configured
@@ -74,7 +75,7 @@ export async function flush(ctx: Ctx, pending: PendingPush[]): Promise<void> {
       try {
         await ctx.push.send(
           { endpoint: sub.endpoint, p256dh: sub.p256dh, auth: sub.auth },
-          { title: note.title, body: note.body, url: "/#/alerts", tag: note.tag },
+          { title: note.title, body: note.body, url: note.url ?? "/#/alerts", tag: note.tag },
         );
       } catch (error) {
         const status = (error as { statusCode?: number }).statusCode;

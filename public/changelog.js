@@ -7,6 +7,16 @@ import { normalizeEntries } from "./whats-new.js";
  */
 const RAW = [
   {
+    id: "2026-11-21-group-chat",
+    date: "2026-11-21",
+    title: "A chat for each group",
+    bullets: [
+      "Open the group chat from a group on the You tab and talk with everyone in it.",
+      "A badge on the group shows how many messages you have not read.",
+      "Mute a chat when it gets busy. Notifications never include the message text.",
+    ],
+  },
+  {
     id: "2026-11-21-pull-to-refresh",
     date: "2026-11-21",
     title: "Pull down to refresh",

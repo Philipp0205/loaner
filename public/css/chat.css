@@ -1,0 +1,21 @@
+/* The group chat screen and the unread badge on a group card. The pane itself is the kit's (ak-chat.css). */
+
+/* The screen fills what is left between the top of the page and the tab bar, so the pane gets a real height. */
+.chat-screen {
+  display: flex; flex-direction: column;
+  height: calc(100vh - var(--page-top) - var(--tab-h) - 28px);
+  height: calc(100dvh - var(--page-top) - var(--tab-h) - 28px);
+}
+.chat-screen .thread-head { flex: none; }
+.chat-host { flex: 1; min-height: 0; border-radius: var(--r-card); overflow: hidden; box-shadow: inset 0 0 0 1px var(--line); }
+.chat-mute { flex: none; min-height: 44px; }
+
+/* The base textarea rule sets a tall minimum, which the one-line composer does not want. */
+.ak-chat-input { min-height: 44px; height: 44px; padding: 10px 14px; }
+
+.group-chat-open { gap: var(--s2); }
+.chat-badge {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 20px; height: 20px; padding: 0 6px; border-radius: 10px;
+  background: var(--ak-accent); color: var(--ak-accent-ink); font-size: var(--fs-xs); font-weight: 700;
+}

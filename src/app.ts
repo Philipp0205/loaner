@@ -15,6 +15,8 @@ import {
   type Mailer,
 } from "./app-kit/index.ts";
 import { sqliteAuthStore } from "./auth-store.js";
+import { chatRoutes } from "./chat/routes.js";
+import { createGroupChat, type GroupChat } from "./chat/service.js";
 import type { Config } from "./config.js";
 import { get } from "./db.js";
 import { createMailer } from "./mail.js";
@@ -37,6 +39,8 @@ export type AppDeps = {
   push: PushSender;
   /** Defaults to Resend when RESEND_API_KEY is set, otherwise no mail is sent. Tests pass a stub. */
   mailer?: Mailer;
+  /** The group chat. Defaults to one made here. The server passes its own so it can flush it on shutdown. */
+  chat?: GroupChat;
 };
 
 const PUBLIC_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "public");
@@ -82,9 +86,11 @@ export function createApp(deps: AppDeps): http.RequestListener {
     // The token rides in the fragment, so it never reaches a server log or a Referer header.
     linkUrl: (kind, token) => `${deps.config.appOrigin}/${kind}#t=${token}`,
   });
+  const groupChat = deps.chat ?? createGroupChat(ctx);
   const routes = compile([
     ...authRoutes(auth),
-    ...groupRoutes(),
+    ...groupRoutes(groupChat),
+    ...chatRoutes(groupChat),
     ...itemRoutes(),
     ...photoRoutes(),
     ...requestRoutes(),

@@ -5,6 +5,7 @@ import test from "node:test";
 import { chromium, type Browser, type BrowserContext, type BrowserContextOptions, type Page } from "playwright-core";
 import { hashSecret, stubMailer, type Mailer, type MailMessage } from "../../src/app-kit/index.ts";
 import { createApp } from "../../src/app.js";
+import { createGroupChat, type GroupChat } from "../../src/chat/service.js";
 import { loadConfig } from "../../src/config.js";
 import { openDb } from "../../src/db.js";
 import { createNoopPushSender } from "../../src/push.js";
@@ -13,7 +14,7 @@ import { createNoopPushSender } from "../../src/push.js";
 export const UA = "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Mobile Safari/537.36";
 export const PHONE = { width: 390, height: 844 };
 
-export type Server = { baseUrl: string; db: DatabaseSync; mail: Mailer & { sent: MailMessage[] }; close: () => Promise<void> };
+export type Server = { baseUrl: string; db: DatabaseSync; mail: Mailer & { sent: MailMessage[] }; chat: GroupChat; close: () => Promise<void> };
 
 /** Headless Chrome: the installed channel, else the system binary. `args` are extra Chrome flags for one spec. */
 export async function launchChrome(args: string[] = []): Promise<Browser> {
@@ -29,7 +30,9 @@ export async function startServer(env: NodeJS.ProcessEnv = {}): Promise<Server> 
   const db = openDb(":memory:");
   const config = loadConfig({ PORT: "3000", DB_PATH: ":memory:", APP_TZ: "UTC", ...env });
   const mail = stubMailer();
-  const server = http.createServer(createApp({ db, config, push: createNoopPushSender(), now: () => Date.now(), mailer: mail }));
+  const ctx = { db, config, push: createNoopPushSender(), now: () => Date.now() };
+  const chat = createGroupChat(ctx);
+  const server = http.createServer(createApp({ ...ctx, mailer: mail, chat }));
   await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", () => resolve()));
   const baseUrl = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
   // Links in mail open on this server.
@@ -38,9 +41,11 @@ export async function startServer(env: NodeJS.ProcessEnv = {}): Promise<Server> 
     baseUrl,
     db,
     mail,
+    chat,
     async close() {
       server.closeAllConnections?.();
       await new Promise<void>((resolve) => server.close(() => resolve()));
+      chat.dispose();
       db.close();
     },
   };
@@ -102,6 +107,7 @@ export function useLoaner(env: NodeJS.ProcessEnv = {}, chromeArgs: string[] = []
     get baseUrl() { return live(server).baseUrl; },
     get db() { return live(server).db; },
     get mail() { return live(server).mail; },
+    get chat() { return live(server).chat; },
     /** A fresh phone-sized browser context: its own storage, so its own person. `options` override the phone defaults, e.g. `{ colorScheme: "dark" }`. */
     async phone(options: BrowserContextOptions = {}): Promise<BrowserContext> {
       const context = await live(browser).newContext({
