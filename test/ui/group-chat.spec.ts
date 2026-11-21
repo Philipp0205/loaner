@@ -7,7 +7,7 @@ const loaner = useLoaner();
 
 const tab = (page: Page, name: string) => page.locator(".ak-tabbar").getByRole("button", { name }).click();
 const bubbles = (page: Page) => page.locator(".ak-chat-msg .ak-chat-body");
-const chatButton = (page: Page) => page.locator("section.card[data-group] [data-chat-open]");
+const chatRow = (page: Page) => page.locator("button.chat-row");
 
 async function send(page: Page, text: string) {
   await page.locator(".ak-chat-input").fill(text);
@@ -15,13 +15,12 @@ async function send(page: Page, text: string) {
 }
 
 async function openChat(page: Page) {
-  await tab(page, "Browse");
-  await tab(page, "You");
-  await chatButton(page).click();
+  await tab(page, "Chat");
+  await chatRow(page).click();
   await page.locator(".ak-chat-composer").waitFor();
 }
 
-test("two members chat, see unread on the You card, and mute sticks", { timeout: 120_000 }, async () => {
+test("two members chat from the Chat tab, see unread on its row and badge, and mute sticks", { timeout: 120_000 }, async () => {
   const errors: string[] = [];
   const tessCtx = await loaner.phone();
   const boCtx = await loaner.phone({ colorScheme: "dark" });
@@ -53,9 +52,9 @@ test("two members chat, see unread on the You card, and mute sticks", { timeout:
   await bo.getByRole("button", { name: "Join Flat 3B" }).click();
   await bo.locator("nav.ak-tabbar").waitFor();
 
-  // Tess opens the chat, which fills the screen above the tab bar, and says hello.
-  await chatButton(tess).click();
-  await tess.locator(".ak-chat-composer").waitFor();
+  // The You card no longer has a chat button. Tess opens the chat from the Chat tab and says hello.
+  assert.equal(await tess.locator("section.card[data-group] [data-chat-open]").count(), 0, "no Group chat button on You");
+  await openChat(tess);
   assert.match(tess.url(), /#\/group\/[^/]+\/chat$/);
   assert.equal(await tess.locator("#chat-mute").getAttribute("aria-pressed"), "false");
   const pane = await tess.locator(".ak-chat").boundingBox();
@@ -63,13 +62,16 @@ test("two members chat, see unread on the You card, and mute sticks", { timeout:
   await send(tess, "Anyone need the drill?");
   await bubbles(tess).filter({ hasText: "Anyone need the drill?" }).waitFor();
 
-  // Bo sees the unread badge on the You card, then the message in the chat.
-  await tab(bo, "Browse");
-  await tab(bo, "You");
+  // Bo sees the unread badge on the Chat tab and its row, with a preview, then the message in the chat.
+  await bo.evaluate(() => document.dispatchEvent(new Event("visibilitychange")));
+  await bo.locator(".ak-tabbar .ak-badge").waitFor();
+  assert.equal((await bo.locator(".ak-tabbar .ak-badge").textContent())?.trim(), "1");
+  await tab(bo, "Chat");
   const badge = bo.locator("[data-chat-unread]");
   await badge.waitFor();
   assert.equal((await badge.textContent())?.trim(), "1");
-  await chatButton(bo).click();
+  assert.match(await chatRow(bo).innerText(), /Tess: Anyone need the drill\?/);
+  await chatRow(bo).click();
   await bubbles(bo).filter({ hasText: "Anyone need the drill?" }).waitFor();
   await send(bo, "Yes please");
 
@@ -77,10 +79,12 @@ test("two members chat, see unread on the You card, and mute sticks", { timeout:
   await bubbles(tess).filter({ hasText: "Yes please" }).waitFor({ timeout: 15_000 });
   assert.equal(await bubbles(tess).count(), 2);
 
-  // Opening cleared Bo's badge.
+  // Opening cleared Bo's badges, and Back returns to the Chat list.
   await bo.goBack();
-  await bo.locator("section.card[data-group]").first().waitFor();
-  assert.equal(await bo.locator("[data-chat-unread]").count(), 0, "no badge once read");
+  await chatRow(bo).waitFor();
+  assert.equal(await bo.locator("[data-chat-unread]").count(), 0, "no row badge once read");
+  assert.equal(await bo.locator(".ak-tabbar .ak-badge").count(), 0, "no tab badge once read");
+  assert.match(bo.url(), /#\/chat$/);
 
   // Mute sticks across a reload.
   await openChat(bo);

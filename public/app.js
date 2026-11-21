@@ -5,9 +5,13 @@ import { renderBrowse, renderItem } from "./browse.js";
 import { renderMine, renderItemForm } from "./mine.js";
 import { renderCamera, stopCamera } from "./camera.js";
 import { renderChat, stopChat } from "./chat/screen.js";
+import { renderChatList } from "./chat/list.js";
+import { totalUnread, chatSignature, UNREAD_EVENT } from "./chat/pure.js";
 import { renderRequests } from "./requests.js";
 import { renderMessages } from "./messages.js";
 import { renderAlerts } from "./alerts.js";
+import { syncBells } from "./alerts/bell.js";
+import { TABS, tabBadges } from "./nav/tabs.js";
 import { renderYou } from "./you.js";
 import { go, loadGroups, loadMe, redraw, state } from "./state.js";
 import { h, listsSettled, toast } from "./util.js";
@@ -29,14 +33,6 @@ AppKit.installPrompt.init({
 });
 
 const root = document.getElementById("root");
-
-const TABS = [
-  ["browse", "Browse"],
-  ["mine", "My items"],
-  ["requests", "Requests"],
-  ["alerts", "Alerts"],
-  ["you", "You"],
-];
 
 let currentTab = "browse";
 // Set by a tab tap, so the next screen change is a plain switch with no slide.
@@ -65,9 +61,14 @@ const bar = AppKit.tabbar({
   badgeLabel: "unread",
 });
 
+/**
+ * Moves the highlight and refreshes the badges. `active` is null on Alerts (a pushed screen with no tab),
+ * which highlights nothing. The Chat tab badge is the unread chat total, the bell badge is state.unread.
+ */
 function updateBar(active = currentTab) {
   currentTab = active;
-  bar.update({ active, badge: { alerts: state.unread > 0 ? state.unread : 0 } });
+  bar.update({ active, badge: tabBadges(state.chatUnread) });
+  syncBells(state.unread);
 }
 
 /** Puts the bar on screen. The highlight moves later, once the new screen is drawn, so the scroll restore finds it. */
@@ -77,6 +78,7 @@ function showBar() {
 }
 
 // The fourth item is how deep the screen sits in its tab: 0 is a tab root. A deeper screen pushes, a shallower one pops.
+// Alerts has no tab (null): it opens from the header bell as a pushed screen, and the bar highlights nothing.
 const ROUTES = [
   [/^#\/browse$/, "browse", () => renderBrowse(), 0],
   [/^#\/item\/([^/]+)\/messages\/([^/]+)$/, "browse", (m) => renderMessages(m[1], m[2]), 2],
@@ -87,9 +89,10 @@ const ROUTES = [
   [/^#\/mine\/new\/form$/, "mine", () => renderItemForm(null), 2],
   [/^#\/mine\/edit\/([^/]+)$/, "mine", (m) => renderItemForm(m[1]), 1],
   [/^#\/requests$/, "requests", () => renderRequests(), 0],
-  [/^#\/alerts$/, "alerts", () => renderAlerts(), 0],
+  [/^#\/chat$/, "chat", () => renderChatList(), 0],
+  [/^#\/alerts$/, null, () => renderAlerts(), 1],
   [/^#\/you$/, "you", () => renderYou(), 0],
-  [/^#\/group\/([^/]+)\/chat$/, "you", (m) => renderChat(m[1]), 1],
+  [/^#\/group\/([^/]+)\/chat$/, "chat", (m) => renderChat(m[1]), 1],
 ];
 
 let serial = 0;
@@ -131,7 +134,7 @@ function dropNativeParts() {
 /** Edge swipe back, only while a screen is deeper than its tab root. It does nothing outside an installed app. */
 function setSwipe(depth, tab) {
   if (depth > 0 && !swipeHandle) {
-    swipeHandle = AppKit.transition.swipeBack({ onBack: () => (history.length > 1 ? history.back() : go(`#/${tab}`)) });
+    swipeHandle = AppKit.transition.swipeBack({ onBack: () => (history.length > 1 ? history.back() : go(`#/${tab || "browse"}`)) });
   } else if (depth === 0 && swipeHandle) {
     swipeHandle.destroy();
     swipeHandle = null;
@@ -219,15 +222,18 @@ async function show() {
 }
 
 /**
- * One GET /api/me keeps the unread badge fresh and notices when the address was confirmed elsewhere,
- * without redrawing the screen. Skipped while the page is hidden.
+ * One GET /api/me keeps the bell badge fresh and notices when the address was confirmed elsewhere,
+ * without redrawing the screen. One GET /api/chats does the same for the Chat tab badge.
+ * Skipped while the page is hidden.
  */
 async function pollUnread() {
   if (!getToken() || !state.user || document.hidden) return;
   try {
     const me = await api("GET", "/api/me");
-    if (me.unread !== state.unread) {
+    const chatUnread = await pollChat();
+    if (me.unread !== state.unread || chatUnread !== state.chatUnread) {
       state.unread = me.unread;
+      state.chatUnread = chatUnread;
       updateBar();
     }
     if (me.user.emailVerifiedAt && state.user && !state.user.emailVerifiedAt) {
@@ -236,6 +242,18 @@ async function pollUnread() {
     }
   } catch {
     /* a missed poll is fine */
+  }
+}
+
+/** The unread group chat total now, or what we had if the call fails. A changed list refreshes the Chat tab. */
+async function pollChat() {
+  try {
+    const { chats } = await api("GET", "/api/chats");
+    if (location.hash === "#/chat" && chatSignature(chats) !== chatSignature(state.chats)) redraw("#/chat");
+    state.chats = chats;
+    return totalUnread(chats);
+  } catch {
+    return state.chatUnread;
   }
 }
 
@@ -254,6 +272,7 @@ setInterval(pollUnread, 30_000);
 // A lighter check while the banner is up, so confirming on another phone shows here within seconds.
 setInterval(() => waitingForConfirm() && pollUnread(), 6_000);
 document.addEventListener("visibilitychange", pollUnread);
+document.addEventListener(UNREAD_EVENT, () => updateBar());
 window.addEventListener("focus", pollUnread);
 
 /**

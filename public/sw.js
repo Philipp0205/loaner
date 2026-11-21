@@ -1,7 +1,7 @@
 // The shell, caching and update flow come from the app kit worker. This file adds the push handlers.
 importScripts("/app-kit/ak-sw.js");
 
-const VERSION = "v27"; // loaner-v27
+const VERSION = "v28"; // loaner-v28
 const SHELL = [
   "/", "/app", "/welcome",
   "/landing.js", "/css/landing.css", "/landing/phone-light.png", "/landing/phone-dark.png", "/landing/shelf-light.png", "/landing/shelf-dark.png", "/icons/mark.svg",
@@ -17,7 +17,8 @@ const SHELL = [
   "/photos/limits.js", "/photos/copy.js", "/photos/pure.js", "/photos/gallery.js", "/photos/picker.js",
   "/donation/copy.js", "/donation/parse.js", "/donation/label.js",
   "/refresh/copy.js", "/refresh/pull.js", "/refresh/pure.js",
-  "/chat/copy.js", "/chat/button.js", "/chat/screen.js",
+  "/chat/copy.js", "/chat/pure.js", "/chat/list.js", "/chat/screen.js",
+  "/alerts/copy.js", "/alerts/return.js", "/alerts/bell.js", "/nav/tabs.js",
   "/manifest.webmanifest?v=1", "/logo.svg", "/icons/icon-192.png", "/icons/icon-512.png",
 ];
 

@@ -87,6 +87,16 @@ export function linkFrom(message: MailMessage | undefined, kind: "verify" | "rec
   return match[1];
 }
 
+/** The bell in the header of a main tab, and its unread badge. Alerts have no tab in the bar. */
+export const bell = (page: Page) => page.locator("[data-alerts-bell]");
+export const bellBadge = (page: Page) => page.locator("[data-alerts-bell] .ak-badge");
+
+/** Taps the header bell and waits for the Alerts screen. */
+export async function openAlerts(page: Page): Promise<void> {
+  await bell(page).click();
+  await page.getByRole("heading", { level: 1, name: "Alerts" }).waitFor();
+}
+
 /** Registers test.before and test.after. Read baseUrl and browser inside tests. `env` is passed to the server's config, `chromeArgs` to Chrome. */
 export function useLoaner(env: NodeJS.ProcessEnv = {}, chromeArgs: string[] = []) {
   let server: Server | undefined;

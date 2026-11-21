@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { Page } from "playwright-core";
-import { openWelcome, useLoaner } from "./harness.js";
+import { bellBadge, openAlerts, openWelcome, useLoaner } from "./harness.js";
 
 const loaner = useLoaner();
 
@@ -96,9 +96,9 @@ test("Bo messages Tess about her drill, Tess replies from her request card", { t
 
   // Tess sees the alert badge and the unread dot on the request card. Neither shows the text.
   await tess.evaluate(() => document.dispatchEvent(new Event("visibilitychange")));
-  await tess.locator(".ak-tabbar .ak-badge").waitFor();
-  assert.equal(await tess.locator(".ak-tabbar .ak-badge").textContent(), "2", "the new message and the new request");
-  await tab(tess, "Alerts");
+  await bellBadge(tess).waitFor();
+  assert.equal(await bellBadge(tess).textContent(), "2", "the new message and the new request");
+  await openAlerts(tess);
   const note = tess.locator("article.card.unread", { hasText: "New message" });
   await note.getByText("Bo sent you a message about Cordless drill.").waitFor();
   assert.equal(await note.getByText("Saturday").count(), 0, "the alert does not carry the message");
@@ -121,7 +121,7 @@ test("Bo messages Tess about her drill, Tess replies from her request card", { t
   await tess.locator("article.card", { hasText: "Bo wants Cordless drill" }).getByRole("button", { name: "Message" }).waitFor();
   assert.equal(await tess.locator("button.msg-btn [data-unread]").count(), 0, "unread cleared after opening");
   await tess.evaluate(() => document.dispatchEvent(new Event("visibilitychange")));
-  await tess.waitForFunction(() => document.querySelector(".ak-tabbar .ak-badge")?.textContent === "1");
+  await tess.waitForFunction(() => document.querySelector("[data-alerts-bell] .ak-badge")?.textContent === "1");
 
   // Bo, still in the thread, sees the reply without reloading (the thread polls).
   await bo.locator(".msg.theirs .bubble", { hasText: "Sure, come at 10." }).waitFor({ timeout: 15_000 });
@@ -137,8 +137,9 @@ test("Bo messages Tess about her drill, Tess replies from her request card", { t
   await bo.reload();
   await bo.locator(".host button.msg-btn [data-unread]").waitFor();
   await bo.locator("article.card button.msg-btn [data-unread]").waitFor();
-  // The alert opens the borrower's thread too.
-  await tab(bo, "Alerts");
+  // The alert opens the borrower's thread too. The bell sits on a tab root, so go to Browse first.
+  await tab(bo, "Browse");
+  await openAlerts(bo);
   const alert = bo.locator("article.card.unread", { hasText: "Tess sent you a message about Cordless drill." }).first();
   assert.equal(await alert.getByText("tape").count(), 0, "the alert does not carry the message");
   await alert.getByRole("button", { name: "Open" }).click();

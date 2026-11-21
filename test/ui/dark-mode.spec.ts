@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import type { BrowserContext, Page } from "playwright-core";
 import { openWelcome, signUp as signUpVia, useLoaner } from "./harness.js";
+import { ENTRIES, formatEntryDate } from "./whats-new-seen.js";
 
 const loaner = useLoaner();
 
@@ -187,11 +188,15 @@ test("dark mode: the main screens stay dark with readable text and no white chro
   await page.locator("form.item-form").waitFor();
   await assertDark(page, "new item form");
 
-  // Requests, Alerts, You.
+  // Requests, Chat, Alerts (from the bell), You.
   await tab(page, "Requests");
   await page.getByRole("heading", { level: 1, name: "Requests" }).waitFor();
   await assertDark(page, "requests");
-  await tab(page, "Alerts");
+  await tab(page, "Chat");
+  await page.getByRole("heading", { level: 1, name: "Chat" }).waitFor();
+  await page.locator(".chat-row").waitFor();
+  await assertDark(page, "chat list");
+  await page.locator("[data-alerts-bell]").click();
   await page.getByRole("heading", { level: 1, name: "Alerts" }).waitFor();
   await assertDark(page, "alerts");
   await tab(page, "You");
@@ -227,7 +232,7 @@ test("dark mode: the What's new and feedback sheets use the dark card, not white
   assert.equal(await computed(page, ".ak-sheet", "color"), DARK_INK, "What's new sheet text");
   assert.equal(await computed(page, ".ak-scrim", "background-color"), "rgba(0, 0, 0, 0.72)", "the scrim is the kit's dark scrim");
   assert.equal(await computed(page, ".wn-entry h3", "color"), DARK_INK);
-  assert.equal(await whatsNew.locator(".wn-date").first().textContent(), "21 Nov 2026");
+  assert.equal(await whatsNew.locator(".wn-date").first().textContent(), formatEntryDate(ENTRIES[0].date));
   assert.equal(await whatsNew.getByRole("heading", { name: "Dark mode", exact: true }).count(), 1, "the dark mode entry is listed");
   await assertDark(page, "what's new sheet");
   await whatsNew.getByRole("button", { name: "Done" }).click();

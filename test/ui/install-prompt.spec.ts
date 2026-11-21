@@ -114,7 +114,7 @@ test("closing hides it for this visit, across navigation, and a new visit shows 
   assert.equal(await page.evaluate(() => sessionStorage.getItem("ak-install-prompt-dismissed")), "1");
   assert.equal(await page.evaluate(() => localStorage.getItem("ak-install-prompt-dismissed")), null, "not kept in localStorage");
 
-  for (const tab of ["My items", "Requests", "Alerts", "You", "Browse"]) {
+  for (const tab of ["My items", "Requests", "Chat", "You", "Browse"]) {
     await page.locator(".ak-tabbar").getByRole("button", { name: tab, exact: true }).click();
     await page.waitForFunction((label) => document.querySelector(".ak-tabbar [aria-current]")?.textContent?.includes(label), tab);
   }
@@ -170,7 +170,7 @@ test("the banner stays clear of the tab bar and leaves the buttons reachable", {
   assert.ok(banner.x >= 0 && banner.x + banner.width <= 390, "fits the phone width");
 
   // The tab bar's centre points hit the tab buttons, not the banner.
-  for (const label of ["Browse", "My items", "Requests", "Alerts", "You"]) {
+  for (const label of ["Browse", "My items", "Requests", "Chat", "You"]) {
     const button = page.locator(".ak-tabbar").getByRole("button", { name: label, exact: true });
     const box = (await button.boundingBox())!;
     const hit = await page.evaluate(({ x, y }) => !!document.elementFromPoint(x, y)?.closest(".ak-tabbar"), { x: box.x + box.width / 2, y: box.y + box.height / 2 });

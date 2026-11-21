@@ -8,12 +8,13 @@ import { photoEl } from "./photo.js";
 import { PHOTO_COPY } from "./photos/copy.js";
 import { photoPicker } from "./photos/picker.js";
 import { go, redraw, state, stayedPut } from "./state.js";
-import { busy, emptyState, h, largeTitleHead, skeletonList, statusPill, swrList, toast } from "./util.js";
+import { busy, emptyState, h, skeletonList, statusPill, swrList, toast } from "./util.js";
+import { tabHead } from "./alerts/bell.js";
 
 export async function renderMine() {
   const add = h("button", { class: "primary", type: "button", onclick: () => go("#/mine/new") }, "Add an item");
   const rerender = () => redraw("#/mine");
-  const head = largeTitleHead("My items", add);
+  const head = tabHead("My items", add);
   if (!state.groups.length) {
     return h("div", null, head, emptyState("Join or create a group first", "Items are shared with your groups. Open the Browse tab to create one."));
   }

@@ -126,7 +126,7 @@ test("pull to refresh on Requests: a request made elsewhere shows up, with fresh
   await drag(cdp, 200, true);
   await page.locator('[data-request][data-status="pending"]').waitFor();
   await page.getByText("For a shelf").waitFor();
-  assert.equal(await page.locator(".ak-tabbar .ak-badge").count(), 1, "the unread badge is refreshed too");
+  assert.equal(await page.locator("[data-alerts-bell] .ak-badge").count(), 1, "the unread badge is refreshed too");
   await page.waitForFunction(() => !document.querySelector(".ak-ptr-loading"));
   assert.equal(await marker(page), "same page", "no full page reload");
 

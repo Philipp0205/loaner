@@ -1,6 +1,5 @@
 /** Every string the group chat shows. */
 export const CHAT_COPY = {
-  open: "Group chat",
   title: "Group chat",
   back: "Back",
   placeholder: "Message the group",
@@ -14,9 +13,15 @@ export const CHAT_COPY = {
   unmuteHint: "Unmute this chat to get notifications again.",
   nowMuted: "Group chat muted",
   nowUnmuted: "Group chat unmuted",
+  // The Chat tab: the list of group chats.
+  listTitle: "Chat",
+  listEmpty: "No messages yet",
+  listEmptyTitle: "No group chats yet",
+  listEmptyText: "Create or join a group and its chat shows up here.",
+  you: "You",
 };
 
-/** The label of the unread badge on a group card, for assistive tech. */
+/** The label of an unread badge, for assistive tech. */
 export function unreadLabel(count) {
   return count === 1 ? "1 unread message" : `${count} unread messages`;
 }
