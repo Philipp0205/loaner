@@ -12,7 +12,11 @@
  *   document.body.appendChild(bar.el);
  *   bar.update({ active: 'alerts', badge: { alerts: 0 } });
  *
- * tabs[].icon is optional: a DOM node, or a short string shown as text.
+ * tabs[].icon is optional: a DOM node, or a short string. Either way the icon
+ * ends up with the class ak-tab-icon: a node gets the class added (its other
+ * classes stay), a string is wrapped in <span class="ak-tab-icon">. The size is
+ * --ak-tab-icon-size (26px, ak-tokens.css). Pressing a tab dips the icon to
+ * scale 0.9 (ak-components.css), with or without html.ak-native.
  * A badge shows when its value is truthy. A number over 99 shows as "99+".
  * The badge has role="img" and an aria-label. A count is named
  * "{text} {badgeLabel}", for example "3 new" or "99+ new". badgeLabel defaults
@@ -40,6 +44,19 @@
  *                                       update that changes active without a
  *                                       tap saves the old tab first.
  *
+ * Landing on a tab. When update({ active }) changes the active tab to another
+ * id, the new .ak-tab gets the class ak-tab-in (the colour moves from muted to
+ * text, the icon springs from 0.86 to 1). The class is removed when its own
+ * animationend fires (an animationend from the icon does not count). Not added
+ * on the first render, when active stays the same (a badge-only update, or
+ * update({ active: alreadyActive })), on a tap on the active tab, or with
+ * prefers-reduced-motion: reduce. It is automatic: no option, no opt-out.
+ * For an app with its own tab bar, and for its pages (no instance needed):
+ *   AppKit.tabbar.animateIn(el)    adds ak-tab-in to el, removes it on animationend
+ *   AppKit.tabbar.animatePage(el)  adds ak-page-in (opacity 0 to 1, no transform)
+ * Both do nothing without an element or with reduced motion, play again when
+ * the class is already on, and never throw.
+ *
  * Needs ak-components.css. Plain ES5. The only global it adds is window.AppKit.
  */
 (function () {
@@ -65,6 +82,81 @@
       return !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
     } catch (e) {
       return false;
+    }
+  }
+
+  // className is a string on HTML elements, and an SVGAnimatedString on SVG.
+  // Always go through getAttribute/setAttribute when it is not a string, so an
+  // SVG tab icon keeps its other classes and actually gets ak-tab-icon.
+  function classNameOf(el) {
+    if (!el) {
+      return '';
+    }
+    if (typeof el.className === 'string') {
+      return el.className;
+    }
+    if (el.getAttribute) {
+      return el.getAttribute('class') || '';
+    }
+    return '';
+  }
+
+  function setClassName(el, value) {
+    if (typeof el.className === 'string') {
+      el.className = value;
+    } else if (el.setAttribute) {
+      el.setAttribute('class', value);
+    }
+  }
+
+  function hasClass(el, name) {
+    return (' ' + classNameOf(el) + ' ').indexOf(' ' + name + ' ') >= 0;
+  }
+
+  function addClass(el, name) {
+    if (!hasClass(el, name)) {
+      var cur = classNameOf(el);
+      setClassName(el, cur ? cur + ' ' + name : name);
+    }
+  }
+
+  function removeClass(el, name) {
+    setClassName(el, (' ' + classNameOf(el) + ' ').replace(' ' + name + ' ', ' ').replace(/^\s+|\s+$/g, ''));
+  }
+
+  // Adds a class that starts a CSS animation, and removes it when that animation
+  // ends. A second call while the class is on plays it again. Never throws.
+  function play(el, cls, animation) {
+    if (!el || reducedMotion()) {
+      return;
+    }
+    try {
+      var key = '_ak_' + cls;
+      if (el[key]) {
+        el.removeEventListener('animationend', el[key]);
+        el[key] = null;
+      }
+      if (hasClass(el, cls)) {
+        removeClass(el, cls);
+        void el.offsetWidth;
+      }
+      addClass(el, cls);
+      // animationend of a child (the icon) bubbles up to here. It is not ours.
+      var onEnd = function (event) {
+        if (event && event.target && event.target !== el) {
+          return;
+        }
+        if (event && event.animationName && event.animationName !== animation) {
+          return;
+        }
+        el.removeEventListener('animationend', onEnd);
+        el[key] = null;
+        removeClass(el, cls);
+      };
+      el[key] = onEnd;
+      el.addEventListener('animationend', onEnd);
+    } catch (e) {
+      // A tab that cannot animate is still a tab.
     }
   }
 
@@ -151,9 +243,13 @@
       button.setAttribute('data-tab', tab.id);
       if (tab.icon) {
         if (typeof tab.icon === 'object') {
+          addClass(tab.icon, 'ak-tab-icon');
           button.appendChild(tab.icon);
         } else {
-          button.appendChild(document.createTextNode(String(tab.icon)));
+          var icon = document.createElement('span');
+          icon.className = 'ak-tab-icon';
+          icon.appendChild(document.createTextNode(String(tab.icon)));
+          button.appendChild(icon);
         }
       }
       var label = document.createElement('span');
@@ -231,6 +327,13 @@
         badge = c.badge;
       }
       refresh();
+      if (active !== previous) {
+        for (var k = 0; k < items.length; k++) {
+          if (items[k].id === active) {
+            play(items[k].button, 'ak-tab-in', 'ak-tab-in');
+          }
+        }
+      }
       if (active !== previous && o.rememberScroll) {
         restoreScroll(active);
       }
@@ -238,6 +341,16 @@
 
     return { el: nav, update: update };
   }
+
+  // For an app that draws its own tab bar. They work without AppKit.tabbar()
+  // having been called, do nothing without an element or with reduced motion,
+  // and never throw.
+  tabbar.animateIn = function (el) {
+    play(el, 'ak-tab-in', 'ak-tab-in');
+  };
+  tabbar.animatePage = function (el) {
+    play(el, 'ak-page-in', 'ak-page-in');
+  };
 
   AppKit.tabbar = tabbar;
 })();

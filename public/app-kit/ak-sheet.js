@@ -16,7 +16,10 @@
  * close() can be called more than once.
  *
  * While a sheet is open, <html> has the class "ak-sheet-open". With reduced
- * motion the sheet is removed at once. Otherwise it slides out for 220ms.
+ * motion the sheet is removed at once. Otherwise it slides out for 220ms. The
+ * slide out starts from where the sheet is on screen (after a partial drag, at
+ * a snap, or while it is still sliding in) and goes down to the bottom edge, it
+ * does not jump back to its rest position first.
  *
  * Optional, all off by default. Without them nothing changes:
  *
@@ -305,14 +308,42 @@
         remove();
         return;
       }
-      node.style.transform = '';
+      freeze();
       addClass(layer, 'ak-closing');
+      // Read layout so the frozen offset is the transition's start. Then go down.
+      void node.offsetHeight;
+      node.style.transform = 'translateY(100%)';
       setTimeout(remove, CLOSE_MS);
+    }
+
+    // Keeps the sheet where it is on screen (a drag, a snap, or a slide in
+    // progress) as an inline transform, and stops the slide-in animation, which
+    // would otherwise override it. Clearing the transform here would snap the
+    // sheet back to its rest position before it slides out.
+    function freeze() {
+      var from = node.style.transform;
+      if (!from) {
+        try {
+          from = window.getComputedStyle(node).transform;
+        } catch (e) {
+          from = '';
+        }
+        if (!from || from === 'none') {
+          from = ctl ? 'translateY(' + ctl.offsets[ctl.index] + 'px)' : 'translateY(0px)';
+        }
+      }
+      node.style.animation = 'none';
+      node.style.transform = from;
     }
 
     function remove() {
       if (behind) {
         removeClass(behind, 'ak-sheet-behind');
+      }
+      if (node.style.animation) {
+        // Close left these inline. An app that shows the node again starts clean.
+        node.style.animation = '';
+        node.style.transform = '';
       }
       if (layer.parentNode) {
         layer.parentNode.removeChild(layer);

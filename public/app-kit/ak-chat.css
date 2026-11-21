@@ -1,0 +1,151 @@
+/*
+ * AppKit.chat styles (ak-chat.js). Kit tokens only, so light and dark follow
+ * ak-tokens.css. Link it after ak-tokens.css and ak-components.css.
+ *
+ * .ak-chat fills its parent: give the parent a height (a flex column child, or
+ * height: 100%). The list scrolls, the composer stays at the bottom.
+ */
+.ak-chat {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  flex: 1;
+  background: var(--ak-bg);
+  color: var(--ak-text);
+  font-family: var(--ak-font);
+}
+
+.ak-chat-list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  display: flex;
+  flex-direction: column;
+  gap: var(--ak-s1);
+  padding: var(--ak-s3) max(var(--ak-s3), var(--ak-safe-right)) var(--ak-s3) max(var(--ak-s3), var(--ak-safe-left));
+}
+
+.ak-chat-empty {
+  margin: auto;
+  color: var(--ak-muted);
+  font-size: var(--ak-fs-md);
+}
+
+.ak-chat-msg {
+  display: flex;
+  flex-direction: column;
+  max-width: 78%;
+  padding: var(--ak-s2) var(--ak-s3);
+  border-radius: var(--ak-radius-lg);
+  font-size: var(--ak-fs-lg);
+  line-height: var(--ak-lh);
+  overflow-wrap: anywhere;
+}
+.ak-chat-msg.is-me {
+  align-self: flex-end;
+  background: var(--ak-accent);
+  color: var(--ak-accent-ink);
+}
+.ak-chat-msg.is-them {
+  align-self: flex-start;
+  background: var(--ak-surface-2);
+  color: var(--ak-text);
+}
+
+.ak-chat-name {
+  margin-bottom: 2px;
+  color: var(--ak-muted);
+  font-size: var(--ak-fs-xs);
+  font-weight: var(--ak-fw);
+}
+.ak-chat-body {
+  white-space: pre-wrap;
+}
+.ak-chat-time {
+  align-self: flex-end;
+  margin-top: 2px;
+  color: var(--ak-muted);
+  font-size: var(--ak-fs-xs);
+}
+.ak-chat-msg.is-me .ak-chat-time,
+.ak-chat-msg.is-me .ak-chat-note {
+  color: var(--ak-accent-ink);
+  opacity: 0.85;
+}
+
+.ak-chat-note {
+  align-self: flex-end;
+  margin-top: 2px;
+  color: var(--ak-muted);
+  font-size: var(--ak-fs-xs);
+}
+.ak-chat-msg.is-pending { opacity: 0.6; }
+.ak-chat-msg.is-failed {
+  cursor: pointer;
+  outline: 1px solid var(--ak-danger);
+}
+.ak-chat-msg.is-failed:focus-visible {
+  outline: 2px solid var(--ak-accent-2);
+  outline-offset: 2px;
+}
+.ak-chat-msg.is-failed .ak-chat-note {
+  color: var(--ak-danger);
+  opacity: 1;
+}
+.ak-chat-msg.is-me.is-failed {
+  background: var(--ak-surface-2);
+  color: var(--ak-text);
+}
+
+.ak-chat-composer {
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  align-items: flex-end;
+  gap: var(--ak-s2);
+  padding: var(--ak-s2) max(var(--ak-s3), var(--ak-safe-right)) max(8px, env(safe-area-inset-bottom, 0px)) max(var(--ak-s3), var(--ak-safe-left));
+  border-top: 1px solid var(--ak-hairline);
+  background: var(--ak-surface);
+}
+.ak-chat-input {
+  flex: 1;
+  min-width: 0;
+  max-height: 132px;
+  box-sizing: border-box;
+  padding: var(--ak-s2) var(--ak-s3);
+  border: 1px solid var(--ak-hairline);
+  border-radius: var(--ak-radius-lg);
+  background: var(--ak-bg);
+  color: var(--ak-text);
+  font: inherit;
+  /* 16px or more, or iOS zooms the page on focus. */
+  font-size: max(16px, var(--ak-fs-lg));
+  line-height: var(--ak-lh);
+  resize: none;
+}
+.ak-chat-input:focus-visible {
+  outline: 2px solid var(--ak-accent-2);
+  outline-offset: 1px;
+}
+.ak-chat-send {
+  min-height: var(--ak-tap);
+  padding: 0 var(--ak-s4);
+  border: 0;
+  border-radius: var(--ak-radius-pill);
+  background: var(--ak-accent);
+  color: var(--ak-accent-ink);
+  font: inherit;
+  font-weight: var(--ak-fw);
+  cursor: pointer;
+}
+.ak-chat-send:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.ak-chat-send:focus-visible {
+  outline: 2px solid var(--ak-accent-2);
+  outline-offset: 2px;
+}

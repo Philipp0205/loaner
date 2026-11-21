@@ -436,6 +436,51 @@ html.ak-sheet-open body {
 .ak-tab-label { font-size: 12px; font-weight: var(--ak-fw); letter-spacing: -0.01em; }
 .ak-tab .ak-badge { position: absolute; top: 4px; right: 6px; }
 
+/*
+ * Tab icon. AppKit.tabbar puts .ak-tab-icon on every icon (a string icon is
+ * wrapped in a span). The size is --ak-tab-icon-size. Pressing a tab dips the
+ * icon, not the button, so the tap target stays put. This works without
+ * html.ak-native. ak-native.css only keeps the button from dimming.
+ */
+.ak-tab-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: var(--ak-tab-icon-size);
+  height: var(--ak-tab-icon-size);
+  line-height: 1;
+}
+.ak-tabbar .ak-tab .ak-tab-icon {
+  transition: transform var(--ak-duration) var(--ak-ease-spring);
+}
+.ak-tabbar .ak-tab:active .ak-tab-icon {
+  transform: scale(0.9);
+  transition-duration: var(--ak-duration-press);
+  transition-timing-function: ease-out;
+}
+
+/*
+ * Landing on a tab. AppKit.tabbar adds .ak-tab-in to the tab that was just
+ * selected and removes it when the animation ends. .ak-page-in is for the page
+ * the app shows: opacity only, no transform, so nothing measured moves.
+ */
+@keyframes ak-tab-in { from { color: var(--ak-muted); } to { color: var(--ak-text); } }
+@keyframes ak-tab-icon-in { from { transform: scale(0.86); } to { transform: scale(1); } }
+@keyframes ak-page-in { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: no-preference) {
+  .ak-tab.ak-tab-in { animation: ak-tab-in 180ms ease-out; }
+  .ak-tab.ak-tab-in .ak-tab-icon { animation: ak-tab-icon-in 220ms var(--ak-ease-spring); }
+  .ak-page-in { animation: ak-page-in 160ms ease-out; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ak-tabbar .ak-tab .ak-tab-icon { transition: none; }
+  .ak-tabbar .ak-tab:active .ak-tab-icon { transform: none; }
+  .ak-tab.ak-tab-in,
+  .ak-tab.ak-tab-in .ak-tab-icon,
+  .ak-page-in { animation: none; }
+}
+
 .ak-screen-head {
   display: flex;
   align-items: center;
@@ -532,6 +577,37 @@ html.ak-sheet-open body {
 .ak-toast-error, .ak-toast-danger { color: var(--ak-danger); }
 .ak-toast-success { color: var(--ak-success); }
 .ak-toast-warning { color: var(--ak-warning); }
+
+/*
+ * Popup pop. .ak-pop scales and fades in, .ak-pop-out is the reverse. Toasts
+ * and menus that are shown (.ak-card-menu without [hidden]) pop in by
+ * themselves. AppKit.pop.in / AppKit.pop.out (ak-dom.js) add the classes.
+ * Only transform and opacity, so nothing around the popup moves. The origin is
+ * the centre. Set transform-origin on your own popup for a menu under a button.
+ * Reduced motion: a fade, no scale.
+ */
+@keyframes ak-pop-in { from { opacity: 0; transform: scale(0.96); } to { opacity: 1; transform: scale(1); } }
+@keyframes ak-pop-out { from { opacity: 1; transform: scale(1); } to { opacity: 0; transform: scale(0.96); } }
+@keyframes ak-fade-out { from { opacity: 1; } to { opacity: 0; } }
+.ak-pop,
+.ak-toast,
+.ak-card-menu:not([hidden]) {
+  transform-origin: 50% 50%;
+  animation: ak-pop-in var(--ak-pop-duration) var(--ak-pop-ease);
+}
+.ak-pop.ak-pop-out,
+.ak-toast.ak-pop-out,
+.ak-card-menu.ak-pop-out {
+  animation: ak-pop-out var(--ak-pop-duration) var(--ak-pop-ease) both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .ak-pop,
+  .ak-toast,
+  .ak-card-menu:not([hidden]) { animation-name: ak-fade-in; }
+  .ak-pop.ak-pop-out,
+  .ak-toast.ak-pop-out,
+  .ak-card-menu.ak-pop-out { animation-name: ak-fade-out; }
+}
 
 .ak-banner {
   display: flex;
