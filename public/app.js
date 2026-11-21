@@ -4,6 +4,7 @@ import { confirmBanner, emailCard, linkKindFromPath, renderAddEmail, renderLinkP
 import { renderBrowse, renderItem } from "./browse.js";
 import { renderMine, renderItemForm } from "./mine.js";
 import { renderCamera, stopCamera } from "./camera.js";
+import { renderChat, stopChat } from "./chat/screen.js";
 import { renderRequests } from "./requests.js";
 import { renderMessages } from "./messages.js";
 import { renderAlerts } from "./alerts.js";
@@ -88,6 +89,7 @@ const ROUTES = [
   [/^#\/requests$/, "requests", () => renderRequests(), 0],
   [/^#\/alerts$/, "alerts", () => renderAlerts(), 0],
   [/^#\/you$/, "you", () => renderYou(), 0],
+  [/^#\/group\/([^/]+)\/chat$/, "you", (m) => renderChat(m[1]), 1],
 ];
 
 let serial = 0;
@@ -181,6 +183,7 @@ async function show() {
   }
   const [match, tab, view, depth] = found;
   stopCamera();
+  stopChat();
   const tapped = tappedTab;
   tappedTab = false;
   const direction = directionFor(depth, tapped);

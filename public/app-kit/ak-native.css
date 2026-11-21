@@ -122,6 +122,16 @@ html.ak-native .ak-pressable:active {
   transform: scale(0.97);
   transition: none;
 }
+/*
+ * Tab bar items are not dimmed. The kit dips the icon instead (ak-components.css),
+ * so apps no longer override this. The button itself does not scale: that would
+ * move the tap target. More specific than the dim rule above, so it wins.
+ */
+html.ak-native .ak-tabbar .ak-tab:active {
+  opacity: 1;
+  transform: none;
+  filter: none;
+}
 
 @media (prefers-reduced-motion: reduce) {
   html.ak-native button,

@@ -3,6 +3,7 @@ import type { AddressInfo } from "node:net";
 import type { DatabaseSync } from "node:sqlite";
 import { hashSecret, stubMailer, type Mailer, type MailMessage } from "../src/app-kit/index.ts";
 import { createApp } from "../src/app.js";
+import { createGroupChat, type GroupChat } from "../src/chat/service.js";
 import { loadConfig } from "../src/config.js";
 import { openDb } from "../src/db.js";
 import type { PushPayload, PushSender, PushSubscription } from "../src/push.js";
@@ -23,6 +24,8 @@ export type AppCtx = {
   sent: SentPush[];
   /** The same context the app uses, for calling runReminders directly. */
   ctx: Ctx;
+  /** The group chat the app uses: flush(true) sends the queued chat pushes now. */
+  chat: GroupChat;
   /** The mail stub: every message the app tried to send, in order. */
   mail: Mailer & { sent: MailMessage[] };
   advance: (ms: number) => void;
@@ -48,18 +51,21 @@ export async function withApp(fn: (app: AppCtx) => Promise<void>, options: WithA
   const config = loadConfig({ PORT: "3000", DB_PATH: ":memory:", APP_TZ: "UTC", ...options.env });
   const mail = stubMailer();
   const ctx: Ctx = { db, config, push, now: () => now };
-  const server = http.createServer(createApp({ ...ctx, mailer: options.mailer ?? mail }));
+  // The group chat is made here so a test can flush its push batcher instead of waiting out the window.
+  const chat = createGroupChat(ctx);
+  const server = http.createServer(createApp({ ...ctx, mailer: options.mailer ?? mail, chat }));
   await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", () => resolve()));
   const port = (server.address() as AddressInfo).port;
   // Links in mail point at this server, so a test can open them.
   config.appOrigin = `http://127.0.0.1:${port}`;
   try {
     await fn({
-      port, db, sent, ctx, mail,
+      port, db, sent, ctx, mail, chat,
       advance(ms) { now += ms; },
       at(ms) { now = ms; },
     });
   } finally {
+    chat.dispose();
     server.closeAllConnections?.();
     await new Promise<void>((resolve) => server.close(() => resolve()));
     db.close();

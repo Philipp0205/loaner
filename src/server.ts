@@ -1,6 +1,7 @@
 import http from "node:http";
 import { installGracefulShutdown } from "./app-kit/index.ts";
 import { createApp } from "./app.js";
+import { createGroupChat } from "./chat/service.js";
 import { loadConfig, isProduction } from "./config.js";
 import { openDb } from "./db.js";
 import { createNoopPushSender, createWebPushSender } from "./push.js";
@@ -10,6 +11,7 @@ const config = loadConfig();
 const db = openDb(config.dbPath);
 const push = config.vapid ? createWebPushSender(config.vapid) : createNoopPushSender();
 const ctx = { db, config, now: () => Date.now(), push };
+const groupChat = createGroupChat(ctx);
 
 let reminding = false;
 function remindNow(): void {
@@ -25,7 +27,7 @@ remindNow();
 const reminderTimer = setInterval(remindNow, 5 * 60 * 1000);
 reminderTimer.unref?.();
 
-const server = http.createServer(createApp(ctx));
+const server = http.createServer(createApp({ ...ctx, chat: groupChat }));
 server.listen(config.port, "0.0.0.0", () => {
   console.log("Loan some");
   console.log(`  listening  http://localhost:${config.port}`);
@@ -45,7 +47,13 @@ installGracefulShutdown({
     clearInterval(reminderTimer);
     console.log(`Loan some ${message}`);
   },
-  onClose: () => {
+  onClose: async () => {
+    // Queued chat pushes go out first, while the database is still open.
+    try {
+      await groupChat.close();
+    } catch (error) {
+      console.error("chat flush failed", error instanceof Error ? error.name : "unknown");
+    }
     try {
       db.close();
     } catch (error) {

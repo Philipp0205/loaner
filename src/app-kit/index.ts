@@ -11,3 +11,4 @@ export * from "./shutdown.ts";
 export * from "./auth-code.ts";
 export * from "./mailer.ts";
 export * from "./auth.ts";
+export * from "./chat.ts";

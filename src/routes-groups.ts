@@ -1,4 +1,5 @@
 import { isMember, requireMember } from "./access.js";
+import type { GroupChat } from "./chat/service.js";
 import { newId, newInviteCode } from "./code.js";
 import { all, get, run, tx } from "./db.js";
 import { HttpError, jsonBody, me, type Ctx, type Route } from "./types.js";
@@ -34,19 +35,21 @@ function groupView(ctx: Ctx, group: GroupRow) {
   return { id: group.id, name: group.name, inviteCode: group.invite_code, members: members(ctx, group.id) };
 }
 
-export function groupRoutes(): Route[] {
+export function groupRoutes(groupChat: GroupChat): Route[] {
   return [
     {
+      // Each group carries unreadChat: group chat messages from others that this person has not opened.
       method: "GET",
       path: "/api/groups",
-      handler(req) {
+      async handler(req) {
         const user = me(req);
         const rows = all<GroupRow>(
           req.ctx.db,
           "SELECT g.id, g.name, g.invite_code FROM groups g JOIN memberships m ON m.group_id = g.id WHERE m.user_id = ? ORDER BY m.rowid",
           user.id,
         );
-        return { groups: rows.map((row) => groupView(req.ctx, row)) };
+        const unread = await groupChat.unreadCounts(user.id, rows.map((row) => row.id));
+        return { groups: rows.map((row) => ({ ...groupView(req.ctx, row), unreadChat: unread[row.id] ?? 0 })) };
       },
     },
     {
@@ -89,11 +92,12 @@ export function groupRoutes(): Route[] {
     {
       method: "GET",
       path: "/api/groups/:id",
-      handler(req) {
+      async handler(req) {
         const user = me(req);
         requireMember(req.ctx, user.id, req.params.id);
         const group = get<GroupRow>(req.ctx.db, "SELECT id, name, invite_code FROM groups WHERE id = ?", req.params.id)!;
-        return { group: groupView(req.ctx, group) };
+        const unread = await groupChat.unreadCounts(user.id, [group.id]);
+        return { group: { ...groupView(req.ctx, group), unreadChat: unread[group.id] ?? 0 } };
       },
     },
     {

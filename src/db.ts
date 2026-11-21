@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
+import { migrateChat } from "./chat/schema.js";
 import { PHOTOS_SCHEMA, migratePhotos } from "./photos/migrate.js";
 
 const SCHEMA = `
@@ -157,6 +158,7 @@ export function openDb(file: string): DatabaseSync {
   db.exec(PHOTOS_SCHEMA);
   migrate(db);
   migratePhotos(db);
+  migrateChat(db);
   return db;
 }
 

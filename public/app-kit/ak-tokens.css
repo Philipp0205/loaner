@@ -137,6 +137,7 @@
   --ak-phone: 480px;
   --ak-tab: calc(64px + env(safe-area-inset-bottom, 0px));
   --ak-tap: 44px;
+  --ak-tab-icon-size: 26px;
   --ak-sheet-margin: 12px;
 
   /*
@@ -156,6 +157,8 @@
   --ak-duration: 120ms;
   --ak-duration-press: 80ms;
   --ak-duration-sheet: 220ms;
+  --ak-pop-duration: 140ms;
+  --ak-pop-ease: cubic-bezier(0.2, 0.9, 0.3, 1);
 }
 
 /* Light phone. Colours only. */
